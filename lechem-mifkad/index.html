@@ -1,0 +1,1789 @@
+<title>Lechem Mifkad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap">
+<style>
+/* =========================================================
+   Lechem Mifkad: design tokens
+   ========================================================= */
+:root {
+  --bg: #F3F6F2;
+  --surface: #FFFFFF;
+  --surface-2: #EDF2EE;
+  --ink: #1C2621;
+  --muted: #62716A;
+  --line: #DCE4DD;
+  --accent: #2E7A5E;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DCEEE4;
+  --warn: #A95F17;
+  --warn-soft: #FBECDB;
+  --danger: #B9443A;
+  --danger-soft: #F8E1DE;
+  --n-kcal: #E09A2D;
+  --n-protein: #7B6AD3;
+  --n-carbs: #3597AB;
+  --n-fat: #E07262;
+  --n-fibre: #5E9F44;
+  --track: #E5EBE6;
+  --toast-bg: #1C2621;
+  --toast-ink: #F3F6F2;
+  --backdrop: rgba(18, 30, 24, .38);
+  --shadow: 0 1px 2px rgba(24, 48, 36, .05), 0 8px 24px rgba(24, 48, 36, .06);
+  --shadow-sheet: 0 -12px 40px rgba(18, 30, 24, .18);
+  --radius-lg: 22px;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --font-display: 'Bricolage Grotesque', ui-rounded, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111613;
+    --surface: #19201C;
+    --surface-2: #222B26;
+    --ink: #E6EDE8;
+    --muted: #93A39A;
+    --line: #2C3731;
+    --accent: #5DBB93;
+    --accent-ink: #0D1A13;
+    --accent-soft: #1D3A2D;
+    --warn: #EBA85C;
+    --warn-soft: #3A2A18;
+    --danger: #EF7A6E;
+    --danger-soft: #3B1F1C;
+    --n-kcal: #F0B550;
+    --n-protein: #9D90F0;
+    --n-carbs: #5CC0D2;
+    --n-fat: #F2917F;
+    --n-fibre: #8CCB6C;
+    --track: #28322C;
+    --toast-bg: #E6EDE8;
+    --toast-ink: #111613;
+    --backdrop: rgba(0, 0, 0, .55);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .25);
+    --shadow-sheet: 0 -12px 40px rgba(0, 0, 0, .5);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111613;
+  --surface: #19201C;
+  --surface-2: #222B26;
+  --ink: #E6EDE8;
+  --muted: #93A39A;
+  --line: #2C3731;
+  --accent: #5DBB93;
+  --accent-ink: #0D1A13;
+  --accent-soft: #1D3A2D;
+  --warn: #EBA85C;
+  --warn-soft: #3A2A18;
+  --danger: #EF7A6E;
+  --danger-soft: #3B1F1C;
+  --n-kcal: #F0B550;
+  --n-protein: #9D90F0;
+  --n-carbs: #5CC0D2;
+  --n-fat: #F2917F;
+  --n-fibre: #8CCB6C;
+  --track: #28322C;
+  --toast-bg: #E6EDE8;
+  --toast-ink: #111613;
+  --backdrop: rgba(0, 0, 0, .55);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .25);
+  --shadow-sheet: 0 -12px 40px rgba(0, 0, 0, .5);
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+html { -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+body.locked { overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+h1, h2, h3 { margin: 0; font-family: var(--font-display); text-wrap: balance; letter-spacing: -.01em; }
+p { margin: 0; }
+svg { display: block; }
+.tnum { font-variant-numeric: tabular-nums; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.app {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 14px 48px;
+  display: grid;
+  gap: 14px;
+}
+
+/* =========================================================
+   Header
+   ========================================================= */
+.topbar { display: grid; gap: 8px; }
+.brand-row { display: flex; align-items: center; gap: 8px; }
+.brand { font-size: 24px; font-weight: 700; line-height: 1.1; margin-right: auto; display: grid; gap: 4px; min-width: 0; }
+.brand-en { white-space: nowrap; }
+.brand-en span { color: var(--accent); }
+.brand-he {
+  justify-self: start; font-family: 'Frank Ruhl Libre', 'Noto Serif Hebrew', 'Times New Roman', serif;
+  font-size: 1.12em; font-weight: 700; line-height: 1.35; color: var(--ink); letter-spacing: 0;
+}
+@media (max-width: 440px) {
+  .brand-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px 8px; }
+  .brand { grid-column: 1 / 3; grid-row: 1; }
+  #btn-theme { grid-column: 3; grid-row: 1; }
+  #btn-save { grid-column: 1; grid-row: 2; }
+  #btn-load { grid-column: 2 / 4; grid-row: 2; }
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; padding: 0 16px; border-radius: 999px;
+  font-weight: 600; font-size: 15px;
+  background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow);
+  transition: transform .15s var(--ease), background-color .2s;
+  position: relative;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-ghost { background: transparent; box-shadow: none; }
+.btn-danger { background: var(--danger-soft); color: var(--danger); box-shadow: none; }
+.btn-block { width: 100%; }
+.btn svg { width: 18px; height: 18px; }
+.btn.has-dot::after {
+  content: ''; position: absolute; top: 6px; right: 6px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--n-kcal); border: 2px solid var(--accent);
+}
+.icon-btn {
+  width: 44px; height: 44px; flex: none; border-radius: 50%;
+  display: inline-grid; place-items: center;
+  color: var(--ink);
+  transition: background-color .2s, transform .15s var(--ease);
+}
+.icon-btn:hover { background: var(--surface-2); }
+.icon-btn:active { transform: scale(.94); }
+.icon-btn svg { width: 22px; height: 22px; }
+.topbar .icon-btn { background: var(--surface); box-shadow: var(--shadow); }
+
+.status {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  font-size: 13px; color: var(--muted); min-height: 26px;
+}
+.status strong { color: var(--ink); font-weight: 600; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 600;
+}
+.pill-warn { background: var(--warn-soft); color: var(--warn); }
+.pill-ok { background: var(--accent-soft); color: var(--accent); }
+button.pill { min-height: 26px; }
+.notice {
+  background: var(--warn-soft); color: var(--warn);
+  border-radius: var(--radius); padding: 12px 14px; font-size: 14px; font-weight: 500;
+}
+
+/* Date bar */
+.datebar {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface); border-radius: 999px; padding: 4px;
+  box-shadow: var(--shadow);
+}
+.date-center {
+  position: relative; flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 48px; border-radius: 999px; text-align: center;
+}
+.date-center:hover { background: var(--surface-2); }
+.date-title { font-family: var(--font-display); font-weight: 700; font-size: 18px; line-height: 1.15; }
+.date-sub { font-size: 12.5px; color: var(--muted); }
+.date-input {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; border: 0; cursor: pointer; font-size: 16px;
+  -webkit-appearance: none; appearance: none; background: transparent;
+}
+.date-input::-webkit-calendar-picker-indicator {
+  position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer;
+}
+.today-chip {
+  min-height: 36px; padding: 0 12px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 13px;
+}
+
+/* =========================================================
+   Layout
+   ========================================================= */
+.layout { display: grid; gap: 14px; align-items: start; }
+@media (min-width: 880px) {
+  .layout { grid-template-columns: 370px minmax(0, 1fr); gap: 18px; }
+  .rings-card { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+}
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+/* =========================================================
+   Rings
+   ========================================================= */
+.rings-card { padding: 16px 18px 18px; display: grid; gap: 16px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-head h2 { font-size: 17px; font-weight: 700; }
+.link-btn {
+  min-height: 36px; padding: 0 12px; border-radius: 999px;
+  color: var(--accent); font-weight: 600; font-size: 14px;
+}
+.link-btn:hover { background: var(--accent-soft); }
+
+.ring-main { display: flex; align-items: center; gap: 18px; }
+.ring { position: relative; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--track); }
+.ring-bar {
+  fill: none; stroke-linecap: round;
+  transition: stroke-dashoffset .9s var(--ease), stroke .3s;
+}
+.ring-lg { width: 148px; height: 148px; }
+.ring-lg .ring-track, .ring-lg .ring-bar { stroke-width: 13; }
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; line-height: 1.1;
+}
+.ring-val { font-family: var(--font-display); font-weight: 700; font-size: 30px; font-variant-numeric: tabular-nums; }
+.ring-of { font-size: 12px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.ring-side { display: grid; gap: 10px; min-width: 0; flex: 1; }
+.left-big { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.left-big small { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--muted); }
+.left-big.is-over { color: var(--warn); }
+.meal-split { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.meal-split li { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
+.meal-split b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.ring-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.mini { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-width: 0; }
+.ring-sm { width: 62px; height: 62px; }
+.ring-sm .ring-track, .ring-sm .ring-bar { stroke-width: 7; }
+.ring-sm .ring-val { font-size: 15px; }
+.mini-label { font-size: 12.5px; font-weight: 600; }
+.mini-of { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mini-of.is-over { color: var(--warn); font-weight: 600; }
+.mini-of.is-met { color: var(--accent); font-weight: 600; }
+
+/* =========================================================
+   Meals
+   ========================================================= */
+.meals { display: grid; gap: 12px; }
+.meal { padding: 14px 12px 10px 16px; display: grid; gap: 6px; }
+.meal-head { display: flex; align-items: center; gap: 10px; }
+.meal-head > div { flex: 1; min-width: 0; }
+.meal-title { font-size: 19px; font-weight: 700; }
+.meal-sub { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.add-btn {
+  width: 44px; height: 44px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent);
+  transition: transform .15s var(--ease), background-color .2s;
+}
+.add-btn:hover { background: var(--accent); color: var(--accent-ink); }
+.add-btn:active { transform: scale(.92); }
+.add-btn svg { width: 22px; height: 22px; }
+.entries { list-style: none; margin: 0 0 0 -8px; padding: 0; display: grid; }
+.entry {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 9px 8px; border-radius: var(--radius-sm); text-align: left;
+  transition: background-color .2s;
+}
+.entry:hover { background: var(--surface-2); }
+.entry-main { display: grid; min-width: 0; flex: 1; }
+.entry-name { font-weight: 500; overflow-wrap: anywhere; }
+.entry-portion { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.entry-kcal { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.entry-kcal small { font-weight: 400; color: var(--muted); font-size: 12px; }
+.entry.flash { animation: flash 1.4s var(--ease); }
+@keyframes flash { 0% { background: var(--accent-soft); } 100% { background: transparent; } }
+.meal-macros {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  border-top: 1px solid var(--line); padding: 8px 4px 2px 0;
+  font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.meal-macros span { display: inline-flex; align-items: center; gap: 5px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.meal-empty {
+  text-align: left; padding: 6px 0 6px; color: var(--muted); font-size: 14px;
+  min-height: 36px; border-radius: 8px;
+}
+.meal-empty:hover { color: var(--accent); }
+
+.foot { font-size: 12.5px; color: var(--muted); max-width: 62ch; }
+
+/* =========================================================
+   Bottom sheet / dialog
+   ========================================================= */
+.backdrop {
+  position: fixed; inset: 0; z-index: 40;
+  background: var(--backdrop); opacity: 0;
+  transition: opacity .28s var(--ease);
+}
+.backdrop.is-open { opacity: 1; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  background: var(--surface); color: var(--ink);
+  border-radius: 24px 24px 0 0;
+  max-height: 88vh; max-height: 88dvh;
+  display: flex; flex-direction: column;
+  box-shadow: var(--shadow-sheet);
+  transform: translateY(100%);
+  transition: transform .34s var(--ease);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.sheet.is-open { transform: translateY(0); }
+@media (min-width: 640px) {
+  .sheet {
+    left: 50%; right: auto; bottom: auto; top: 50%;
+    width: min(500px, calc(100vw - 32px));
+    max-height: 84vh; max-height: 84dvh;
+    border-radius: 24px;
+    transform: translate(-50%, -46%) scale(.98); opacity: 0;
+    transition: transform .3s var(--ease), opacity .24s var(--ease);
+  }
+  .sheet.is-open { transform: translate(-50%, -50%); opacity: 1; }
+}
+.sheet-grip { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 8px auto 0; flex: none; }
+@media (min-width: 640px) { .sheet-grip { display: none; } }
+.sheet-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px 6px 18px; flex: none; }
+.sheet-head h2 { font-size: 19px; font-weight: 700; flex: 1; min-width: 0; }
+.sheet-body {
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 4px 18px 18px; flex: 1; min-height: 0;
+}
+
+.search {
+  width: 100%; min-height: 48px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--surface-2);
+  padding: 0 14px; font-size: 16px; outline: none;
+  -webkit-appearance: none; appearance: none;
+}
+.search:focus { border-color: var(--accent); background: var(--surface); }
+.search-wrap { position: sticky; top: 0; background: var(--surface); padding-bottom: 8px; z-index: 1; }
+.results { display: grid; }
+.group-label {
+  font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); padding: 14px 10px 6px;
+}
+.result {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 10px; border-radius: var(--radius-sm); text-align: left;
+}
+.result:hover, .result:focus-visible { background: var(--surface-2); }
+.r-main { display: grid; min-width: 0; }
+.r-name { font-weight: 500; }
+.r-meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.r-kcal { font-weight: 600; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.r-kcal small { font-weight: 400; color: var(--muted); }
+.empty-msg { padding: 18px 10px; color: var(--muted); font-size: 14px; }
+
+.detail { display: grid; gap: 18px; }
+.back-btn {
+  justify-self: start; display: inline-flex; align-items: center; gap: 4px;
+  min-height: 36px; padding: 0 10px 0 4px; border-radius: 999px;
+  color: var(--accent); font-weight: 600; font-size: 14px;
+}
+.back-btn svg { width: 18px; height: 18px; }
+.detail-name { font-size: 22px; font-weight: 700; }
+.detail-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.field { display: grid; gap: 8px; }
+.field-label { font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.stepper { display: flex; align-items: center; gap: 10px; }
+.step-btn {
+  width: 48px; height: 48px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background: var(--surface-2); color: var(--ink);
+  transition: transform .12s var(--ease);
+}
+.step-btn:active { transform: scale(.92); }
+.step-btn svg { width: 20px; height: 20px; }
+.qty-input {
+  width: 100px; min-height: 48px; text-align: center;
+  border-radius: 14px; border: 1px solid var(--line); background: var(--surface);
+  font-family: var(--font-display); font-weight: 700; font-size: 22px;
+  font-variant-numeric: tabular-nums; outline: none;
+}
+.qty-input:focus { border-color: var(--accent); }
+.qty-input[aria-invalid="true"] { border-color: var(--danger); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 42px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+  font-weight: 500; font-size: 15px;
+  transition: background-color .18s, color .18s, border-color .18s;
+}
+.chip:hover { border-color: var(--accent); }
+.chip-g { color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip[aria-checked="true"] .chip-g { color: inherit; opacity: .8; }
+
+.preview {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px;
+  background: var(--surface-2); border-radius: var(--radius); padding: 12px 8px;
+}
+.pv { display: grid; justify-items: center; gap: 2px; text-align: center; min-width: 0; }
+.pv b { font-family: var(--font-display); font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pv span { font-size: 11.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.preview-note { font-size: 13px; color: var(--muted); margin-top: -10px; font-variant-numeric: tabular-nums; }
+.field-error { font-size: 13px; color: var(--danger); }
+
+.sheet-actions {
+  position: sticky; bottom: -18px; margin: 0 -18px -18px; padding: 12px 18px 18px;
+  background: var(--surface); display: flex; gap: 10px;
+  border-top: 1px solid var(--line);
+}
+.sheet-actions .btn-primary { flex: 1; }
+
+.goal-row {
+  display: grid; grid-template-columns: 1fr 120px 36px; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--line);
+}
+.goal-row label { font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
+.goal-input {
+  min-height: 44px; width: 100%; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface-2); padding: 0 12px; font-size: 16px; text-align: right;
+  font-variant-numeric: tabular-nums; outline: none;
+}
+.goal-input:focus { border-color: var(--accent); background: var(--surface); }
+.goal-unit { color: var(--muted); font-size: 13px; }
+.sheet-text { color: var(--muted); font-size: 14px; }
+.json-box {
+  width: 100%; min-height: 160px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface-2); padding: 10px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical;
+}
+
+/* Toast */
+.toast {
+  position: fixed; left: 50%; z-index: 60;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 16px); opacity: 0;
+  width: max-content; max-width: calc(100vw - 32px);
+  display: flex; align-items: center; gap: 12px;
+  background: var(--toast-bg); color: var(--toast-ink);
+  border-radius: 14px; padding: 12px 16px; font-size: 14px; font-weight: 500;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+  transition: transform .28s var(--ease), opacity .2s;
+  pointer-events: none;
+}
+.toast.is-on { transform: translate(-50%, 0); opacity: 1; }
+.toast-btn { pointer-events: auto; color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; min-height: 32px; padding: 0 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+</style>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand-row">
+      <h1 class="brand"><span class="brand-en">Lechem <span>Mifkad</span></span><span class="brand-he" lang="he" dir="rtl">לֶחֶם מִפְקָד</span></h1>
+      <button class="btn btn-primary" id="btn-save" data-action="save" title="Save all data as a JSON file">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Save
+      </button>
+      <button class="btn" id="btn-load" data-action="load" title="Load a saved file and merge it">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/></svg>Load
+      </button>
+      <button class="icon-btn" id="btn-theme" data-action="theme" aria-label="Theme"></button>
+    </div>
+    <div class="status" id="save-status" role="status" aria-live="polite"></div>
+  </header>
+
+  <div class="notice" id="storage-notice" hidden>
+    This browser isn't keeping your data (private browsing or blocked storage). Tap Save before you close the page, or today's entries will be lost.
+  </div>
+
+  <nav class="datebar" aria-label="Choose day">
+    <button class="icon-btn" data-action="prev-day" aria-label="Previous day">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+    </button>
+    <div class="date-center">
+      <span class="date-title" id="date-title">Today</span>
+      <span class="date-sub" id="date-sub"></span>
+      <input type="date" class="date-input" id="date-input" aria-label="Pick a date">
+    </div>
+    <button class="today-chip" id="today-chip" data-action="today" hidden>Today</button>
+    <button class="icon-btn" data-action="next-day" aria-label="Next day">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+    </button>
+  </nav>
+
+  <main class="layout">
+    <section class="card rings-card" aria-labelledby="totals-h">
+      <div class="card-head">
+        <h2 id="totals-h">Daily totals</h2>
+        <button class="link-btn" data-action="goals">Edit goals</button>
+      </div>
+      <div class="ring-main" id="ring-main"></div>
+      <div class="ring-grid" id="ring-grid"></div>
+    </section>
+    <section class="meals" id="meals" aria-label="Meals"></section>
+  </main>
+
+  <p class="foot">Nutrition values are approximate averages for home-style cooking, per 100 g; oil and ghee vary a lot. Your data stays in this browser and in the files you save. Nothing is sent to a server.</p>
+</div>
+
+<div class="backdrop" id="backdrop" data-action="close-sheet" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+  <div class="sheet-grip" aria-hidden="true"></div>
+  <div class="sheet-head">
+    <h2 id="sheet-title"></h2>
+    <button class="icon-btn" data-action="close-sheet" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="sheet-body" id="sheet-body"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<input type="file" id="file-input" accept=".json,application/json" hidden>
+
+<!--
+  SEED FOODS
+  Edit or extend this list freely. Each food:
+    id          unique, never change it once used (diary entries point to it)
+    name        display name
+    aliases     other names the search should match
+    category    dal | rice | bread | sabzi | paneer | south | snack | dairy | drink | fruit | egg | sweet
+    per100g     kcal, protein, carbs, fat, fibre per 100 g (or 100 ml for liquids)
+    units       grams per portion unit for THIS food (katori, roti, piece, tbsp, cup, g)
+    defaultUnit the unit picked first when adding
+    liquid      optional; true shows ml instead of g
+-->
+<script type="application/json" id="seed-foods">
+[
+  {"id":"toor-dal","name":"Toor dal (tadka)","aliases":["arhar dal","tuvar dal","dal tadka","yellow dal"],"category":"dal","per100g":{"kcal":116,"protein":6.8,"carbs":16.5,"fat":2.6,"fibre":2.9},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"moong-dal","name":"Moong dal (yellow)","aliases":["mung dal","dhuli moong","moong ki dal"],"category":"dal","per100g":{"kcal":105,"protein":7,"carbs":15,"fat":2,"fibre":2.5},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"masoor-dal","name":"Masoor dal","aliases":["red lentils","lal dal"],"category":"dal","per100g":{"kcal":110,"protein":7.5,"carbs":15.5,"fat":2.2,"fibre":3},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"chana-dal","name":"Chana dal","aliases":["bengal gram dal"],"category":"dal","per100g":{"kcal":130,"protein":7.5,"carbs":18,"fat":3.2,"fibre":4.5},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"dal-palak","name":"Dal palak","aliases":["spinach dal","palak dal"],"category":"dal","per100g":{"kcal":100,"protein":6,"carbs":12,"fat":3,"fibre":3.5},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"dal-makhani","name":"Dal makhani","aliases":["maa ki dal","kaali dal","black urad dal"],"category":"dal","per100g":{"kcal":165,"protein":6,"carbs":15,"fat":9,"fibre":4},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"rajma","name":"Rajma","aliases":["rajma masala","kidney beans curry"],"category":"dal","per100g":{"kcal":125,"protein":6,"carbs":16,"fat":4,"fibre":5},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"chole","name":"Chole","aliases":["chana masala","chhole","chickpea curry","pindi chana"],"category":"dal","per100g":{"kcal":150,"protein":6.5,"carbs":19,"fat":5.5,"fibre":5.5},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"kala-chana","name":"Kala chana curry","aliases":["black chickpeas","kale chane"],"category":"dal","per100g":{"kcal":140,"protein":7,"carbs":18,"fat":4.5,"fibre":6},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"sambar","name":"Sambar","aliases":["sambhar","sambaar"],"category":"dal","per100g":{"kcal":70,"protein":3,"carbs":9.5,"fat":2.2,"fibre":2.2},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"rasam","name":"Rasam","aliases":["saaru","chaaru"],"category":"dal","per100g":{"kcal":35,"protein":1.2,"carbs":5,"fat":1.2,"fibre":0.8},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","liquid":true,"source":"seed"},
+  {"id":"kadhi","name":"Kadhi","aliases":["kadi","punjabi kadhi","gujarati kadhi"],"category":"dal","per100g":{"kcal":75,"protein":3,"carbs":6,"fat":4.3,"fibre":0.5},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"steamed-rice","name":"Steamed rice (white)","aliases":["chawal","plain rice","bhaat","white rice"],"category":"rice","per100g":{"kcal":130,"protein":2.7,"carbs":28.2,"fat":0.3,"fibre":0.4},"units":{"katori":130,"cup":180,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"brown-rice","name":"Brown rice","aliases":["red rice"],"category":"rice","per100g":{"kcal":112,"protein":2.6,"carbs":23.5,"fat":0.9,"fibre":1.8},"units":{"katori":130,"cup":180,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"jeera-rice","name":"Jeera rice","aliases":["cumin rice"],"category":"rice","per100g":{"kcal":160,"protein":3,"carbs":28,"fat":4,"fibre":0.6},"units":{"katori":130,"cup":180,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"veg-pulao","name":"Veg pulao","aliases":["pulav","vegetable pulao"],"category":"rice","per100g":{"kcal":150,"protein":3.2,"carbs":25,"fat":4.3,"fibre":1.5},"units":{"katori":130,"cup":180,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"veg-biryani","name":"Veg biryani","aliases":["vegetable biryani"],"category":"rice","per100g":{"kcal":165,"protein":3.5,"carbs":26,"fat":5.5,"fibre":1.8},"units":{"katori":130,"cup":180,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"chicken-biryani","name":"Chicken biryani","aliases":["biryani","murgh biryani"],"category":"rice","per100g":{"kcal":185,"protein":9,"carbs":22,"fat":6.8,"fibre":1},"units":{"katori":150,"cup":180,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"curd-rice","name":"Curd rice","aliases":["thayir sadam","dahi chawal","mosaranna"],"category":"rice","per100g":{"kcal":115,"protein":3.2,"carbs":18,"fat":3.3,"fibre":0.4},"units":{"katori":130,"cup":180,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"lemon-rice","name":"Lemon rice","aliases":["chitranna","nimbu chawal"],"category":"rice","per100g":{"kcal":165,"protein":3,"carbs":27,"fat":5.2,"fibre":1},"units":{"katori":130,"cup":180,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"khichdi","name":"Moong dal khichdi","aliases":["khichdi","khichri","khichadi"],"category":"rice","per100g":{"kcal":120,"protein":4.5,"carbs":20,"fat":2.5,"fibre":1.8},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"bisi-bele-bath","name":"Bisi bele bath","aliases":["bisibelebath","sambar rice"],"category":"rice","per100g":{"kcal":140,"protein":4,"carbs":22,"fat":4,"fibre":2},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"roti","name":"Roti / phulka","aliases":["chapati","chapathi","phulka","fulka"],"category":"bread","per100g":{"kcal":264,"protein":8.5,"carbs":48,"fat":3.5,"fibre":7.5},"units":{"roti":40,"g":1},"defaultUnit":"roti","source":"seed"},
+  {"id":"roti-ghee","name":"Roti with ghee","aliases":["chapati with ghee","ghee roti","tawa roti"],"category":"bread","per100g":{"kcal":300,"protein":8.2,"carbs":46,"fat":8.5,"fibre":7},"units":{"roti":45,"g":1},"defaultUnit":"roti","source":"seed"},
+  {"id":"paratha","name":"Plain paratha","aliases":["parantha","lachha paratha","parotta"],"category":"bread","per100g":{"kcal":326,"protein":7.5,"carbs":45,"fat":13,"fibre":6},"units":{"piece":80,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"aloo-paratha","name":"Aloo paratha","aliases":["potato paratha"],"category":"bread","per100g":{"kcal":260,"protein":6,"carbs":36,"fat":10,"fibre":4},"units":{"piece":120,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"paneer-paratha","name":"Paneer paratha","aliases":[],"category":"bread","per100g":{"kcal":285,"protein":10,"carbs":32,"fat":13,"fibre":4},"units":{"piece":120,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"methi-thepla","name":"Methi thepla","aliases":["thepla"],"category":"bread","per100g":{"kcal":300,"protein":8,"carbs":40,"fat":12,"fibre":6},"units":{"piece":45,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"puri","name":"Puri","aliases":["poori"],"category":"bread","per100g":{"kcal":350,"protein":7,"carbs":42,"fat":17,"fibre":4},"units":{"piece":25,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"naan","name":"Naan","aliases":["tandoori naan"],"category":"bread","per100g":{"kcal":300,"protein":9,"carbs":50,"fat":7,"fibre":2},"units":{"piece":90,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"butter-naan","name":"Butter naan","aliases":[],"category":"bread","per100g":{"kcal":330,"protein":9,"carbs":50,"fat":11,"fibre":2},"units":{"piece":95,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"jowar-roti","name":"Jowar roti","aliases":["jowar bhakri","jolada rotti","jonna rotte"],"category":"bread","per100g":{"kcal":255,"protein":7.5,"carbs":50,"fat":2.5,"fibre":6},"units":{"roti":60,"g":1},"defaultUnit":"roti","source":"seed"},
+  {"id":"bajra-roti","name":"Bajra roti","aliases":["bajra bhakri","sajje rotti","bajre ki roti"],"category":"bread","per100g":{"kcal":280,"protein":8,"carbs":52,"fat":4.5,"fibre":7},"units":{"roti":60,"g":1},"defaultUnit":"roti","source":"seed"},
+  {"id":"makki-roti","name":"Makki roti","aliases":["makki di roti","makai roti","corn roti"],"category":"bread","per100g":{"kcal":290,"protein":6,"carbs":50,"fat":7,"fibre":6.5},"units":{"roti":70,"g":1},"defaultUnit":"roti","source":"seed"},
+  {"id":"aloo-sabzi","name":"Aloo sabzi (dry)","aliases":["potato sabzi","aloo bhaji","batata bhaji","aloo fry"],"category":"sabzi","per100g":{"kcal":125,"protein":2,"carbs":16,"fat":6,"fibre":2},"units":{"katori":110,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"aloo-gobi","name":"Aloo gobi","aliases":["gobi aloo","cauliflower potato"],"category":"sabzi","per100g":{"kcal":110,"protein":2.6,"carbs":11,"fat":6.2,"fibre":3},"units":{"katori":120,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"bhindi","name":"Bhindi fry","aliases":["okra","bhindi masala","bhendi","lady finger"],"category":"sabzi","per100g":{"kcal":115,"protein":2.3,"carbs":9,"fat":8,"fibre":3.5},"units":{"katori":100,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"baingan-bharta","name":"Baingan bharta","aliases":["baingan","brinjal","vangi","eggplant"],"category":"sabzi","per100g":{"kcal":105,"protein":2,"carbs":9,"fat":7,"fibre":3.5},"units":{"katori":130,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"mix-veg","name":"Mixed veg curry","aliases":["mix veg","mixed vegetables","sabzi"],"category":"sabzi","per100g":{"kcal":100,"protein":2.5,"carbs":10,"fat":5.5,"fibre":3},"units":{"katori":130,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"cabbage-sabzi","name":"Cabbage sabzi","aliases":["patta gobi","cabbage poriyal","band gobhi"],"category":"sabzi","per100g":{"kcal":80,"protein":1.8,"carbs":7,"fat":5,"fibre":2.5},"units":{"katori":110,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"lauki","name":"Lauki sabzi","aliases":["bottle gourd","doodhi","ghiya","sorakaya"],"category":"sabzi","per100g":{"kcal":60,"protein":1.2,"carbs":5,"fat":4,"fibre":1.5},"units":{"katori":140,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"beans-poriyal","name":"Beans poriyal","aliases":["french beans sabzi","beans thoran"],"category":"sabzi","per100g":{"kcal":90,"protein":2.5,"carbs":8,"fat":5.5,"fibre":3.5},"units":{"katori":100,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"palak-sabzi","name":"Palak sabzi","aliases":["spinach sabzi","saag","sarson ka saag"],"category":"sabzi","per100g":{"kcal":85,"protein":3,"carbs":5,"fat":6,"fibre":2.5},"units":{"katori":120,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"aloo-matar","name":"Aloo matar","aliases":["matar aloo","potato peas curry"],"category":"sabzi","per100g":{"kcal":105,"protein":3,"carbs":13,"fat":5,"fibre":3},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"karela","name":"Karela fry","aliases":["bitter gourd","kakarakaya"],"category":"sabzi","per100g":{"kcal":95,"protein":2,"carbs":8,"fat":6.5,"fibre":3},"units":{"katori":100,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"avial","name":"Avial","aliases":["aviyal"],"category":"sabzi","per100g":{"kcal":110,"protein":2.5,"carbs":8,"fat":7.5,"fibre":3},"units":{"katori":130,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"pav-bhaji","name":"Pav bhaji (bhaji only)","aliases":["bhaji"],"category":"sabzi","per100g":{"kcal":140,"protein":3,"carbs":14,"fat":8,"fibre":3.5},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"palak-paneer","name":"Palak paneer","aliases":["saag paneer"],"category":"paneer","per100g":{"kcal":150,"protein":7.5,"carbs":6,"fat":11,"fibre":2.2},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"paneer-butter-masala","name":"Paneer butter masala","aliases":["paneer makhani","shahi paneer"],"category":"paneer","per100g":{"kcal":220,"protein":8,"carbs":8,"fat":17.5,"fibre":1.5},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"matar-paneer","name":"Matar paneer","aliases":["mutter paneer"],"category":"paneer","per100g":{"kcal":165,"protein":7.5,"carbs":9,"fat":11,"fibre":2.8},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"kadai-paneer","name":"Kadai paneer","aliases":["karahi paneer"],"category":"paneer","per100g":{"kcal":190,"protein":9,"carbs":7,"fat":14.5,"fibre":2},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"paneer-bhurji","name":"Paneer bhurji","aliases":["scrambled paneer"],"category":"paneer","per100g":{"kcal":230,"protein":13,"carbs":5,"fat":18,"fibre":1},"units":{"katori":120,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"paneer","name":"Paneer (plain)","aliases":["cottage cheese","chhena"],"category":"paneer","per100g":{"kcal":265,"protein":18.3,"carbs":1.2,"fat":20.8,"fibre":0},"units":{"piece":25,"katori":100,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"paneer-tikka","name":"Paneer tikka","aliases":[],"category":"paneer","per100g":{"kcal":220,"protein":15,"carbs":5,"fat":15.5,"fibre":1},"units":{"piece":30,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"idli","name":"Idli","aliases":["idly","rava idli"],"category":"south","per100g":{"kcal":130,"protein":4.2,"carbs":27,"fat":0.5,"fibre":1.2},"units":{"piece":40,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"plain-dosa","name":"Plain dosa","aliases":["dosai","sada dosa","dosa"],"category":"south","per100g":{"kcal":170,"protein":4,"carbs":28,"fat":4.5,"fibre":1.2},"units":{"piece":80,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"masala-dosa","name":"Masala dosa","aliases":["dosa with potato"],"category":"south","per100g":{"kcal":180,"protein":4,"carbs":27,"fat":6.5,"fibre":2},"units":{"piece":180,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"uttapam","name":"Uttapam","aliases":["uthappam","onion uttapam"],"category":"south","per100g":{"kcal":165,"protein":4.5,"carbs":26,"fat":4.8,"fibre":1.8},"units":{"piece":120,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"medu-vada","name":"Medu vada","aliases":["vada","uzhunnu vada","garelu"],"category":"south","per100g":{"kcal":290,"protein":10,"carbs":28,"fat":15.5,"fibre":4},"units":{"piece":45,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"pesarattu","name":"Pesarattu","aliases":["moong dosa","green gram dosa"],"category":"south","per100g":{"kcal":160,"protein":7.5,"carbs":22,"fat":4.5,"fibre":3},"units":{"piece":90,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"appam","name":"Appam","aliases":["palappam"],"category":"south","per100g":{"kcal":150,"protein":2.5,"carbs":30,"fat":2,"fibre":0.8},"units":{"piece":60,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"pongal","name":"Pongal","aliases":["ven pongal","khara pongal"],"category":"south","per100g":{"kcal":150,"protein":4.2,"carbs":20,"fat":5.8,"fibre":1.2},"units":{"katori":150,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"upma","name":"Upma","aliases":["uppittu","rava upma","uppuma"],"category":"south","per100g":{"kcal":150,"protein":3.5,"carbs":22,"fat":5.5,"fibre":1.5},"units":{"katori":150,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"coconut-chutney","name":"Coconut chutney","aliases":["nariyal chutney","chutney"],"category":"south","per100g":{"kcal":225,"protein":2.8,"carbs":8,"fat":20.5,"fibre":5},"units":{"tbsp":15,"katori":60,"g":1},"defaultUnit":"tbsp","source":"seed"},
+  {"id":"poha","name":"Poha","aliases":["pohe","aval","kanda poha","avalakki"],"category":"snack","per100g":{"kcal":180,"protein":3.5,"carbs":31.5,"fat":4,"fibre":1},"units":{"katori":150,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"besan-chilla","name":"Besan chilla","aliases":["cheela","pudla","besan puda"],"category":"snack","per100g":{"kcal":190,"protein":9,"carbs":21,"fat":7.5,"fibre":4},"units":{"piece":70,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"dhokla","name":"Dhokla","aliases":["khaman","khaman dhokla"],"category":"snack","per100g":{"kcal":160,"protein":6.5,"carbs":24,"fat":4.5,"fibre":2},"units":{"piece":30,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"samosa","name":"Samosa","aliases":["aloo samosa"],"category":"snack","per100g":{"kcal":308,"protein":5,"carbs":32,"fat":17.5,"fibre":3},"units":{"piece":70,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"pakora","name":"Pakora","aliases":["pakoda","bhajiya","onion bhaji","bhaji"],"category":"snack","per100g":{"kcal":315,"protein":7,"carbs":30,"fat":18.5,"fibre":4},"units":{"piece":20,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"aloo-tikki","name":"Aloo tikki","aliases":["potato patty","tikki"],"category":"snack","per100g":{"kcal":190,"protein":3,"carbs":24,"fat":9,"fibre":2.5},"units":{"piece":60,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"pav","name":"Pav","aliases":["ladi pav","bread roll","bun"],"category":"snack","per100g":{"kcal":280,"protein":8.5,"carbs":50,"fat":4.5,"fibre":2},"units":{"piece":40,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"vada-pav","name":"Vada pav","aliases":["wada pav"],"category":"snack","per100g":{"kcal":290,"protein":6,"carbs":38,"fat":12.5,"fibre":3},"units":{"piece":130,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"bhel-puri","name":"Bhel puri","aliases":["bhel","jhal muri"],"category":"snack","per100g":{"kcal":190,"protein":4.5,"carbs":30,"fat":6,"fibre":3},"units":{"katori":100,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"sprouts-chaat","name":"Sprouts chaat","aliases":["moong sprouts","sprouts salad","ankurit moong"],"category":"snack","per100g":{"kcal":95,"protein":6,"carbs":14,"fat":1.8,"fibre":4},"units":{"katori":100,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"roasted-chana","name":"Roasted chana","aliases":["bhuna chana","phutana","chickpeas roasted"],"category":"snack","per100g":{"kcal":370,"protein":22,"carbs":58,"fat":5,"fibre":17},"units":{"tbsp":10,"katori":40,"g":1},"defaultUnit":"tbsp","source":"seed"},
+  {"id":"peanuts","name":"Peanuts (roasted)","aliases":["moongphali","groundnuts","singdana","shengdana"],"category":"snack","per100g":{"kcal":585,"protein":24,"carbs":21,"fat":49,"fibre":8},"units":{"tbsp":9,"katori":40,"g":1},"defaultUnit":"tbsp","source":"seed"},
+  {"id":"makhana","name":"Makhana (roasted)","aliases":["fox nuts","lotus seeds","phool makhana"],"category":"snack","per100g":{"kcal":370,"protein":9.5,"carbs":74,"fat":2.5,"fibre":7.5},"units":{"cup":14,"katori":12,"g":1},"defaultUnit":"cup","source":"seed"},
+  {"id":"marie-biscuit","name":"Marie biscuit","aliases":["biscuit","tea biscuit"],"category":"snack","per100g":{"kcal":440,"protein":7,"carbs":76,"fat":12,"fibre":2},"units":{"piece":7,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"curd","name":"Curd (dahi)","aliases":["dahi","yogurt","yoghurt","thayir","mosaru"],"category":"dairy","per100g":{"kcal":60,"protein":3.1,"carbs":3,"fat":4,"fibre":0},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"raita","name":"Raita","aliases":["boondi raita","cucumber raita","kheera raita"],"category":"dairy","per100g":{"kcal":70,"protein":3,"carbs":5,"fat":4,"fibre":0.5},"units":{"katori":120,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"chaas","name":"Chaas","aliases":["buttermilk","majjige","mattha","mor"],"category":"dairy","per100g":{"kcal":20,"protein":1,"carbs":2.2,"fat":0.8,"fibre":0},"units":{"cup":240,"g":1},"defaultUnit":"cup","liquid":true,"source":"seed"},
+  {"id":"milk-toned","name":"Milk (toned)","aliases":["doodh","milk"],"category":"dairy","per100g":{"kcal":58,"protein":3.1,"carbs":4.7,"fat":3,"fibre":0},"units":{"cup":240,"tbsp":15,"g":1},"defaultUnit":"cup","liquid":true,"source":"seed"},
+  {"id":"milk-full","name":"Milk (full cream)","aliases":["whole milk","full fat milk"],"category":"dairy","per100g":{"kcal":88,"protein":3.2,"carbs":4.8,"fat":6,"fibre":0},"units":{"cup":240,"tbsp":15,"g":1},"defaultUnit":"cup","liquid":true,"source":"seed"},
+  {"id":"sweet-lassi","name":"Sweet lassi","aliases":["lassi"],"category":"dairy","per100g":{"kcal":100,"protein":3,"carbs":15,"fat":3,"fibre":0},"units":{"cup":240,"g":1},"defaultUnit":"cup","liquid":true,"source":"seed"},
+  {"id":"ghee","name":"Ghee","aliases":["clarified butter","desi ghee"],"category":"dairy","per100g":{"kcal":900,"protein":0,"carbs":0,"fat":100,"fibre":0},"units":{"tbsp":13,"g":1},"defaultUnit":"tbsp","source":"seed"},
+  {"id":"butter","name":"Butter","aliases":["makkhan","white butter"],"category":"dairy","per100g":{"kcal":717,"protein":0.9,"carbs":0.1,"fat":81,"fibre":0},"units":{"tbsp":14,"g":1},"defaultUnit":"tbsp","source":"seed"},
+  {"id":"chai","name":"Chai (milk and sugar)","aliases":["masala chai","tea","cutting chai","adrak chai"],"category":"drink","per100g":{"kcal":52,"protein":1.6,"carbs":7.5,"fat":1.7,"fibre":0},"units":{"cup":150,"g":1},"defaultUnit":"cup","liquid":true,"source":"seed"},
+  {"id":"filter-coffee","name":"Filter coffee","aliases":["coffee","kaapi","milk coffee"],"category":"drink","per100g":{"kcal":60,"protein":1.8,"carbs":8,"fat":2.2,"fibre":0},"units":{"cup":150,"g":1},"defaultUnit":"cup","liquid":true,"source":"seed"},
+  {"id":"nimbu-pani","name":"Nimbu pani","aliases":["lemonade","shikanji","lemon water"],"category":"drink","per100g":{"kcal":30,"protein":0,"carbs":7.5,"fat":0,"fibre":0},"units":{"cup":240,"g":1},"defaultUnit":"cup","liquid":true,"source":"seed"},
+  {"id":"coconut-water","name":"Coconut water","aliases":["nariyal pani","tender coconut","elaneer"],"category":"drink","per100g":{"kcal":19,"protein":0.7,"carbs":3.7,"fat":0.2,"fibre":1.1},"units":{"cup":240,"g":1},"defaultUnit":"cup","liquid":true,"source":"seed"},
+  {"id":"banana","name":"Banana","aliases":["kela","kele"],"category":"fruit","per100g":{"kcal":89,"protein":1.1,"carbs":22.8,"fat":0.3,"fibre":2.6},"units":{"piece":100,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"apple","name":"Apple","aliases":["seb","sev"],"category":"fruit","per100g":{"kcal":52,"protein":0.3,"carbs":13.8,"fat":0.2,"fibre":2.4},"units":{"piece":150,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"papaya","name":"Papaya","aliases":["papita"],"category":"fruit","per100g":{"kcal":43,"protein":0.5,"carbs":10.8,"fat":0.3,"fibre":1.7},"units":{"katori":140,"cup":145,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"boiled-egg","name":"Boiled egg","aliases":["egg","anda","ubla anda"],"category":"egg","per100g":{"kcal":155,"protein":12.6,"carbs":1.1,"fat":10.6,"fibre":0},"units":{"piece":50,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"omelette","name":"Masala omelette (2 eggs)","aliases":["omelet","anda omelette"],"category":"egg","per100g":{"kcal":170,"protein":11,"carbs":3,"fat":13,"fibre":0.5},"units":{"piece":120,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"chicken-curry","name":"Chicken curry","aliases":["murgh curry","chicken masala"],"category":"egg","per100g":{"kcal":160,"protein":14,"carbs":4,"fat":10,"fibre":1},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"fish-curry","name":"Fish curry","aliases":["meen curry","machher jhol","macchi"],"category":"egg","per100g":{"kcal":130,"protein":13,"carbs":4,"fat":7,"fibre":0.8},"units":{"katori":150,"cup":240,"tbsp":15,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"gulab-jamun","name":"Gulab jamun","aliases":["jamun"],"category":"sweet","per100g":{"kcal":300,"protein":5,"carbs":45,"fat":12,"fibre":0.5},"units":{"piece":40,"g":1},"defaultUnit":"piece","source":"seed"},
+  {"id":"kheer","name":"Kheer","aliases":["payasam","rice kheer","payesh"],"category":"sweet","per100g":{"kcal":140,"protein":4,"carbs":20,"fat":5,"fibre":0.3},"units":{"katori":120,"g":1},"defaultUnit":"katori","source":"seed"},
+  {"id":"sugar","name":"Sugar","aliases":["chini","cheeni","shakkar"],"category":"sweet","per100g":{"kcal":400,"protein":0,"carbs":100,"fat":0,"fibre":0},"units":{"tbsp":12,"g":1},"defaultUnit":"tbsp","source":"seed"}
+]
+</script>
+
+<script>
+(() => {
+'use strict';
+
+/* =========================================================
+   Config: meals, nutrients, units, defaults.
+   Add a section (e.g. supplements) or a nutrient here, not in the UI code.
+   ========================================================= */
+const Config = {
+  appId: 'lechem-mifkad',
+  legacyAppIds: ['food-tracker'], // backups saved before the rename still load
+  schemaVersion: 1,
+  storageKey: 'lechem-mifkad:v1',
+  legacyStorageKeys: ['thali-diary:v1'], // moved to storageKey on first load, then removed
+  meals: [
+    { id: 'breakfast', label: 'Breakfast' },
+    { id: 'lunch', label: 'Lunch' },
+    { id: 'snacks', label: 'Snacks' },
+    { id: 'dinner', label: 'Dinner' },
+  ],
+  // limit: true means the goal is a ceiling (warn when over); false means a target to reach.
+  nutrients: [
+    { key: 'kcal', label: 'Calories', unit: 'kcal', dp: 0, limit: true },
+    { key: 'protein', label: 'Protein', unit: 'g', dp: 1, limit: false },
+    { key: 'carbs', label: 'Carbs', unit: 'g', dp: 1, limit: true },
+    { key: 'fat', label: 'Fat', unit: 'g', dp: 1, limit: true },
+    { key: 'fibre', label: 'Fibre', unit: 'g', dp: 1, limit: false },
+  ],
+  units: {
+    katori: { one: 'katori', many: 'katori' },
+    roti: { one: 'roti', many: 'roti' },
+    piece: { one: 'piece', many: 'pieces' },
+    tbsp: { one: 'tbsp', many: 'tbsp' },
+    cup: { one: 'cup', many: 'cups' },
+    g: { one: 'g', many: 'g' },
+  },
+  unitOrder: ['katori', 'roti', 'piece', 'tbsp', 'cup', 'g'],
+  categories: {
+    dal: 'Dals & curries', rice: 'Rice', bread: 'Rotis & breads', sabzi: 'Sabzis',
+    paneer: 'Paneer', south: 'South Indian', snack: 'Breakfast & snacks', dairy: 'Dairy',
+    drink: 'Drinks', fruit: 'Fruit', egg: 'Eggs, chicken & fish', sweet: 'Sweets & sugar',
+    custom: 'My foods',
+  },
+  defaultGoals: { kcal: 2000, protein: 60, carbs: 250, fat: 65, fibre: 30 },
+};
+const NUTRIENT_KEYS = Config.nutrients.map(n => n.key);
+const MEAL_IDS = new Set(Config.meals.map(m => m.id));
+
+/* =========================================================
+   Utilities
+   ========================================================= */
+const $ = (sel, root = document) => root.querySelector(sel);
+const U = {
+  uid(prefix = 'e') {
+    try { if (crypto && crypto.randomUUID) return prefix + '_' + crypto.randomUUID(); } catch (e) { /* fall through */ }
+    return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+  },
+  now: () => new Date().toISOString(),
+  ymd(d = new Date()) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  },
+  fromYmd(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12); },
+  addDays(s, n) { const d = U.fromYmd(s); d.setDate(d.getDate() + n); return U.ymd(d); },
+  isYmd: s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(U.fromYmd(s)),
+  ts(s) { const t = Date.parse(s); return isFinite(t) ? t : 0; },
+  isoOr(s, fallback) { return U.ts(s) ? new Date(U.ts(s)).toISOString() : fallback; },
+  esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  },
+  r1: n => Math.round(n * 10) / 10,
+  num(n, dp = 1) {
+    if (!isFinite(n)) n = 0;
+    const v = dp === 0 ? Math.round(n) : (Math.abs(n) >= 100 ? Math.round(n) : U.r1(n));
+    return v.toLocaleString('en-IN', { maximumFractionDigits: dp });
+  },
+  qty: n => String(Math.round(n * 100) / 100),
+  fmtDateTime(iso) {
+    return new Date(iso).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  },
+};
+
+const Bus = {
+  handlers: {},
+  on(ev, fn) { (this.handlers[ev] = this.handlers[ev] || []).push(fn); },
+  emit(ev, data) { (this.handlers[ev] || []).forEach(fn => fn(data)); },
+};
+
+/* =========================================================
+   Store: the one place that touches browser storage.
+   State shape (also the basis of the export file):
+     entries:     { [id]: DiaryEntry }  (deleted entries stay, flagged, so merges respect deletions)
+     goals:       { kcal, protein, carbs, fat, fibre, updatedAt }
+     customFoods: { [id]: FoodItem & { updatedAt } }  (reserved for a later phase)
+     settings:    { theme, features: { ai: false } }
+     meta:        { lastExportedAt, dirty }
+   ========================================================= */
+const Store = {
+  available: true,
+  state: null,
+  blank() {
+    return {
+      schemaVersion: Config.schemaVersion,
+      entries: {},
+      goals: { ...Config.defaultGoals, updatedAt: null },
+      customFoods: {},
+      settings: { theme: 'system', features: { ai: false } },
+      meta: { lastExportedAt: null, dirty: false },
+    };
+  },
+  load() {
+    let raw = null, legacyKey = null;
+    try {
+      raw = localStorage.getItem(Config.storageKey);
+      if (!raw) {
+        legacyKey = Config.legacyStorageKeys.find(k => localStorage.getItem(k));
+        if (legacyKey) raw = localStorage.getItem(legacyKey);
+      }
+    } catch (e) { this.available = false; }
+    let data = null;
+    if (raw) { try { data = JSON.parse(raw); } catch (e) { data = null; } }
+    this.state = this.migrate(data);
+    // Data found under an old key: copy it to the current key, and only then remove the old one.
+    if (legacyKey && data && this.persist()) {
+      try { localStorage.removeItem(legacyKey); } catch (e) { /* keep the old copy */ }
+    }
+    try {
+      localStorage.setItem(Config.storageKey + ':probe', '1');
+      localStorage.removeItem(Config.storageKey + ':probe');
+    } catch (e) { this.available = false; }
+  },
+  // Future schema changes: add `if (data.schemaVersion < N) { ...transform... }` steps here.
+  migrate(data) {
+    const base = this.blank();
+    if (!data || typeof data !== 'object') return base;
+    const settings = data.settings || {};
+    return {
+      schemaVersion: Config.schemaVersion,
+      entries: data.entries && typeof data.entries === 'object' ? data.entries : {},
+      goals: { ...base.goals, ...(data.goals || {}) },
+      customFoods: data.customFoods && typeof data.customFoods === 'object' ? data.customFoods : {},
+      settings: { ...base.settings, ...settings, features: { ...base.settings.features, ...(settings.features || {}) } },
+      meta: { ...base.meta, ...(data.meta || {}) },
+    };
+  },
+  persist() {
+    try {
+      localStorage.setItem(Config.storageKey, JSON.stringify(this.state));
+      this.available = true;
+      return true;
+    } catch (e) {
+      this.available = false;
+      return false;
+    }
+  },
+  // Every data change goes through commit: mark unsaved, write to storage, redraw.
+  commit({ dirty = true } = {}) {
+    if (dirty) this.state.meta.dirty = true;
+    this.persist();
+    Bus.emit('change');
+  },
+};
+
+/* =========================================================
+   Foods: catalogue, search, portion maths.
+   ========================================================= */
+const Foods = {
+  list: [],
+  byId: new Map(),
+  keys: new Map(),
+  norm: s => String(s).toLowerCase().normalize('NFKD').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(),
+  valid(f) {
+    return f && typeof f.id === 'string' && typeof f.name === 'string' && f.per100g && f.units &&
+      NUTRIENT_KEYS.every(k => typeof f.per100g[k] === 'number');
+  },
+  init(seed, custom = []) {
+    this.list = [...seed, ...custom].filter(f => this.valid(f)).map(f => ({ ...f, units: { ...f.units, g: 1 } }));
+    this.byId = new Map(this.list.map(f => [f.id, f]));
+    this.keys = new Map(this.list.map(f => [f.id, [this.norm(f.name), ...(f.aliases || []).map(this.norm)]]));
+  },
+  get(id) { return id ? this.byId.get(id) || null : null; },
+  unitsOf(food) { return Config.unitOrder.filter(u => food.units[u]); },
+  gramsFor(food, qty, unit) { return qty * (food.units[unit] || 0); },
+  nutrientsFor(food, grams) {
+    const out = {};
+    for (const k of NUTRIENT_KEYS) out[k] = U.r1(food.per100g[k] * grams / 100);
+    return out;
+  },
+  measure(food) { return food && food.liquid ? 'ml' : 'g'; },
+  // The one place portion labels are built: "katori (150 g)", "cup (150 ml)", "grams".
+  unitLabel(food, unit) {
+    const m = this.measure(food);
+    if (unit === 'g') return m === 'ml' ? 'ml' : 'grams';
+    return `${Config.units[unit].one} (${U.num(food.units[unit], 0)} ${m})`;
+  },
+  unitLabelHtml(food, unit) {
+    const m = this.measure(food);
+    if (unit === 'g') return m === 'ml' ? 'ml' : 'grams';
+    return `${U.esc(Config.units[unit].one)} <span class="chip-g">(${U.num(food.units[unit], 0)} ${m})</span>`;
+  },
+  search(query) {
+    const q = this.norm(query);
+    if (!q) return [];
+    const words = q.split(' ');
+    const scored = [];
+    for (const f of this.list) {
+      let best = 0;
+      this.keys.get(f.id).forEach((key, i) => {
+        let s = 0;
+        if (key === q) s = 100;
+        else if (key.startsWith(q)) s = 80;
+        else if (key.split(' ').some(w => w.startsWith(q))) s = 60;
+        else if (key.includes(q)) s = 40;
+        else if (words.every(w => key.includes(w))) s = 30;
+        if (s && i > 0) s -= 5; // name matches rank above alias matches
+        if (s > best) best = s;
+      });
+      if (best) scored.push([best, f]);
+    }
+    return scored.sort((a, b) => b[0] - a[0] || a[1].name.localeCompare(b[1].name)).map(x => x[1]);
+  },
+};
+
+/* =========================================================
+   Diary: every way of logging food ends in Diary.add().
+   DiaryEntry:
+     { id, date:'YYYY-MM-DD', meal, foodId, foodName, qty, unit, grams,
+       nutrients:{kcal,protein,carbs,fat,fibre}, source:'manual'|'ai'|...,
+       createdAt, updatedAt, deleted }
+   ========================================================= */
+const Diary = {
+  add({ date, meal, foodId = null, qty, unit, source = 'manual', foodName, grams, nutrients }) {
+    const food = Foods.get(foodId);
+    if (food) {
+      grams = Foods.gramsFor(food, qty, unit);
+      nutrients = Foods.nutrientsFor(food, grams);
+      foodName = food.name;
+    }
+    if (!foodName || !nutrients || !(qty > 0) || !MEAL_IDS.has(meal) || !U.isYmd(date)) {
+      throw new Error('Diary.add needs a date, meal, quantity and either a known food or explicit nutrients.');
+    }
+    const t = U.now();
+    const entry = {
+      id: U.uid('e'), date, meal,
+      foodId: food ? food.id : foodId, foodName,
+      qty, unit, grams: U.r1(grams || 0), nutrients,
+      source, createdAt: t, updatedAt: t, deleted: false,
+    };
+    Store.state.entries[entry.id] = entry;
+    Store.commit();
+    return entry;
+  },
+  update(id, { qty, unit, meal } = {}) {
+    const cur = Store.state.entries[id];
+    if (!cur) return null;
+    const next = { ...cur };
+    if (meal && MEAL_IDS.has(meal)) next.meal = meal;
+    if (qty != null || unit != null) {
+      const nq = qty ?? cur.qty;
+      const nu = unit ?? cur.unit;
+      const food = Foods.get(cur.foodId);
+      if (food && food.units[nu]) {
+        next.qty = nq; next.unit = nu;
+        next.grams = U.r1(Foods.gramsFor(food, nq, nu));
+        next.nutrients = Foods.nutrientsFor(food, next.grams);
+      } else {
+        // Food not in the catalogue (e.g. logged by AI): scale what was stored.
+        const k = cur.qty > 0 ? nq / cur.qty : 1;
+        next.qty = nq;
+        next.grams = U.r1(cur.grams * k);
+        next.nutrients = Object.fromEntries(NUTRIENT_KEYS.map(n => [n, U.r1((cur.nutrients[n] || 0) * k)]));
+      }
+    }
+    next.updatedAt = U.now();
+    Store.state.entries[id] = next;
+    Store.commit();
+    return next;
+  },
+  remove(id) { this.setDeleted(id, true); },
+  restore(id) { this.setDeleted(id, false); },
+  setDeleted(id, deleted) {
+    const cur = Store.state.entries[id];
+    if (!cur) return;
+    Store.state.entries[id] = { ...cur, deleted, updatedAt: U.now() };
+    Store.commit();
+  },
+  day(date) {
+    return Object.values(Store.state.entries)
+      .filter(e => !e.deleted && e.date === date)
+      .sort((a, b) => U.ts(a.createdAt) - U.ts(b.createdAt));
+  },
+  byMeal(date) {
+    const out = Object.fromEntries(Config.meals.map(m => [m.id, []]));
+    for (const e of this.day(date)) (out[e.meal] || (out[e.meal] = [])).push(e);
+    return out;
+  },
+  recentFoodIds(limit = 8) {
+    const seen = new Set();
+    const out = [];
+    Object.values(Store.state.entries)
+      .filter(e => !e.deleted && e.foodId && Foods.get(e.foodId))
+      .sort((a, b) => U.ts(b.createdAt) - U.ts(a.createdAt))
+      .some(e => {
+        if (!seen.has(e.foodId)) { seen.add(e.foodId); out.push(e.foodId); }
+        return out.length >= limit;
+      });
+    return out;
+  },
+  portionText(e) {
+    const m = Foods.measure(Foods.get(e.foodId));
+    if (e.unit === 'g') return `${U.qty(e.qty)} ${m}`;
+    const u = Config.units[e.unit] || { one: e.unit, many: e.unit };
+    return `${U.qty(e.qty)} ${e.qty <= 1 ? u.one : u.many} (${U.num(e.grams, 0)} ${m})`;
+  },
+};
+
+const Totals = {
+  of(entries) {
+    const t = Object.fromEntries(NUTRIENT_KEYS.map(k => [k, 0]));
+    for (const e of entries) for (const k of NUTRIENT_KEYS) t[k] += Number(e.nutrients && e.nutrients[k]) || 0;
+    return t;
+  },
+};
+
+/* =========================================================
+   Features: optional add-ons, off by default.
+   A future AI logger registers a log source here, for example:
+     Features.register({ id: 'ai', flag: 'ai', label: 'Describe a meal',
+       open(ctx) { ...turn text into items...; Diary.add({ ...ctx, foodId or foodName+grams+nutrients, qty, unit, source: 'ai' }); } });
+   Its button appears in the add panel only when settings.features.ai is true.
+   ========================================================= */
+const Features = {
+  sources: [],
+  isOn(flag) { return !!(Store.state.settings.features || {})[flag]; },
+  register(source) { this.sources.push(source); },
+  activeSources() { return this.sources.filter(s => !s.flag || this.isOn(s.flag)); },
+};
+
+/* =========================================================
+   Host: optional claude.ai artifact features (file saving).
+   ========================================================= */
+const Host = {
+  framed: !!(window.claude && typeof window.claude.use === 'function'),
+  ready: null,
+  init() {
+    this.ready = this.framed
+      ? window.claude.use('downloads').catch(() => null)
+      : Promise.resolve(null);
+  },
+};
+
+/* =========================================================
+   Sync: export to one JSON file and merge-import.
+   Merge rules: match entries by id; add missing ones; when both exist the newer
+   updatedAt wins (a tie keeps this device's copy). Deletions travel as entries
+   with deleted:true, so they win over older copies too. Goals: newer wins.
+   ========================================================= */
+const Sync = {
+  filename() { return `lechem-mifkad-${U.ymd()}.json`; },
+  buildExport() {
+    const s = Store.state;
+    return {
+      app: Config.appId,
+      schemaVersion: Config.schemaVersion,
+      exportedAt: U.now(),
+      entries: Object.values(s.entries).sort((a, b) => a.date.localeCompare(b.date) || U.ts(a.createdAt) - U.ts(b.createdAt)),
+      goals: s.goals,
+      customFoods: Object.values(s.customFoods),
+      settings: { features: s.settings.features },
+    };
+  },
+  cleanEntry(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (typeof raw.id !== 'string' || !raw.id || raw.id.length > 100) return null;
+    if (!U.isYmd(raw.date) || !MEAL_IDS.has(raw.meal)) return null;
+    const qty = Number(raw.qty);
+    if (!(qty > 0)) return null;
+    const nutrients = {};
+    for (const k of NUTRIENT_KEYS) {
+      const v = Number(raw.nutrients && raw.nutrients[k]);
+      nutrients[k] = isFinite(v) && v >= 0 ? v : 0;
+    }
+    const epoch = new Date(0).toISOString();
+    const createdAt = U.isoOr(raw.createdAt, epoch);
+    return {
+      id: raw.id, date: raw.date, meal: raw.meal,
+      foodId: typeof raw.foodId === 'string' ? raw.foodId : null,
+      foodName: String(raw.foodName || 'Food').slice(0, 120),
+      qty, unit: Config.units[raw.unit] ? raw.unit : 'g',
+      grams: Math.max(0, Number(raw.grams) || 0),
+      nutrients,
+      source: typeof raw.source === 'string' ? raw.source.slice(0, 24) : 'manual',
+      createdAt, updatedAt: U.isoOr(raw.updatedAt, createdAt),
+      deleted: !!raw.deleted,
+    };
+  },
+  cleanGoals(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const g = {};
+    for (const k of NUTRIENT_KEYS) {
+      const v = Number(raw[k]);
+      if (!(v > 0)) return null;
+      g[k] = v;
+    }
+    g.updatedAt = U.ts(raw.updatedAt) ? raw.updatedAt : null;
+    return g;
+  },
+  // Pure: returns the merged data and counts without touching the Store.
+  merge(local, incoming) {
+    const stats = { added: 0, updated: 0, removed: 0, unchanged: 0, localNewer: 0, localOnly: 0, skipped: 0, goalsUpdated: false, localAhead: 0 };
+    const entries = { ...local.entries };
+    const seen = new Set();
+    for (const raw of Array.isArray(incoming.entries) ? incoming.entries : []) {
+      const e = this.cleanEntry(raw);
+      if (!e) { stats.skipped++; continue; }
+      seen.add(e.id);
+      const cur = entries[e.id];
+      if (!cur) {
+        entries[e.id] = e;
+        if (!e.deleted) stats.added++;
+        continue;
+      }
+      const a = U.ts(e.updatedAt), b = U.ts(cur.updatedAt);
+      if (a > b) {
+        entries[e.id] = e;
+        if (e.deleted && !cur.deleted) stats.removed++;
+        else if (!e.deleted && cur.deleted) stats.added++;
+        else stats.updated++;
+      } else if (a < b) stats.localNewer++;
+      else stats.unchanged++;
+    }
+    for (const id in local.entries) if (!seen.has(id)) stats.localOnly++;
+
+    let goals = local.goals;
+    const g = this.cleanGoals(incoming.goals);
+    const lg = U.ts(local.goals.updatedAt), ig = g ? U.ts(g.updatedAt) : 0;
+    if (g && ig > lg) { goals = g; stats.goalsUpdated = true; }
+    const goalsAhead = lg > ig ? 1 : 0;
+
+    const customFoods = { ...local.customFoods };
+    let foodsAhead = 0;
+    const inFoods = new Set();
+    for (const f of Array.isArray(incoming.customFoods) ? incoming.customFoods : []) {
+      if (!Foods.valid(f)) continue;
+      inFoods.add(f.id);
+      const cur = customFoods[f.id];
+      if (!cur || U.ts(f.updatedAt) > U.ts(cur.updatedAt)) customFoods[f.id] = { ...f, source: 'custom' };
+      else if (U.ts(cur.updatedAt) > U.ts(f.updatedAt)) foodsAhead++;
+    }
+    for (const id in local.customFoods) if (!inFoods.has(id)) foodsAhead++;
+
+    stats.localAhead = stats.localNewer + stats.localOnly + goalsAhead + foodsAhead;
+    return { entries, goals, customFoods, stats };
+  },
+  markSaved(at) {
+    Store.state.meta.lastExportedAt = at;
+    Store.state.meta.dirty = false;
+    Store.commit({ dirty: false });
+  },
+  async save() {
+    const payload = this.buildExport();
+    const text = JSON.stringify(payload, null, 2);
+    const filename = this.filename();
+    if (Host.framed) {
+      UI.setSaving(true);
+      const downloads = await Host.ready;
+      UI.setSaving(false);
+      if (!downloads) { UI.openCopySheet(text, payload.exportedAt); return; }
+      try {
+        await downloads.save({ filename, data: text });
+        this.markSaved(payload.exportedAt);
+        UI.toast(`Saved ${filename}`);
+      } catch (err) {
+        const code = err && err.code;
+        if (code === 'declined') UI.toast('Save cancelled. Nothing was saved.');
+        else if (code === 'rate_limited') UI.toast('A save prompt is already open.');
+        else UI.openCopySheet(text, payload.exportedAt);
+      }
+      return;
+    }
+    // Opened as a plain file outside claude.ai: a normal browser download works.
+    try {
+      const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      this.markSaved(payload.exportedAt);
+      UI.toast(`Downloaded ${filename}`);
+    } catch (e) {
+      UI.openCopySheet(text, payload.exportedAt);
+    }
+  },
+  async load(file) {
+    if (!file) return;
+    if (file.size > 25 * 1024 * 1024) { UI.toast('That file is too large to be a Lechem Mifkad backup.'); return; }
+    let data;
+    try { data = JSON.parse(await file.text()); } catch (e) { UI.toast('Couldn\'t read that file. Pick the .json file you saved from here.'); return; }
+    if (!data || typeof data !== 'object' || !Array.isArray(data.entries) || (data.app && data.app !== Config.appId && !Config.legacyAppIds.includes(data.app))) {
+      UI.toast('That file isn\'t a Lechem Mifkad backup.');
+      return;
+    }
+    const s = Store.state;
+    const { entries, goals, customFoods, stats } = this.merge(s, data);
+    s.entries = entries; s.goals = goals; s.customFoods = customFoods;
+    if (stats.localAhead === 0) {
+      // This device now matches the file exactly, so nothing is unsaved.
+      s.meta.dirty = false;
+      if (U.ts(data.exportedAt) > U.ts(s.meta.lastExportedAt)) s.meta.lastExportedAt = new Date(U.ts(data.exportedAt)).toISOString();
+    } else {
+      s.meta.dirty = true;
+    }
+    Foods.init(SEED, Object.values(customFoods));
+    Store.commit({ dirty: false });
+    const parts = [`${stats.added} added`, `${stats.updated} updated`];
+    if (stats.removed) parts.push(`${stats.removed} removed`);
+    parts.push(`${stats.unchanged} unchanged`);
+    let msg = `Merged: ${parts.join(', ')}.`;
+    if (stats.goalsUpdated) msg += ' Goals updated.';
+    if (stats.skipped) msg += ` ${stats.skipped} unreadable skipped.`;
+    if (stats.localAhead) msg += ' This device has newer changes, so tap Save to update your master copy.';
+    UI.toast(msg, { ms: 7000 });
+  },
+};
+
+/* =========================================================
+   Theme
+   ========================================================= */
+const Theme = {
+  modes: ['system', 'light', 'dark'],
+  hostAttr: null,
+  overriding: false,
+  apply(mode) {
+    const root = document.documentElement;
+    if (mode === 'light' || mode === 'dark') {
+      if (!this.overriding) { this.hostAttr = root.getAttribute('data-theme'); this.overriding = true; }
+      root.setAttribute('data-theme', mode);
+    } else if (this.overriding) {
+      if (this.hostAttr) root.setAttribute('data-theme', this.hostAttr); else root.removeAttribute('data-theme');
+      this.overriding = false;
+    }
+  },
+  next() {
+    const s = Store.state.settings;
+    s.theme = this.modes[(this.modes.indexOf(s.theme) + 1) % this.modes.length];
+    this.apply(s.theme);
+    Store.persist();
+    UI.renderThemeButton();
+    UI.toast(`Theme: ${s.theme === 'system' ? 'matches your device' : s.theme}`);
+  },
+};
+
+/* =========================================================
+   UI
+   ========================================================= */
+const ICON = {
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>',
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>',
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+  auto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline"><path d="m5 12 5 5 9-10"/></svg>',
+};
+const nutrientColor = key => `var(--n-${key})`;
+const View = { date: U.ymd() };
+
+const UI = {
+  init() {
+    this.buildRings();
+    document.addEventListener('click', e => this.onClick(e));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') Sheet.close(); });
+    $('#sheet-body').addEventListener('input', e => this.onSheetInput(e));
+    $('#sheet-body').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.id === 'food-search') {
+        const first = $('#results .result');
+        if (first) first.click();
+      }
+    });
+    const dateInput = $('#date-input');
+    dateInput.addEventListener('change', () => { if (U.isYmd(dateInput.value)) this.goTo(dateInput.value); });
+    $('#file-input').addEventListener('change', async e => {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      await Sync.load(file);
+    });
+    Bus.on('change', () => this.render());
+  },
+  onClick(e) {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const a = el.dataset.action;
+    const actions = {
+      'save': () => Sync.save(),
+      'load': () => $('#file-input').click(),
+      'theme': () => Theme.next(),
+      'prev-day': () => this.goTo(U.addDays(View.date, -1)),
+      'next-day': () => this.goTo(U.addDays(View.date, 1)),
+      'today': () => this.goTo(U.ymd()),
+      'goals': () => GoalsForm.open(),
+      'add': () => AddFlow.openAdd(el.dataset.meal),
+      'edit': () => AddFlow.openEdit(el.dataset.id),
+      'close-sheet': () => Sheet.close(),
+    };
+    if (actions[a]) { actions[a](); return; }
+    AddFlow.onAction(a, el);
+    GoalsForm.onAction(a, el);
+    CopySheet.onAction(a, el);
+  },
+  onSheetInput(e) {
+    if (e.target.id === 'food-search') AddFlow.onSearch(e.target.value);
+    if (e.target.id === 'qty-input') AddFlow.onQtyInput(e.target.value);
+  },
+  goTo(date) {
+    View.date = date;
+    this.render();
+  },
+  render() {
+    this.renderStatus();
+    this.renderDate();
+    this.renderRings();
+    this.renderMeals();
+  },
+  renderThemeButton() {
+    const mode = Store.state.settings.theme;
+    const btn = $('#btn-theme');
+    btn.innerHTML = mode === 'light' ? ICON.sun : mode === 'dark' ? ICON.moon : ICON.auto;
+    const label = mode === 'system' ? 'Theme: matches device. Switch to light' : mode === 'light' ? 'Theme: light. Switch to dark' : 'Theme: dark. Switch to match device';
+    btn.setAttribute('aria-label', label);
+    btn.title = label;
+  },
+  setSaving(on) {
+    const b = $('#btn-save');
+    b.disabled = on;
+    b.lastChild.nodeValue = on ? 'Saving…' : 'Save';
+  },
+  renderStatus() {
+    const m = Store.state.meta;
+    const hasData = Object.keys(Store.state.entries).length > 0;
+    let html = `<span>Last saved: <strong>${m.lastExportedAt ? U.esc(U.fmtDateTime(m.lastExportedAt)) : 'not yet'}</strong></span>`;
+    if (m.dirty && hasData) {
+      html += `<button class="pill pill-warn" data-action="save">Unsaved changes · Save a copy</button>`;
+    } else if (m.lastExportedAt) {
+      html += `<span class="pill pill-ok">${ICON.check} Backed up</span>`;
+    }
+    $('#save-status').innerHTML = html;
+    $('#btn-save').classList.toggle('has-dot', !!(m.dirty && hasData));
+    $('#storage-notice').hidden = Store.available;
+  },
+  renderDate() {
+    const today = U.ymd();
+    const d = U.fromYmd(View.date);
+    const diff = Math.round((d - U.fromYmd(today)) / 86400000);
+    const title = diff === 0 ? 'Today' : diff === -1 ? 'Yesterday' : diff === 1 ? 'Tomorrow' : d.toLocaleDateString('en-IN', { weekday: 'long' });
+    $('#date-title').textContent = title;
+    $('#date-sub').textContent = d.toLocaleDateString('en-IN', { weekday: diff >= -1 && diff <= 1 ? 'short' : undefined, day: 'numeric', month: 'long', year: 'numeric' });
+    $('#date-input').value = View.date;
+    $('#today-chip').hidden = diff === 0;
+  },
+  ringSvg(r, box) {
+    const c = box / 2;
+    return `<svg viewBox="0 0 ${box} ${box}" aria-hidden="true"><circle class="ring-track" cx="${c}" cy="${c}" r="${r}"/><circle class="ring-bar" cx="${c}" cy="${c}" r="${r}"/></svg>`;
+  },
+  buildRings() {
+    $('#ring-main').innerHTML = `
+      <div class="ring ring-lg" data-ring="kcal">${this.ringSvg(52, 120)}
+        <div class="ring-center"><span class="ring-val" data-val>0</span><span class="ring-of" data-of></span></div>
+      </div>
+      <div class="ring-side">
+        <div class="left-big" id="kcal-left"></div>
+        <ul class="meal-split" id="meal-split"></ul>
+      </div>`;
+    $('#ring-grid').innerHTML = Config.nutrients.filter(n => n.key !== 'kcal').map(n => `
+      <div class="mini">
+        <div class="ring ring-sm" data-ring="${n.key}">${this.ringSvg(26, 64)}
+          <div class="ring-center"><span class="ring-val" data-val>0</span></div>
+        </div>
+        <span class="mini-label">${U.esc(n.label)}</span>
+        <span class="mini-of" data-of></span>
+      </div>`).join('');
+    document.querySelectorAll('[data-ring]').forEach(el => {
+      const bar = el.querySelector('.ring-bar');
+      const len = 2 * Math.PI * Number(bar.getAttribute('r'));
+      bar.style.stroke = nutrientColor(el.dataset.ring);
+      bar.style.strokeDasharray = `${len}`;
+      bar.style.strokeDashoffset = `${len}`;
+      bar.dataset.len = len;
+    });
+  },
+  renderRings() {
+    const goals = Store.state.goals;
+    const byMeal = Diary.byMeal(View.date);
+    const all = Object.values(byMeal).flat();
+    const t = Totals.of(all);
+    for (const n of Config.nutrients) {
+      const el = document.querySelector(`[data-ring="${n.key}"]`);
+      const goal = goals[n.key] || 1;
+      const p = Math.max(0, Math.min(1, t[n.key] / goal));
+      const bar = el.querySelector('.ring-bar');
+      bar.style.strokeDashoffset = `${Number(bar.dataset.len) * (1 - p)}`;
+      el.querySelector('[data-val]').textContent = U.num(t[n.key], n.key === 'kcal' ? 0 : (t[n.key] >= 10 ? 0 : 1));
+      const over = n.limit && t[n.key] > goal;
+      const met = !n.limit && t[n.key] >= goal;
+      bar.style.stroke = over ? 'var(--warn)' : nutrientColor(n.key);
+      if (n.key === 'kcal') {
+        el.querySelector('[data-of]').textContent = `of ${U.num(goal, 0)} kcal`;
+      } else {
+        const of = el.parentElement.querySelector('[data-of]');
+        of.innerHTML = `${met ? ICON.check + ' ' : ''}${U.num(t[n.key], 0)} / ${U.num(goal, 0)} ${n.unit}`;
+        of.className = 'mini-of' + (over ? ' is-over' : met ? ' is-met' : '');
+        el.setAttribute('aria-label', `${n.label}: ${U.num(t[n.key], 1)} of ${goal} ${n.unit}`);
+      }
+    }
+    const left = goals.kcal - t.kcal;
+    const leftEl = $('#kcal-left');
+    leftEl.className = 'left-big' + (left < 0 ? ' is-over' : '');
+    leftEl.innerHTML = left >= 0
+      ? `${U.num(left, 0)} <small>kcal left</small>`
+      : `${U.num(-left, 0)} <small>kcal over goal</small>`;
+    $('#meal-split').innerHTML = Config.meals.map(m => {
+      const k = Totals.of(byMeal[m.id] || []).kcal;
+      return `<li><span>${U.esc(m.label)}</span><b>${U.num(k, 0)}</b></li>`;
+    }).join('');
+  },
+  renderMeals() {
+    const byMeal = Diary.byMeal(View.date);
+    $('#meals').innerHTML = Config.meals.map(m => {
+      const list = byMeal[m.id] || [];
+      const t = Totals.of(list);
+      const sub = list.length ? `${U.num(t.kcal, 0)} kcal · ${list.length} item${list.length === 1 ? '' : 's'}` : 'Nothing logged yet';
+      const body = list.length ? `
+        <ul class="entries">${list.map(e => `
+          <li><button class="entry" data-action="edit" data-id="${U.esc(e.id)}" aria-label="Edit ${U.esc(e.foodName)}">
+            <span class="entry-main"><span class="entry-name">${U.esc(e.foodName)}</span><span class="entry-portion">${U.esc(Diary.portionText(e))}</span></span>
+            <span class="entry-kcal">${U.num(e.nutrients.kcal, 0)}<small> kcal</small></span>
+          </button></li>`).join('')}
+        </ul>
+        <div class="meal-macros">${Config.nutrients.filter(n => n.key !== 'kcal').map(n =>
+          `<span><i class="dot" style="background:${nutrientColor(n.key)}"></i>${U.esc(n.label)} ${U.num(t[n.key], 1)} g</span>`).join('')}
+        </div>`
+        : `<button class="meal-empty" data-action="add" data-meal="${m.id}">Tap + to add ${U.esc(m.label.toLowerCase())}</button>`;
+      return `<article class="card meal" data-meal-card="${m.id}">
+        <header class="meal-head">
+          <div><h2 class="meal-title">${U.esc(m.label)}</h2><p class="meal-sub">${sub}</p></div>
+          <button class="add-btn" data-action="add" data-meal="${m.id}" aria-label="Add food to ${U.esc(m.label)}">${ICON.plus}</button>
+        </header>${body}
+      </article>`;
+    }).join('');
+  },
+  flash(id) {
+    const el = document.querySelector(`.entry[data-id="${CSS.escape(id)}"]`);
+    if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+  },
+  toastTimer: 0,
+  toast(msg, { action, onAction, ms } = {}) {
+    const el = $('#toast');
+    clearTimeout(this.toastTimer);
+    el.innerHTML = `<span>${U.esc(msg)}</span>${action ? `<button class="toast-btn" type="button">${U.esc(action)}</button>` : ''}`;
+    if (action) el.querySelector('.toast-btn').addEventListener('click', () => { onAction(); this.hideToast(); });
+    el.hidden = false;
+    void el.offsetWidth;
+    el.classList.add('is-on');
+    this.toastTimer = setTimeout(() => this.hideToast(), ms || (action ? 6000 : 3200));
+  },
+  hideToast() {
+    const el = $('#toast');
+    el.classList.remove('is-on');
+    this.toastTimer = setTimeout(() => { el.hidden = true; }, 300);
+  },
+  openCopySheet(text, exportedAt) { CopySheet.open(text, exportedAt); },
+};
+
+/* Sheet: one bottom sheet (a centred dialog on wide screens) reused by every panel. */
+const Sheet = {
+  timer: 0,
+  lastFocus: null,
+  isOpen: false,
+  open(title, html) {
+    const el = $('#sheet'), bd = $('#backdrop');
+    clearTimeout(this.timer);
+    if ($('#toast').classList.contains('is-on')) UI.hideToast();
+    if (!this.isOpen) this.lastFocus = document.activeElement;
+    this.isOpen = true;
+    $('#sheet-title').textContent = title;
+    $('#sheet-body').innerHTML = html;
+    $('#sheet-body').scrollTop = 0;
+    el.hidden = false; bd.hidden = false;
+    void el.offsetWidth;
+    el.classList.add('is-open'); bd.classList.add('is-open');
+    document.body.classList.add('locked');
+  },
+  close() {
+    if (!this.isOpen) return;
+    this.isOpen = false;
+    const el = $('#sheet'), bd = $('#backdrop');
+    el.classList.remove('is-open'); bd.classList.remove('is-open');
+    document.body.classList.remove('locked');
+    this.timer = setTimeout(() => { el.hidden = true; bd.hidden = true; $('#sheet-body').innerHTML = ''; }, 340);
+    if (this.lastFocus && this.lastFocus.isConnected) this.lastFocus.focus({ preventScroll: true });
+  },
+};
+
+/* Add / edit flow */
+const AddFlow = {
+  s: null,
+  mealLabel: id => (Config.meals.find(m => m.id === id) || {}).label || id,
+  openAdd(meal) {
+    this.s = { mode: 'add', step: 'search', meal: MEAL_IDS.has(meal) ? meal : 'breakfast', query: '' };
+    Sheet.open(`Add to ${this.mealLabel(this.s.meal)}`, this.searchHtml());
+    const input = $('#food-search');
+    if (input) input.focus({ preventScroll: true });
+  },
+  openEdit(id) {
+    const e = Store.state.entries[id];
+    if (!e) return;
+    this.s = { mode: 'edit', step: 'detail', id, meal: e.meal, foodId: e.foodId, qty: e.qty, unit: e.unit };
+    Sheet.open('Edit entry', this.detailHtml());
+  },
+  searchHtml() {
+    const sources = Features.activeSources()
+      .map(src => `<button class="chip" data-action="source" data-source="${U.esc(src.id)}">${U.esc(src.label)}</button>`).join('');
+    return `
+      <div class="search-wrap">
+        <input id="food-search" class="search" type="search" placeholder="Search dal, roti, poha, chai…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search foods" value="${U.esc(this.s.query)}">
+        ${sources ? `<div class="chips" style="margin-top:8px">${sources}</div>` : ''}
+      </div>
+      <div class="results" id="results">${this.resultsHtml()}</div>`;
+  },
+  resultRow(f) {
+    const u = f.defaultUnit;
+    const g = f.units[u];
+    const kcal = f.per100g.kcal * g / 100;
+    return `<button class="result" data-action="pick" data-food="${U.esc(f.id)}">
+      <span class="r-main"><span class="r-name">${U.esc(f.name)}</span><span class="r-meta">1 ${U.esc(Foods.unitLabel(f, u))}</span></span>
+      <span class="r-kcal">${U.num(kcal, 0)} <small>kcal</small></span>
+    </button>`;
+  },
+  resultsHtml() {
+    const q = this.s.query.trim();
+    if (q) {
+      const hits = Foods.search(q).slice(0, 40);
+      if (!hits.length) return `<p class="empty-msg">No food matches “${U.esc(q)}”. Try another spelling or a simpler name, such as “dal” or “roti”.</p>`;
+      return hits.map(f => this.resultRow(f)).join('');
+    }
+    let html = '';
+    const recent = Diary.recentFoodIds(8).map(id => Foods.get(id)).filter(Boolean);
+    if (recent.length) html += `<div class="group-label">Recent</div>` + recent.map(f => this.resultRow(f)).join('');
+    for (const [cat, label] of Object.entries(Config.categories)) {
+      const foods = Foods.list.filter(f => f.category === cat);
+      if (foods.length) html += `<div class="group-label">${U.esc(label)}</div>` + foods.map(f => this.resultRow(f)).join('');
+    }
+    return html;
+  },
+  onSearch(value) {
+    this.s.query = value;
+    $('#results').innerHTML = this.resultsHtml();
+  },
+  pick(foodId) {
+    const f = Foods.get(foodId);
+    if (!f) return;
+    Object.assign(this.s, { step: 'detail', foodId, unit: f.defaultUnit, qty: f.defaultUnit === 'g' ? 100 : 1 });
+    Sheet.open(`Add to ${this.mealLabel(this.s.meal)}`, this.detailHtml());
+  },
+  entry() { return this.s.mode === 'edit' ? Store.state.entries[this.s.id] : null; },
+  compute() {
+    const s = this.s, food = Foods.get(s.foodId), e = this.entry();
+    if (!(s.qty > 0)) return null;
+    if (food && food.units[s.unit]) {
+      const grams = Foods.gramsFor(food, s.qty, s.unit);
+      return { grams, nutrients: Foods.nutrientsFor(food, grams) };
+    }
+    if (e) {
+      const k = s.qty / e.qty;
+      return { grams: e.grams * k, nutrients: Object.fromEntries(NUTRIENT_KEYS.map(n => [n, (e.nutrients[n] || 0) * k])) };
+    }
+    return null;
+  },
+  previewHtml() {
+    const r = this.compute();
+    const food = Foods.get(this.s.foodId);
+    const m = Foods.measure(food);
+    const cells = Config.nutrients.map(n => `
+      <div class="pv"><b>${r ? U.num(r.nutrients[n.key], n.key === 'kcal' ? 0 : 1) : '–'}</b>
+      <span><i class="dot" style="background:${nutrientColor(n.key)}"></i>${n.key === 'kcal' ? 'kcal' : U.esc(n.label)}</span></div>`).join('');
+    return `<div class="preview" id="preview" aria-live="polite">${cells}</div>
+      <p class="preview-note" id="preview-note">${r ? `Total weight: ${U.num(r.grams, 0)} ${m}` : ''}</p>`;
+  },
+  detailHtml() {
+    const s = this.s, food = Foods.get(s.foodId), e = this.entry();
+    const name = food ? food.name : (e ? e.foodName : 'Food');
+    const units = food ? Foods.unitsOf(food) : [s.unit];
+    const chip = u => food ? Foods.unitLabelHtml(food, u) : U.esc(Config.units[u] ? Config.units[u].one : u);
+    const meta = food
+      ? `${U.esc(Config.categories[food.category] || '')} · ${U.num(food.per100g.kcal, 0)} kcal per 100 ${Foods.measure(food)}`
+      : 'Logged item';
+    return `
+      <div class="detail">
+        ${s.mode === 'add' ? `<button class="back-btn" data-action="back">${ICON.left}All foods</button>` : ''}
+        <div><h3 class="detail-name">${U.esc(name)}</h3><p class="detail-meta">${meta}</p></div>
+        <div class="field">
+          <label class="field-label" for="qty-input">Quantity</label>
+          <div class="stepper">
+            <button class="step-btn" type="button" data-action="qty-dec" aria-label="Decrease">${ICON.minus}</button>
+            <input id="qty-input" class="qty-input" type="text" inputmode="decimal" autocomplete="off" value="${U.qty(s.qty)}">
+            <button class="step-btn" type="button" data-action="qty-inc" aria-label="Increase">${ICON.plus}</button>
+          </div>
+          <p class="field-error" id="qty-error" hidden>Enter a quantity above 0.</p>
+        </div>
+        <div class="field">
+          <span class="field-label" id="lbl-unit">Portion</span>
+          <div class="chips" role="radiogroup" aria-labelledby="lbl-unit">
+            ${units.map(u => `<button type="button" class="chip" role="radio" aria-checked="${u === s.unit}" data-action="unit" data-unit="${u}">${chip(u)}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label" id="lbl-meal">Meal</span>
+          <div class="chips" role="radiogroup" aria-labelledby="lbl-meal">
+            ${Config.meals.map(m => `<button type="button" class="chip" role="radio" aria-checked="${m.id === s.meal}" data-action="meal" data-meal="${m.id}">${U.esc(m.label)}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field"><span class="field-label">Nutrition for this portion</span>${this.previewHtml()}</div>
+        <div class="sheet-actions">
+          ${s.mode === 'edit' ? `<button class="btn btn-danger" type="button" data-action="delete">Delete</button>` : ''}
+          <button class="btn btn-primary" type="button" id="submit-btn" data-action="submit">${s.mode === 'edit' ? 'Save changes' : `Add to ${U.esc(this.mealLabel(s.meal))}`}</button>
+        </div>
+      </div>`;
+  },
+  rerenderDetail() {
+    const body = $('#sheet-body');
+    const top = body.scrollTop;
+    body.innerHTML = this.detailHtml();
+    body.scrollTop = top;
+    if (this.s.mode === 'add') $('#sheet-title').textContent = `Add to ${this.mealLabel(this.s.meal)}`;
+  },
+  refreshPreview() {
+    const wrap = $('#preview');
+    if (!wrap) return;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = this.previewHtml();
+    wrap.replaceWith(tmp.children[0]);
+    $('#preview-note').replaceWith(tmp.children[0]);
+    const ok = this.s.qty > 0;
+    $('#submit-btn').disabled = !ok;
+    $('#qty-error').hidden = ok;
+    $('#qty-input').setAttribute('aria-invalid', String(!ok));
+  },
+  onQtyInput(value) {
+    const v = parseFloat(String(value).replace(',', '.'));
+    this.s.qty = isFinite(v) && v > 0 && v <= 10000 ? v : 0;
+    this.refreshPreview();
+  },
+  step(dir) {
+    const s = this.s;
+    const cur = s.qty > 0 ? s.qty : 0;
+    let next;
+    if (s.unit === 'g') next = dir > 0 ? Math.floor(cur / 10) * 10 + 10 : Math.ceil(cur / 10) * 10 - 10;
+    else if (dir > 0) next = cur < 1 ? cur + 0.25 : cur + 0.5;
+    else next = cur <= 1 ? cur - 0.25 : cur - 0.5;
+    const min = s.unit === 'g' ? 5 : 0.25;
+    s.qty = Math.max(min, Math.round(next * 100) / 100);
+    $('#qty-input').value = U.qty(s.qty);
+    this.refreshPreview();
+  },
+  setUnit(unit) {
+    const s = this.s, food = Foods.get(s.foodId);
+    if (!food || unit === s.unit || !food.units[unit]) return;
+    // Keep the weight the same when switching to or from grams.
+    const grams = s.qty > 0 ? s.qty * food.units[s.unit] : 0;
+    if (unit === 'g') s.qty = grams ? Math.round(grams) : 100;
+    else if (s.unit === 'g') s.qty = grams ? Math.max(0.25, Math.round(grams / food.units[unit] * 4) / 4) : 1;
+    s.unit = unit;
+    this.rerenderDetail();
+  },
+  submit() {
+    const s = this.s;
+    if (!(s.qty > 0)) return;
+    if (s.mode === 'edit') {
+      const e = Diary.update(s.id, { qty: s.qty, unit: s.unit, meal: s.meal });
+      Sheet.close();
+      if (e) { UI.flash(e.id); UI.toast(`Updated ${e.foodName}`); }
+      return;
+    }
+    const e = Diary.add({ date: View.date, meal: s.meal, foodId: s.foodId, qty: s.qty, unit: s.unit, source: 'manual' });
+    Sheet.close();
+    UI.flash(e.id);
+    UI.toast(`Added ${e.foodName} to ${this.mealLabel(e.meal)}`);
+  },
+  onAction(a, el) {
+    if (!this.s || !Sheet.isOpen) return;
+    switch (a) {
+      case 'pick': this.pick(el.dataset.food); break;
+      case 'back':
+        this.s.step = 'search';
+        Sheet.open(`Add to ${this.mealLabel(this.s.meal)}`, this.searchHtml());
+        break;
+      case 'qty-inc': this.step(1); break;
+      case 'qty-dec': this.step(-1); break;
+      case 'unit': this.setUnit(el.dataset.unit); break;
+      case 'meal': this.s.meal = el.dataset.meal; this.rerenderDetail(); break;
+      case 'submit': this.submit(); break;
+      case 'delete': {
+        const id = this.s.id, name = (this.entry() || {}).foodName || 'entry';
+        Diary.remove(id);
+        Sheet.close();
+        UI.toast(`Deleted ${name}`, { action: 'Undo', onAction: () => { Diary.restore(id); UI.flash(id); } });
+        break;
+      }
+      case 'source': {
+        const src = Features.activeSources().find(x => x.id === el.dataset.source);
+        if (src && src.open) src.open({ date: View.date, meal: this.s.meal });
+        break;
+      }
+    }
+  },
+};
+
+/* Goals form */
+const GoalsForm = {
+  open() {
+    const g = Store.state.goals;
+    Sheet.open('Daily goals', this.html(g));
+    this.active = true;
+  },
+  html(g) {
+    return `
+      <form id="goals-form" novalidate>
+        ${Config.nutrients.map(n => `
+          <div class="goal-row">
+            <label for="goal-${n.key}"><i class="dot" style="background:${nutrientColor(n.key)}"></i>${U.esc(n.label)}</label>
+            <input class="goal-input" id="goal-${n.key}" name="${n.key}" type="text" inputmode="decimal" autocomplete="off" value="${U.esc(g[n.key])}">
+            <span class="goal-unit">${U.esc(n.unit)}</span>
+          </div>`).join('')}
+        <p class="field-error" id="goals-error" hidden>Each goal needs a number above 0.</p>
+        <p class="sheet-text" style="margin-top:12px">Calories, carbs and fat are treated as limits; protein and fibre as targets to reach.</p>
+        <div class="sheet-actions" style="margin-top:14px">
+          <button class="btn" type="button" data-action="goals-reset">Use defaults</button>
+          <button class="btn btn-primary" type="button" data-action="goals-save">Save goals</button>
+        </div>
+      </form>`;
+  },
+  onAction(a) {
+    if (!this.active || !Sheet.isOpen) return;
+    if (a === 'goals-reset') {
+      for (const n of Config.nutrients) $(`#goal-${n.key}`).value = Config.defaultGoals[n.key];
+    }
+    if (a === 'goals-save') {
+      const next = {};
+      for (const n of Config.nutrients) {
+        const v = parseFloat(String($(`#goal-${n.key}`).value).replace(',', '.'));
+        if (!(v > 0 && v < 100000)) { $('#goals-error').hidden = false; $(`#goal-${n.key}`).focus(); return; }
+        next[n.key] = Math.round(v * 10) / 10;
+      }
+      Store.state.goals = { ...next, updatedAt: U.now() };
+      Store.commit();
+      this.active = false;
+      Sheet.close();
+      UI.toast('Goals saved');
+    }
+  },
+};
+
+/* Shown only if this view can't save files: lets you copy the backup instead. */
+const CopySheet = {
+  text: '', exportedAt: null, active: false,
+  open(text, exportedAt) {
+    this.text = text; this.exportedAt = exportedAt; this.active = true;
+    Sheet.open('Copy your backup', `
+      <div class="detail">
+        <p class="sheet-text">This view can't save files. Copy the backup below and paste it into a new file named <strong>${U.esc(Sync.filename())}</strong> in iCloud Drive (for example with the Files or TextEdit app).</p>
+        <textarea class="json-box" id="json-box" readonly aria-label="Backup data">${U.esc(text)}</textarea>
+        <div class="sheet-actions">
+          <button class="btn" type="button" data-action="mark-saved">I've saved it</button>
+          <button class="btn btn-primary" type="button" data-action="copy-json">Copy backup</button>
+        </div>
+      </div>`);
+  },
+  onAction(a) {
+    if (!this.active || !Sheet.isOpen) return;
+    if (a === 'copy-json') {
+      const box = $('#json-box');
+      const fallback = () => { box.focus(); box.select(); UI.toast('Text selected. Use Copy from the menu.'); };
+      try {
+        navigator.clipboard.writeText(this.text).then(() => UI.toast('Backup copied'), fallback);
+      } catch (e) { fallback(); }
+    }
+    if (a === 'mark-saved') {
+      Sync.markSaved(this.exportedAt);
+      this.active = false;
+      Sheet.close();
+      UI.toast('Marked as saved');
+    }
+  },
+};
+
+/* =========================================================
+   Boot
+   ========================================================= */
+let SEED = [];
+try { SEED = JSON.parse($('#seed-foods').textContent); } catch (e) { SEED = []; }
+if (!Array.isArray(SEED)) SEED = [];
+
+Store.load();
+Foods.init(SEED, Object.values(Store.state.customFoods));
+Theme.apply(Store.state.settings.theme);
+Host.init();
+UI.init();
+UI.renderThemeButton();
+UI.render();
+if (!SEED.length) UI.toast('The food list failed to load. Check the seed-foods block.', { ms: 8000 });
+
+// Other code (later phases, tests) reaches the app through this object.
+window.LechemMifkad = { Config, Store, Foods, Diary, Totals, Sync, Features, UI, View };
+})();
+</script>
