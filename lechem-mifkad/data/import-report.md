@@ -4,12 +4,12 @@ Built 2026-09-26 by `tools/build_foods.py`. Re-running it regenerates this file.
 
 ## Summary
 
-- **1151 foods** in the app: 894 INDB, 257 estimate.
+- **1861 foods** in the app: 127 CoFID, 528 IFCT, 894 INDB, 50 USDA, 262 estimate.
 - INDB rows read: 1014. 120 fried dishes were corrected for frying oil (now labelled *estimate*, original INDB values kept on the food).
 - Phase 1 foods: 64 replaced by INDB matches (old ids redirect), 36 kept as *estimate*.
-- Calorie check (4/4/9 kcal per g protein/carbs/fat, flagged when off by more than 15% and more than 20 kcal): **37 foods flagged**, listed below, values unchanged.
-- `index.html` size: 459 KB (limit 16 MB).
-- Categories: bakery 181, continental 143, chutney 100, snack 98, sweet 83, sabzi 69, drink 55, soup 52, meat 48, dal 42, bread 41, packaged 36, rice 32, indochinese 32, dairy 32, street 26, south 25, egg 21, paneer 18, infant 14, fruit 3.
+- Calorie check (4/4/9 kcal per g protein/carbs/fat, flagged when off by more than 15% and more than 20 kcal): **49 foods flagged**, listed below, values unchanged.
+- `index.html` size: 722 KB (limit 16 MB).
+- Categories: meat 253, bakery 183, veg 162, continental 143, chutney 121, snack 98, sweet 98, fruit 86, drink 72, sabzi 69, dairy 56, spices 54, soup 52, bread 48, dal 42, egg 36, packaged 36, grains 36, rice 32, indochinese 32, pulses 31, nuts 29, street 26, south 25, paneer 18, infant 14, oils 9.
 
 ## INDB file: what it contains
 
@@ -246,9 +246,11 @@ Values are shown as listed; nothing was changed to make them match. They carry a
 |---|---|---:|---:|---:|
 | Almond soup (Badam ka soup) (BFP087) | INDB | 79 | 179 | -100 |
 | Bengal 5 Spice Blend (Panch Phoran) (OSR082) | INDB | 290 | 353 | -63 |
+| Black beans (canned, branded) (B507) | USDA | 55 | 86 | -31 |
 | Brown sauce (ASC078) | INDB | 109 | 282 | -174 |
 | Cheese soup (BFP075) | INDB | 41 | 211 | -170 |
 | Chicken consomme (Clear chicken soup) (ASC081) | INDB | 48 | 159 | -111 |
+| Chicken leg, skinless, raw (N001) | IFCT | 384 | 191 | +193 |
 | Chicken manchurian (OSR065) | INDB | 142 | 170 | -28 |
 | Chicken pulao (BFP142) | INDB | 108 | 146 | -38 |
 | Chicken sweet corn soup (ASC087) | INDB | 28 | 178 | -150 |
@@ -257,6 +259,7 @@ Values are shown as listed; nothing was changed to make them match. They carry a
 | Cold summer garden soup (ASC095) | INDB | 49 | 172 | -123 |
 | Consomme au julienne (BFP066) | INDB | 28 | 152 | -124 |
 | Consomme au vermicelli (BFP067) | INDB | 30 | 183 | -153 |
+| Crab (kekda) (Q001) | IFCT | 82 | 53 | +29 |
 | Cream of broccoli soup (BFP080) | INDB | 56 | 165 | -109 |
 | Cream of carrot soup (BFP079) | INDB | 60 | 168 | -108 |
 | Cream of green peas soup (ASC083) | INDB | 128 | 189 | -61 |
@@ -264,23 +267,32 @@ Values are shown as listed; nothing was changed to make them match. They carry a
 | Cream of mushroom soup (ASC086) | INDB | 117 | 181 | -64 |
 | Cream of potato soup (BFP082) | INDB | 60 | 165 | -105 |
 | Cream of spinach soup (ASC084) | INDB | 101 | 154 | -53 |
+| Cream of tartar (U505) | CoFID | 239 | 0 | +239 |
 | Cream of tomato soup (ASC082) | INDB | 98 | 152 | -54 |
 | Curried Cauliflower soup (OSR135) | INDB | 37 | 127 | -90 |
+| Dijon mustard (X515) | USDA | 100 | 0 | +100 |
 | Egg drop soup (ASC089) | INDB | 27 | 178 | -150 |
 | French onion soup (ASC091) | INDB | 56 | 192 | -136 |
 | Green pea soup (Matar ka soup) (BFP072) | INDB | 40 | 175 | -135 |
+| Kalonji (nigella seeds) (A512) | USDA | 400 | 566 | -166 |
+| Lemon peel, raw (G550) | USDA | 47 | 73 | -26 |
 | Lentil soup (ASC080) | INDB | 31 | 160 | -129 |
 | Meat and macaroni casserole (BFP157) | INDB | 162 | 193 | -31 |
 | Meat consomme (with mutton) (BFP065) | INDB | 30 | 185 | -155 |
+| Methi dana (fenugreek seeds) (G026) | IFCT | 235 | 195 | +40 |
 | Millet soup (OSR136) | INDB | 56 | 191 | -135 |
 | Minced meat pancake (with chicken) (BFP127) | INDB | 116 | 175 | -59 |
 | Minestrone soup (ASC088) | INDB | 43 | 152 | -109 |
 | Mixed vegetable soup (BFP074) | INDB | 36 | 150 | -114 |
 | Mulligatawny soup (BFP076) | INDB | 54 | 198 | -144 |
 | Mutton pulao (BFP141) | INDB | 131 | 168 | -37 |
+| Roasted chickpeas (branded) (B511) | USDA | 286 | 378 | -92 |
 | Spaghetti bolognese (BFP155) | INDB | 97 | 163 | -66 |
 | Spinach soup (Palak ka soup) (BFP073) | INDB | 33 | 183 | -150 |
+| Spirits (whisky, rum, vodka, gin), 40% (K502) | CoFID | 222 | 0 | +222 |
 | Talaumein soup (ASC093) | INDB | 36 | 172 | -136 |
+| Tutti frutti gumballs (candy, not candied papaya) (I511) | USDA | 500 | 400 | +100 |
+| Vanilla extract (G544) | USDA | 288 | 52 | +236 |
 
 ## Serving sizes not used
 
@@ -321,3 +333,101 @@ Values are shown as listed; nothing was changed to make them match. They carry a
 
 Foods marked *estimate* were written by Claude from typical recipes and labels: Indo-Chinese, street food, restaurant dishes, packaged foods (Maggi, Parle-G, Haldiram's, Amul and others) and the Phase 1 foods INDB lacks. Packaged values are typical label values and may differ from your packet; add the packet as a "From packet label" food to replace them.
 
+
+## Raw ingredients (Phase 3): IFCT 2017, UK CoFID, USDA
+
+- **710 ingredients** (tagged `kind: ingredient`, default unit grams): 127 CoFID, 528 IFCT, 50 USDA, 5 estimate.
+- IFCT 2017 Table 1: 528 foods read, all imported.
+- UK CoFID: 144 rows read; 127 imported, 8 left out as duplicates of IFCT foods, 9 had no energy value (below).
+- USDA: 54 rows read (the sheet has 999 rows; the rest are empty); 50 imported, 4 left out as duplicates of IFCT foods.
+
+### How the files were read
+
+- **IFCT PDF**: the PDF has a real text layer. `tools/ifct_pdf.py` reads each piece of text with its position on the page (standard library only) and rebuilds the rows of Table 1, book pages 3–30. Cells are assigned to columns by position, so blank cells are found by the gap they leave. Paneer (L003) and Khoa (L004) are kerned letter by letter in the PDF; their cells were reassembled by position and the build checks the raw digits still match.
+- **Values**: the mean of "mean ± SD" is used. Blank cells mean below detectable limit and are 0.
+- **Energy**: IFCT gives kJ only. kcal = kJ ÷ 4.18 (the book's own factor), rounded.
+- **Carbohydrate**: Table 1 has one carbohydrate column, CHOAVLDF: available carbohydrate by difference (100 − moisture − protein − fat − ash − dietary fibre). It excludes fibre, which the app logs separately, and it is the carbohydrate IFCT uses for its own energy: stated kJ fit 17 × protein + 37 × fat + 17 × carbs (fibre not counted).
+- **Egg, poultry, meat and fish** (groups M–S, 214 foods) have no carbohydrate or fibre columns in Table 1. Both are 0, with a note on each food.
+- **Blank fibre** (below detection, shown as 0): E033, I001, K001, K002, L001, L002, L003, L004.
+- **UK CoFID**: numbers are stored as text. "Tr" (trace) = 0. "N" (not known) and empty cells = unknown: the app shows "—", not 0, and they add nothing to totals. **USDA**: "NA" = unknown.
+
+### Left out: same ingredient already in IFCT 2017
+
+| File | Code | Name | Why |
+|---|---|---|---|
+| CoFID | UK-14-001 | Amla | Amla: same as IFCT E021 Gooseberry (Emblica officinalis) |
+| CoFID | UK-14-347 | Bananas, raw, flesh only, weighed with skin | Bananas: IFCT E009–E012 has bananas (and this row is weighed with skin) |
+| CoFID | UK-13-064 | Beans, broad, whole, raw | Broad beans: IFCT D032 Broad beans (Vicia faba) |
+| CoFID | UK-14-820 | Coconut milk | 'Coconut milk' in CoFID is the liquid inside the nut (22 kcal, 0.3 g fat), not cooking coconut milk: same as IFCT K002 Coconut water |
+| CoFID | UK-14-844 | Sesame seeds | Sesame seeds: IFCT H009–H011 Gingelly seeds |
+| CoFID | UK-13-342 | Shallots, raw | Shallots: IFCT G018 Onion, small (sambar onion) is the Indian shallot |
+| CoFID | UK-14-263 | Sultanas | Sultanas: IFCT E058 Raisins, dried, golden |
+| CoFID | UK-13-622 | Sweetcorn, kernels, raw | Sweetcorn kernels: IFCT A008 Maize, tender, sweet |
+| USDA | US-806341 | Ajwain seed whole organic spices | Ajwain seed: IFCT G029 Omum (ajwain) |
+| USDA | US-173756 | Chickpeas (garbanzo beans, bengal gram), mature seeds, raw | Chickpeas, mature seeds: IFCT B002 Bengal gram, whole |
+| USDA | US-170174 | Nuts, coconut water (liquid from coconuts) | Coconut water: IFCT K002 Coconut water |
+| USDA | US-174270 | Soybeans, mature seeds, raw | Soybeans, mature seeds: IFCT B024/B025 Soybean |
+
+### UK foods with no energy value
+
+CoFID gives protein, fat and fibre for these but no carbohydrate or energy, so calories cannot be worked out from the file.
+
+- **Chilli powder** (UK-13-873): Chilli powder: not imported. Searching "chilli powder" or "lal mirch" finds IFCT G022 Chillies, red (dried red chilli; measured Indian values).
+- **Cinnamon, ground** (UK-13-874): Cinnamon: added as an Estimate food (id cinnamon-ground), protein/fat/fibre from CoFID, carbohydrate estimated.
+- **Fennel seeds** (UK-13-827): Fennel seeds: added as an Estimate food (id fennel-seeds), protein/fat from CoFID, carbohydrate and fibre estimated.
+- **Mixed curry spices** (UK-13-886): Mixed curry spices: not imported. UK CoFID Curry powder and Garam masala (both with energy values) cover it.
+- **Oregano, dried, ground** (UK-13-878): Oregano: added as an Estimate food (id oregano-dried), protein/fat/fibre from CoFID, carbohydrate estimated.
+- **Paprika** (UK-13-879): Paprika: added as an Estimate food (id paprika), protein/fat/fibre from CoFID, carbohydrate estimated.
+- **Pepper, white** (UK-13-881): White pepper: added as an Estimate food (id white-pepper), protein/fat/fibre from CoFID, carbohydrate estimated.
+- **Stock cubes, chicken** (UK-17-726): Stock cubes, chicken: not imported. Values depend on the brand; add the packet as a "From packet label" food.
+- **Stock cubes, vegetable** (UK-17-727): Stock cubes, vegetable: not imported. Values depend on the brand; add the packet as a "From packet label" food.
+
+### Unknown values (shown as "—" in the app)
+
+- CoFID fibre: 47 foods (Agar agar (china grass), dried, Baking soda (bicarbonate of soda), Basil, dried, Chawal ka atta (rice flour), Chicken, whole, meat and skin, raw (weighed with bone), Cocoa powder, Corn syrup, dark, Cornflour (corn starch), Cranberries, Cream of tartar, Currants (dried), Curry powder, Custard powder, Dark chocolate (plain), Drinking chocolate powder, Fruit cocktail, canned in juice, Fruit cocktail, canned in syrup, Garam masala powder (UK), Garlic powder, Glace cherries, Kabuli chana (white chickpeas), dried, raw, Kale, curly, raw, Kesar (saffron), Kuttu (buckwheat groats), Magaz (melon seeds), Mint sauce, Mixed herbs, dried, Moong sprouts, boiled, Mustard powder, Nimbu (lemon), whole fruit, Olives, green, in brine, Orange juice, freshly squeezed, Pasta, white, dried, raw, Peaches, canned in syrup, Pears, canned in juice, Pumpkin seeds, Redcurrants, Ricotta cheese, Sabudana (sago), raw, Shalgam (turnip), raw, Sour-cream dips, assorted, Spring onions, bulbs and tops, raw, Spring onions, bulbs only, raw, Tej patta (bay leaf), dried, Tofu, steamed, Tomato sauce, homemade (pasta sauce), West Indian cherry (acerola)).
+- USDA fibre: 8 foods (Ajinomoto (MSG), Balsamic vinegar, Cajun seasoning, Chakri phool (star anise), Kamal gatta (lotus seeds), dried, Lemongrass, raw, Margarine, Rice vinegar (branded)).
+
+### Calorie check for ingredients
+
+Same rule as above (4/4/9, off by more than 15% and 20 kcal). Values are as listed in the source; nothing was changed. They show ⚠ in the app with a note.
+
+| Food | Source | Listed kcal | 4P+4C+9F | Note |
+|---|---|---:|---:|---|
+| Cream of tartar (U505) | CoFID | 239 | 0 | Energy comes from tartaric acid, which isn't protein, carbs or fat, so the calorie check doesn't apply. UK CoFID doesn't give fibre for this food, so it shows as "—" and adds nothing to your totals. |
+| Spirits (whisky, rum, vodka, gin), 40% (K502) | CoFID | 222 | 0 | Energy comes from alcohol (7 kcal per g), which isn't protein, carbs or fat, so the calorie check doesn't apply. |
+| Chicken leg, skinless, raw (N001) | IFCT | 384 | 191 | IFCT 2017 gives no carbohydrate or fibre for eggs, meat and fish, so both are shown as 0 (IFCT's own energy value assumes the same). Kept as printed in IFCT 2017: 1605 kJ (384 kcal) per 100 g. Its protein and fat give about 192 kcal, and chicken thigh in the same table is 836 kJ, so this is probably a misprint. Chicken thigh or breast is a safer choice. |
+| Crab (kekda) (Q001) | IFCT | 82 | 53 | IFCT 2017 gives no carbohydrate or fibre for eggs, meat and fish, so both are shown as 0 (IFCT's own energy value assumes the same). Kept as printed in IFCT 2017: 343 kJ (82 kcal), while protein and fat give about 54 kcal. |
+| Methi dana (fenugreek seeds) (G026) | IFCT | 235 | 195 | Kept as printed in IFCT 2017: 983 kJ (235 kcal), while protein, carbs and fat give about 195 kcal. |
+| Black beans (canned, branded) (B507) | USDA | 55 | 86 |  |
+| Cajun seasoning (X517) | USDA | 0 | 0 | The USDA entry (a branded label) lists 0 for every nutrient, which is not plausible for a spice mix. Kept as listed. USDA doesn't give fibre for this food, so it shows as "—" and adds nothing to your totals. |
+| Chakri phool (star anise) (G537) | USDA | 0 | 0 | The USDA entry (a branded label) lists 0 for every nutrient, which is not plausible for star anise (typically about 330 kcal per 100 g). Kept as listed; use a small amount or a label value. USDA doesn't give fibre for this food, so it shows as "—" and adds nothing to your totals. |
+| Dijon mustard (X515) | USDA | 100 | 0 | The USDA entry (a branded label) lists 100 kcal but 0 g protein, carbs and fat. Kept as listed. |
+| Kalonji (nigella seeds) (A512) | USDA | 400 | 566 |  |
+| Lemon peel, raw (G550) | USDA | 47 | 73 |  |
+| Roasted chickpeas (branded) (B511) | USDA | 286 | 378 |  |
+| Tutti frutti gumballs (candy, not candied papaya) (I511) | USDA | 500 | 400 |  |
+| Vanilla extract (G544) | USDA | 288 | 52 | Most of the energy comes from alcohol, so it doesn't match protein, carbs and fat. |
+
+### Spot-check: 15 IFCT foods picked at random
+
+Picked with a fixed random seed. "PDF" is the row as printed (mean ± SD); "App" is what the app stores per 100 g. This compares against the PDF's text layer; the book page is given so the printed page can be checked by eye.
+
+The last column is an independent check that the cells landed in the right columns: 17 × protein + 37 × fat + 17 × carbs (IFCT's energy factors) recomputed from the parsed cells should be close to the printed kJ.
+
+| Code | Book page | Food | PDF: protein / carbs / fat / fibre / energy | App: protein / carbs / fat / fibre / kcal | kJ ÷ 4.18 | 17P+37F+17C kJ |
+|---|---:|---|---|---|---:|---:|
+| E043 | 13 | Mangosteen | 0.63 / 11.41 / 0.24 / 1.87 / 219 kJ | 0.6 / 11.4 / 0.2 / 1.9 / 52 | 52.4 | 214 |
+| P045 | 27 | Padayappa (fish) | 19.70 / (no column) / 0.69 / (no column) / 360 kJ | 19.7 / 0 / 0.7 / 0 / 86 | 86.1 | 360 |
+| O004 | 21 | Goat brain (bheja) | 13.82±0.80 / (no column) / 8.06±0.46 / (no column) / 533±23 kJ | 13.8 / 0 / 8.1 / 0 / 128 | 127.5 | 533 |
+| M015 | 20 | Quail egg, whole, boiled | 13.03 / (no column) / 11.50 / (no column) / 647 kJ | 13 / 0 / 11.5 / 0 / 155 | 154.8 | 647 |
+| S006 | 30 | Rohu (rui) | 19.71±0.57 / (no column) / 2.39±0.64 / (no column) / 428±12 kJ | 19.7 / 0 / 2.4 / 0 / 102 | 102.4 | 424 |
+| E054 | 13 | Aloo bukhara (plum) | 0.64±0.13 / 12.10±1.47 / 0.40±0.16 / 2.07±0.36 / 238±19 kJ | 0.6 / 12.1 / 0.4 / 2.1 / 57 | 56.9 | 231 |
+| C020 | 6 | Methi (fenugreek leaves), fresh | 3.68±0.36 / 2.17±0.32 / 0.83±0.02 / 4.90±0.21 / 144±10 kJ | 3.7 / 2.2 / 0.8 / 4.9 / 34 | 34.4 | 130 |
+| S008 | 30 | Prawns, big, freshwater (golda chingri) | 19.24 / (no column) / 0.52 / (no column) / 380 kJ | 19.2 / 0 / 0.5 / 0 / 91 | 90.9 | 346 |
+| P059 | 27 | Pulli paarai (fish) | 20.06 / (no column) / 1.55 / (no column) / 399 kJ | 20.1 / 0 / 1.6 / 0 / 95 | 95.5 | 398 |
+| D035 | 9 | Shimla mirch (capsicum), yellow | 1.35±0.35 / 1.95±0.16 / 0.41±0.02 / 2.19±0.13 / 78±4 kJ | 1.4 / 1.9 / 0.4 / 2.2 / 19 | 18.7 | 71 |
+| F016 | 15 | Singhara (water chestnut) | 0.86 / 21.46 / 0.37 / 3.02 / 400 kJ | 0.9 / 21.5 / 0.4 / 3 / 96 | 95.7 | 393 |
+| O053 | 24 | Pork liver | 19.89±1.16 / (no column) / 3.94±0.34 / (no column) / 484±24 kJ | 19.9 / 0 / 3.9 / 0 / 116 | 115.8 | 484 |
+| G001 | 15 | Hari mirch (green chilli), variety 1 | 2.62±0.35 / 6.32±0.41 / 0.73±0.02 / 4.86±0.65 / 191±5 kJ | 2.6 / 6.3 / 0.7 / 4.9 / 46 | 45.7 | 179 |
+| A007 | 3 | Corn on the cob, local (bhutta), raw | 3.57±0.42 / 22.69±0.94 / 1.40±0.30 / 3.67±0.26 / 502±7 kJ | 3.6 / 22.7 / 1.4 / 3.7 / 120 | 120.1 | 498 |
+| C034 | 7 | Tamarind leaves, tender | 5.84±0.01 / 10.04±0.02 / 0.49±0.01 / 10.70±0.02 / 299±1 kJ | 5.8 / 10 / 0.5 / 10.7 / 72 | 71.5 | 288 |
