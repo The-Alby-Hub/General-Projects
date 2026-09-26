@@ -7,11 +7,13 @@ Reads   data/INDB.xlsx              Indian Nutrient Databank (1,014 recipes, per
         data/estimates.json         foods INDB lacks (source: estimate)
         data/oil-adjust.json        fried INDB dishes to correct for unabsorbed frying oil
         data/aliases.json           search synonyms, aliases, everyday list, name/unit/category fixes
+        data/IFCT2017_Table1.pdf    IFCT 2017 Table 1 raw foods (see tools/ingredients.py, tools/ifct_pdf.py)
+        data/UK_fct.xlsx, data/US_fct.xlsx, data/ingredient-overrides.json   UK CoFID / USDA gap ingredients
 Writes  index.html                  the <script id="seed-foods"> block
         data/import-report.md       what was imported, changed, flagged and why
 
 Standard library only. Run from anywhere:  python3 lechem-mifkad/tools/build_foods.py
-To add another source later (e.g. raw foods), load it like estimates.json with its own
+To add another source later, load it like estimates.json or tools/ingredients.py with its own
 `source` value and append to `foods` before the checks run.
 """
 import json
@@ -21,6 +23,8 @@ import zipfile
 import xml.etree.ElementTree as ET
 from datetime import date
 from pathlib import Path
+
+import ingredients
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / 'data'
@@ -88,11 +92,14 @@ def r1(x):
 
 
 def atwater(p):
-    return 4 * p['protein'] + 4 * p['carbs'] + 9 * p['fat']
+    return 4 * (p['protein'] or 0) + 4 * (p['carbs'] or 0) + 9 * (p['fat'] or 0)
 
 
 def kcal_off(p):
-    """True when listed kcal differs from 4/4/9 by more than 15% and more than 20 kcal."""
+    """True when listed kcal differs from 4/4/9 by more than 15% and more than 20 kcal.
+    Not checked when protein, carbs or fat is unknown (None: UK CoFID / USDA foods)."""
+    if any(p[k] is None for k in ('protein', 'carbs', 'fat')):
+        return False
     est = atwater(p)
     return abs(p['kcal'] - est) > max(20, 0.15 * max(p['kcal'], est))
 
@@ -416,6 +423,11 @@ def main():
         f['units'] = {**e['units'], 'g': 1}
         foods.append(f)
 
+    # Raw ingredients (Phase 3): IFCT 2017, then UK CoFID and USDA for gaps.
+    ing_ov = load('ingredient-overrides.json')
+    ing_foods, ing_rep = ingredients.build(ing_ov, read_xlsx, DATA)
+    foods += ing_foods
+
     # Checks: unique ids, valid shape, calories vs macros.
     ids = [f['id'] for f in foods]
     dup = {i for i in ids if ids.count(i) > 1}
@@ -423,7 +435,10 @@ def main():
         raise SystemExit(f'Duplicate ids: {sorted(dup)}')
     redirects = {sid: 'indb-' + code.lower() for sid, code in seed_map.items() if code}
     for f in foods:
-        assert all(isinstance(f['per100g'][k], (int, float)) for k in NUTRIENTS), f['id']
+        assert isinstance(f['per100g']['kcal'], (int, float)), f['id']
+        # Only UK CoFID / USDA values may be unknown (None); everything else is a number.
+        assert all(isinstance(f['per100g'][k], (int, float)) or (f['per100g'][k] is None and f['source'] in ('CoFID', 'USDA'))
+                   for k in NUTRIENTS), f['id']
         assert f['defaultUnit'] in f['units'], f['id']
         if 'serving' in f['units']:
             assert f.get('serving', {}).get('label'), f['id']
@@ -435,10 +450,10 @@ def main():
 
     payload = {'version': 2, 'built': today,
                'about': 'Built by tools/build_foods.py from data/. Edit the files in data/ and re-run; do not edit this block by hand.',
-               'redirects': redirects, 'synonyms': al['synonyms'], 'foods': foods}
+               'redirects': redirects, 'synonyms': al['synonyms'] + ing_ov['synonyms'], 'foods': foods}
     block = '{\n"version": 2, "built": ' + json.dumps(today) + ',\n"about": ' + json.dumps(payload['about']) + \
             ',\n"redirects": ' + json.dumps(redirects, separators=(',', ':')) + \
-            ',\n"synonyms": [\n' + ',\n'.join(json.dumps(s, ensure_ascii=False) for s in al['synonyms']) + \
+            ',\n"synonyms": [\n' + ',\n'.join(json.dumps(s, ensure_ascii=False) for s in payload['synonyms']) + \
             '\n],\n"foods": [\n' + ',\n'.join(json.dumps(f, ensure_ascii=False, separators=(',', ':')) for f in foods) + '\n]\n}'
     json.loads(block)  # must stay valid JSON
     html = HTML.read_text(encoding='utf-8')
@@ -451,7 +466,15 @@ def main():
     if size > MAX_BYTES:
         raise SystemExit(f'index.html is {size:,} bytes, over the 16 MB limit')
 
+    names = {}
+    for f in foods:
+        names.setdefault(f['name'].lower(), []).append(f['id'])
+    same = {n: ids for n, ids in names.items() if len(ids) > 1}
+    if same:
+        raise SystemExit(f'Foods share a display name (search would show two identical rows): {same}')
+
     write_report(rows, foods, report, size, seed_map, seed_by_id, today)
+    write_ingredient_report(ing_rep, foods, today)
     by_source = {}
     for f in foods:
         by_source[f['source']] = by_source.get(f['source'], 0) + 1
@@ -546,6 +569,88 @@ def write_report(rows, foods, rep, size, seed_map, seed_by_id, today):
       'packaged foods (Maggi, Parle-G, Haldiram\'s, Amul and others) and the Phase 1 foods INDB lacks. Packaged values are typical label '
       'values and may differ from your packet; add the packet as a "From packet label" food to replace them.\n')
     (DATA / 'import-report.md').write_text('\n'.join(L) + '\n', encoding='utf-8')
+
+
+def write_ingredient_report(rep, foods, today):
+    """Appends the Phase 3 ingredients section to data/import-report.md."""
+    L = []
+    w = L.append
+    ing = [f for f in foods if f.get('kind') == 'ingredient']
+    by_src = {}
+    for f in ing:
+        by_src[f['source']] = by_src.get(f['source'], 0) + 1
+    fmt = lambda v: '—' if v is None else f'{v:g}'
+    w('\n## Raw ingredients (Phase 3): IFCT 2017, UK CoFID, USDA\n')
+    w(f'- **{len(ing)} ingredients** (tagged `kind: ingredient`, default unit grams): ' +
+      ', '.join(f'{v} {k}' for k, v in sorted(by_src.items())) + '.')
+    uk_used, us_used = by_src.get('CoFID', 0), by_src.get('USDA', 0)
+    w(f'- IFCT 2017 Table 1: {rep["counts"]["IFCT"]} foods read, all imported.')
+    w(f'- UK CoFID: {rep["counts"]["CoFID"]} rows read; {uk_used} imported, '
+      f'{sum(1 for d in rep["dropped"] if d[0] == "CoFID")} left out as duplicates of IFCT foods, {len(rep["no_energy"])} had no energy value (below).')
+    w(f'- USDA: {rep["counts"]["USDA"]} rows read (the sheet has 999 rows; the rest are empty); {us_used} imported, '
+      f'{sum(1 for d in rep["dropped"] if d[0] == "USDA")} left out as duplicates of IFCT foods.\n')
+
+    w('### How the files were read\n')
+    w('- **IFCT PDF**: the PDF has a real text layer. `tools/ifct_pdf.py` reads each piece of text with its position on the page '
+      '(standard library only) and rebuilds the rows of Table 1, book pages 3–30. Cells are assigned to columns by position, so blank '
+      'cells are found by the gap they leave. Paneer (L003) and Khoa (L004) are kerned letter by letter in the PDF; their cells were '
+      'reassembled by position and the build checks the raw digits still match.')
+    w('- **Values**: the mean of "mean ± SD" is used. Blank cells mean below detectable limit and are 0.')
+    w('- **Energy**: IFCT gives kJ only. kcal = kJ ÷ 4.18 (the book\'s own factor), rounded.')
+    w('- **Carbohydrate**: Table 1 has one carbohydrate column, CHOAVLDF: available carbohydrate by difference '
+      '(100 − moisture − protein − fat − ash − dietary fibre). It excludes fibre, which the app logs separately, and it is the '
+      'carbohydrate IFCT uses for its own energy: stated kJ fit 17 × protein + 37 × fat + 17 × carbs (fibre not counted).')
+    w('- **Egg, poultry, meat and fish** (groups M–S, 214 foods) have no carbohydrate or fibre columns in Table 1. Both are 0, with a note on each food.')
+    w(f'- **Blank fibre** (below detection, shown as 0): {", ".join(rep["blank_fibre"])}.')
+    w('- **UK CoFID**: numbers are stored as text. "Tr" (trace) = 0. "N" (not known) and empty cells = unknown: the app shows "—", '
+      'not 0, and they add nothing to totals. **USDA**: "NA" = unknown.\n')
+
+    w('### Left out: same ingredient already in IFCT 2017\n')
+    w('| File | Code | Name | Why |')
+    w('|---|---|---|---|')
+    for src, code, name, why in rep['dropped']:
+        w(f'| {src} | {code} | {name} | {why} |')
+
+    w('\n### UK foods with no energy value\n')
+    w('CoFID gives protein, fat and fibre for these but no carbohydrate or energy, so calories cannot be worked out from the file.\n')
+    for code, name, what in rep['no_energy']:
+        w(f'- **{name}** ({code}): {what}')
+
+    w('\n### Unknown values (shown as "—" in the app)\n')
+    for src, per in sorted(rep['unknown'].items()):
+        for k, names in per.items():
+            w(f'- {src} {k}: {len(names)} foods ({", ".join(sorted(names))}).')
+
+    w('\n### Calorie check for ingredients\n')
+    w('Same rule as above (4/4/9, off by more than 15% and 20 kcal). Values are as listed in the source; nothing was changed. '
+      'They show ⚠ in the app with a note.\n')
+    w('| Food | Source | Listed kcal | 4P+4C+9F | Note |')
+    w('|---|---|---:|---:|---|')
+    for f in sorted((f for f in ing if kcal_off(f['per100g']) or 'zero' in f.get('flags', [])), key=lambda f: (f['source'], f['name'])):
+        p = f['per100g']
+        w(f'| {f["name"]} ({f["ref"]}) | {f["source"]} | {p["kcal"]} | {atwater(p):.0f} | {f.get("note", "")} |')
+
+    w('\n### Spot-check: 15 IFCT foods picked at random\n')
+    w('Picked with a fixed random seed. "PDF" is the row as printed (mean ± SD); "App" is what the app stores per 100 g. '
+      'This compares against the PDF\'s text layer; the book page is given so the printed page can be checked by eye.\n')
+    w('The last column is an independent check that the cells landed in the right columns: 17 × protein + 37 × fat + 17 × carbs '
+      '(IFCT\'s energy factors) recomputed from the parsed cells should be close to the printed kJ.\n')
+    w('| Code | Book page | Food | PDF: protein / carbs / fat / fibre / energy | App: protein / carbs / fat / fibre / kcal | kJ ÷ 4.18 | 17P+37F+17C kJ |')
+    w('|---|---:|---|---|---|---:|---:|')
+    for r, f in rep['spot']:
+        raw = r['raw']
+        if r['group'] == 'plant' and len(raw) == 9:
+            pdf = f'{raw[1]} / {raw[7]} / {raw[3]} / {raw[4]} / {raw[8]} kJ'
+        elif r['group'] == 'plant':
+            pdf = f'{raw[1]} / {raw[4]} / {raw[3]} / blank / {raw[5]} kJ'
+        else:
+            pdf = f'{raw[1]} / (no column) / {raw[3]} / (no column) / {raw[4]} kJ'
+        p = f['per100g']
+        app = f'{fmt(p["protein"])} / {fmt(p["carbs"])} / {fmt(p["fat"])} / {fmt(p["fibre"])} / {p["kcal"]}'
+        check = 17 * r['protein'] + 37 * r['fat'] + 17 * (r.get('carbs') or 0)
+        w(f'| {r["code"]} | {r["page"]} | {f["name"]} | {pdf} | {app} | {r["kj"] / 4.18:.1f} | {check:.0f} |')
+    with open(DATA / 'import-report.md', 'a', encoding='utf-8') as fh:
+        fh.write('\n'.join(L) + '\n')
 
 
 if __name__ == '__main__':
