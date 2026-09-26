@@ -1,0 +1,1607 @@
+{
+  "_about": "Search vocabulary. 'synonyms' are word groups the app treats as the same word when searching (English, Hindi and regional names). 'byCode' adds aliases to INDB foods, 'byId' to estimate foods. 'everyday' lists INDB codes that rank first (common cooked dishes). 'names' fixes display names, 'units' overrides portion weights (grams) for INDB foods, 'categories' overrides the automatic category.",
+  "synonyms": [
+    [
+      "rice",
+      "chawal",
+      "chaval",
+      "bhaat",
+      "bhat",
+      "sadam",
+      "saadam",
+      "annam",
+      "choru"
+    ],
+    [
+      "okra",
+      "bhindi",
+      "bhendi",
+      "bhende",
+      "vendakkai",
+      "bendakaya",
+      "dherosh",
+      "ladyfinger",
+      "ladyfingers"
+    ],
+    [
+      "potato",
+      "potatoes",
+      "aloo",
+      "alu",
+      "batata",
+      "urulai",
+      "urulaikizhangu",
+      "aloor"
+    ],
+    [
+      "arhar",
+      "toor",
+      "tur",
+      "tuvar",
+      "tuvaram",
+      "togari",
+      "kandi",
+      "pigeon"
+    ],
+    [
+      "chickpea",
+      "chickpeas",
+      "chana",
+      "channa",
+      "chane",
+      "chole",
+      "chhole",
+      "kabuli",
+      "sundal"
+    ],
+    [
+      "curd",
+      "dahi",
+      "yogurt",
+      "yoghurt",
+      "thayir",
+      "mosaru",
+      "perugu",
+      "doi"
+    ],
+    [
+      "spinach",
+      "palak",
+      "saag",
+      "keerai",
+      "palakura"
+    ],
+    [
+      "cauliflower",
+      "gobi",
+      "gobhi",
+      "phoolgobhi",
+      "phoolgobi",
+      "phulkopi"
+    ],
+    [
+      "cabbage",
+      "pattagobhi",
+      "bandgobhi",
+      "muttaikose",
+      "kosu",
+      "bandhakopi"
+    ],
+    [
+      "brinjal",
+      "baingan",
+      "eggplant",
+      "vangi",
+      "vankaya",
+      "kathirikai",
+      "begun",
+      "aubergine",
+      "badanekayi"
+    ],
+    [
+      "peas",
+      "pea",
+      "matar",
+      "mattar",
+      "mutter",
+      "batani",
+      "pattani"
+    ],
+    [
+      "dal",
+      "daal",
+      "dhal",
+      "lentil",
+      "lentils",
+      "paruppu",
+      "pappu",
+      "bele",
+      "dali"
+    ],
+    [
+      "moong",
+      "mung",
+      "mug",
+      "pesara",
+      "hesaru",
+      "payaru",
+      "paasi"
+    ],
+    [
+      "urad",
+      "urid",
+      "udad",
+      "minapa",
+      "ulundu",
+      "uddina",
+      "biuli"
+    ],
+    [
+      "masoor",
+      "masur"
+    ],
+    [
+      "chicken",
+      "murgh",
+      "murg",
+      "kozhi",
+      "kodi",
+      "koli"
+    ],
+    [
+      "mutton",
+      "gosht",
+      "lamb",
+      "goat"
+    ],
+    [
+      "fish",
+      "machli",
+      "machhli",
+      "machhi",
+      "meen",
+      "chepala",
+      "maach",
+      "macher",
+      "machher",
+      "meenu"
+    ],
+    [
+      "egg",
+      "eggs",
+      "anda",
+      "ande",
+      "anday",
+      "muttai",
+      "guddu",
+      "motte",
+      "dim"
+    ],
+    [
+      "prawn",
+      "prawns",
+      "jhinga",
+      "chemmeen",
+      "royyalu",
+      "shrimp"
+    ],
+    [
+      "paneer",
+      "panir"
+    ],
+    [
+      "lauki",
+      "ghiya",
+      "doodhi",
+      "dudhi",
+      "sorakaya",
+      "churakka",
+      "sorekayi",
+      "bottlegourd"
+    ],
+    [
+      "karela",
+      "karele",
+      "kakarakaya",
+      "pavakkai",
+      "hagalakayi",
+      "uchhe",
+      "bittergourd"
+    ],
+    [
+      "tomato",
+      "tomatoes",
+      "tamatar",
+      "thakkali",
+      "tamata"
+    ],
+    [
+      "onion",
+      "onions",
+      "pyaz",
+      "pyaaz",
+      "kanda",
+      "vengayam",
+      "ullipaya",
+      "eerulli",
+      "piyaz"
+    ],
+    [
+      "carrot",
+      "gajar",
+      "gajjar"
+    ],
+    [
+      "radish",
+      "mooli",
+      "mullangi"
+    ],
+    [
+      "fenugreek",
+      "methi",
+      "menthya",
+      "vendhayam",
+      "menthi"
+    ],
+    [
+      "mushroom",
+      "mushrooms",
+      "khumb",
+      "kaalan"
+    ],
+    [
+      "corn",
+      "makka",
+      "makki",
+      "makai",
+      "bhutta",
+      "maize"
+    ],
+    [
+      "banana",
+      "kela",
+      "kele",
+      "vazhai",
+      "arati",
+      "kadali"
+    ],
+    [
+      "mango",
+      "aam",
+      "maanga",
+      "mamidi",
+      "kairi",
+      "keri"
+    ],
+    [
+      "coconut",
+      "nariyal",
+      "thengai",
+      "kobbari",
+      "narkel",
+      "tenga"
+    ],
+    [
+      "peanut",
+      "peanuts",
+      "moongphali",
+      "moongfali",
+      "mungfali",
+      "singdana",
+      "shengdana",
+      "groundnut",
+      "groundnuts",
+      "verkadalai",
+      "palli",
+      "kadalekai"
+    ],
+    [
+      "semolina",
+      "suji",
+      "sooji",
+      "rava",
+      "rawa"
+    ],
+    [
+      "vermicelli",
+      "semiya",
+      "seviyan",
+      "sevai",
+      "shavige"
+    ],
+    [
+      "poha",
+      "pohe",
+      "aval",
+      "avalakki",
+      "chiwda",
+      "chivda",
+      "chirwa",
+      "chura",
+      "atukulu",
+      "flattened"
+    ],
+    [
+      "murmura",
+      "kurmura",
+      "mandakki",
+      "moori",
+      "muri",
+      "pori",
+      "borugulu",
+      "puffed"
+    ],
+    [
+      "milk",
+      "doodh",
+      "dudh",
+      "paal",
+      "palu",
+      "haalu"
+    ],
+    [
+      "tea",
+      "chai",
+      "chaha",
+      "chaya"
+    ],
+    [
+      "coffee",
+      "kaapi",
+      "kapi"
+    ],
+    [
+      "buttermilk",
+      "chaas",
+      "chhach",
+      "chaach",
+      "mattha",
+      "majjige",
+      "mor",
+      "ghol"
+    ],
+    [
+      "ghee",
+      "neyyi",
+      "nei",
+      "tuppa"
+    ],
+    [
+      "roti",
+      "chapati",
+      "chapathi",
+      "phulka",
+      "fulka",
+      "rotli",
+      "poli"
+    ],
+    [
+      "paratha",
+      "parantha",
+      "parotta",
+      "porotta",
+      "parata"
+    ],
+    [
+      "poori",
+      "puri",
+      "pooris",
+      "puris"
+    ],
+    [
+      "pakora",
+      "pakoda",
+      "pakode",
+      "pakore",
+      "pakodi",
+      "pakodies",
+      "bhajji",
+      "bajji",
+      "bhajiya",
+      "fritter",
+      "fritters"
+    ],
+    [
+      "kheer",
+      "payasam",
+      "payesh",
+      "payasa",
+      "khir"
+    ],
+    [
+      "halwa",
+      "halva",
+      "sheera"
+    ],
+    [
+      "ladoo",
+      "laddu",
+      "laddoo",
+      "ladu",
+      "unde"
+    ],
+    [
+      "rajma",
+      "rajmah",
+      "kidney"
+    ],
+    [
+      "sprouts",
+      "sprouted",
+      "ankurit",
+      "molake"
+    ],
+    [
+      "jackfruit",
+      "kathal",
+      "phanas",
+      "chakka",
+      "panasa",
+      "ponsa"
+    ],
+    [
+      "arbi",
+      "arvi",
+      "colocasia",
+      "sepankizhangu",
+      "chamadumpa"
+    ],
+    [
+      "yam",
+      "suran",
+      "zimikand",
+      "jimikand",
+      "senai"
+    ],
+    [
+      "drumstick",
+      "sahjan",
+      "murungakkai",
+      "sajina"
+    ],
+    [
+      "jowar",
+      "jola",
+      "jonna",
+      "sorghum"
+    ],
+    [
+      "bajra",
+      "bajri",
+      "sajje",
+      "kambu"
+    ],
+    [
+      "ragi",
+      "nachni",
+      "nachani",
+      "kezhvaragu"
+    ],
+    [
+      "idli",
+      "idly",
+      "iddli"
+    ],
+    [
+      "dosa",
+      "dosai",
+      "dose",
+      "dhosa"
+    ],
+    [
+      "vada",
+      "vadai",
+      "wada",
+      "vade",
+      "garelu"
+    ],
+    [
+      "sambar",
+      "sambhar",
+      "sambaar",
+      "kuzhambu",
+      "kolambu"
+    ],
+    [
+      "rasam",
+      "saaru",
+      "charu",
+      "chaaru"
+    ],
+    [
+      "upma",
+      "uppittu",
+      "uppuma",
+      "uppma"
+    ],
+    [
+      "khichdi",
+      "khichri",
+      "khitchdi",
+      "khichadi",
+      "kichdi"
+    ],
+    [
+      "biryani",
+      "biriyani",
+      "biriani",
+      "briyani"
+    ],
+    [
+      "pulao",
+      "pulav",
+      "pilaf",
+      "pulaav"
+    ],
+    [
+      "noodles",
+      "noodle",
+      "chowmein",
+      "chowmin"
+    ],
+    [
+      "kebab",
+      "kabab",
+      "kabob",
+      "kebabs"
+    ],
+    [
+      "omelette",
+      "omlet",
+      "omelet",
+      "omlette"
+    ],
+    [
+      "jalebi",
+      "jilebi",
+      "jilapi"
+    ],
+    [
+      "salad",
+      "salaad",
+      "kosambari",
+      "koshimbir"
+    ],
+    [
+      "pickle",
+      "achar",
+      "achaar",
+      "aachar",
+      "oorugai"
+    ],
+    [
+      "chutney",
+      "chatni",
+      "pachadi",
+      "thogayal",
+      "thuvaiyal"
+    ],
+    [
+      "sugar",
+      "chini",
+      "cheeni",
+      "shakkar"
+    ],
+    [
+      "jaggery",
+      "gur",
+      "gud",
+      "bellam",
+      "vellam"
+    ],
+    [
+      "lemon",
+      "nimbu",
+      "nimboo",
+      "neembu",
+      "limbu",
+      "elumichai",
+      "nimmakaya"
+    ],
+    [
+      "tamarind",
+      "imli",
+      "puli",
+      "chintapandu",
+      "hunase"
+    ],
+    [
+      "garlic",
+      "lahsun",
+      "lahasun",
+      "poondu",
+      "vellulli"
+    ],
+    [
+      "ginger",
+      "adrak",
+      "inji",
+      "allam"
+    ],
+    [
+      "mint",
+      "pudina",
+      "pudinay"
+    ],
+    [
+      "coriander",
+      "dhania",
+      "dhaniya",
+      "dhaniye",
+      "kothamalli",
+      "kothimbir"
+    ],
+    [
+      "sabudana",
+      "sago",
+      "javvarisi",
+      "saggubiyyam"
+    ],
+    [
+      "porridge",
+      "daliya",
+      "dalia",
+      "kanji",
+      "ganji",
+      "ambali"
+    ],
+    [
+      "cheela",
+      "chilla",
+      "chila",
+      "puda",
+      "pudla",
+      "poodla"
+    ],
+    [
+      "soup",
+      "shorba",
+      "shoraba"
+    ],
+    [
+      "curry",
+      "kari",
+      "kootu"
+    ],
+    [
+      "sabzi",
+      "sabji",
+      "subzi",
+      "subji",
+      "bhaji",
+      "bhaaji",
+      "poriyal",
+      "thoran",
+      "palya",
+      "kura"
+    ],
+    [
+      "fry",
+      "fried",
+      "varuval",
+      "vepudu"
+    ],
+    [
+      "raita",
+      "rayta",
+      "pachadi"
+    ],
+    [
+      "momos",
+      "momo",
+      "dumpling",
+      "dumplings"
+    ],
+    [
+      "manchurian",
+      "manchoorian",
+      "manchuria"
+    ],
+    [
+      "schezwan",
+      "szechuan",
+      "sichuan",
+      "shezwan"
+    ],
+    [
+      "biscuit",
+      "biscuits",
+      "cookie",
+      "cookies"
+    ],
+    [
+      "kulfi",
+      "qulfi"
+    ],
+    [
+      "rasgulla",
+      "rasagola",
+      "rosogolla",
+      "roshogolla",
+      "rasgolla"
+    ],
+    [
+      "gulab",
+      "gulaab"
+    ],
+    [
+      "pav",
+      "pao",
+      "paav"
+    ],
+    [
+      "samosa",
+      "samosas",
+      "samsa",
+      "singara",
+      "shingara"
+    ]
+  ],
+  "byCode": {
+    "ASC002": [
+      "coffee",
+      "nescafe",
+      "bru"
+    ],
+    "ASC022": [
+      "salted lassi",
+      "namkeen lassi",
+      "chaas"
+    ],
+    "ASC047": [
+      "daliya",
+      "meetha daliya",
+      "broken wheat porridge"
+    ],
+    "ASC050": [
+      "oats porridge",
+      "oatmeal"
+    ],
+    "ASC057": [
+      "fried egg",
+      "egg fry",
+      "anda fry",
+      "bullseye"
+    ],
+    "ASC059": [
+      "anda bhurji",
+      "egg bhurji"
+    ],
+    "ASC113": [
+      "rice",
+      "chawal"
+    ],
+    "ASC114": [
+      "plain pulao"
+    ],
+    "ASC122": [
+      "gosht biryani",
+      "biryani"
+    ],
+    "ASC127": [
+      "puliyogare",
+      "puliyodarai",
+      "tamarind rice"
+    ],
+    "ASC129": [
+      "fried rice",
+      "veg fried rice"
+    ],
+    "ASC134": [
+      "chowmein",
+      "chow mein",
+      "veg noodles"
+    ],
+    "ASC142": [
+      "tandoori naan"
+    ],
+    "ASC143": [
+      "bhature",
+      "bhatoora"
+    ],
+    "ASC146": [
+      "dosa"
+    ],
+    "ASC149": [
+      "kathi roll",
+      "paneer roll",
+      "paneer frankie"
+    ],
+    "ASC150": [
+      "makki di roti",
+      "makai roti",
+      "corn roti"
+    ],
+    "ASC155": [
+      "mix dal",
+      "panchratna dal"
+    ],
+    "ASC160": [
+      "dal makhani",
+      "maa ki dal"
+    ],
+    "ASC161": [
+      "kala chana",
+      "kale chane"
+    ],
+    "ASC162": [
+      "chole",
+      "chana masala",
+      "chhole"
+    ],
+    "ASC167": [
+      "sambhar"
+    ],
+    "ASC173": [
+      "cabbage sabzi",
+      "patta gobi"
+    ],
+    "ASC177": [
+      "baingan bharta"
+    ],
+    "ASC178": [
+      "aloo sabzi",
+      "aloo fry",
+      "sukhi aloo",
+      "jeera aloo"
+    ],
+    "ASC184": [
+      "bharwa bhindi",
+      "stuffed bhindi"
+    ],
+    "ASC214": [
+      "dum aloo",
+      "dum alu"
+    ],
+    "ASC217": [
+      "saag",
+      "sarson da saag",
+      "mustard greens"
+    ],
+    "ASC221": [
+      "shahi paneer"
+    ],
+    "ASC222": [
+      "paneer butter masala",
+      "paneer makhani",
+      "butter paneer"
+    ],
+    "ASC224": [
+      "chilli paneer"
+    ],
+    "ASC227": [
+      "rogan josh",
+      "mutton rogan josh"
+    ],
+    "ASC240": [
+      "chicken curry",
+      "murgh curry"
+    ],
+    "ASC241": [
+      "tandoori chicken",
+      "tandoori murgh"
+    ],
+    "ASC242": [
+      "murgh makhani"
+    ],
+    "ASC243": [
+      "chicken seekh kebab",
+      "chicken kabab"
+    ],
+    "ASC244": [
+      "chilli chicken"
+    ],
+    "ASC246": [
+      "fish curry",
+      "machli curry"
+    ],
+    "ASC247": [
+      "fish fry",
+      "fried fish"
+    ],
+    "ASC277": [
+      "boondi raita"
+    ],
+    "ASC279": [
+      "dahi vada",
+      "dahi bhalla",
+      "dahi bada"
+    ],
+    "ASC282": [
+      "kheer",
+      "chawal ki kheer"
+    ],
+    "ASC285": [
+      "seviyan",
+      "semiya payasam",
+      "sheer khurma"
+    ],
+    "ASC292": [
+      "firni"
+    ],
+    "ASC293": [
+      "suji halwa",
+      "sooji halwa",
+      "rava kesari",
+      "sheera"
+    ],
+    "ASC295": [
+      "gajar halwa",
+      "gajar ka halwa"
+    ],
+    "ASC339": [
+      "kaju katli",
+      "kaju barfi"
+    ],
+    "ASC343": [
+      "besan ladoo",
+      "besan laddu"
+    ],
+    "ASC348": [
+      "gulab jamun"
+    ],
+    "ASC351": [
+      "aloo pakora",
+      "potato bhajji"
+    ],
+    "ASC352": [
+      "onion pakora",
+      "kanda bhaji",
+      "onion bhaji",
+      "pyaz pakoda"
+    ],
+    "ASC358": [
+      "bread pakora",
+      "bread pakoda"
+    ],
+    "ASC360": [
+      "aloo bonda",
+      "batata vada",
+      "bonda"
+    ],
+    "ASC361": [
+      "samosa",
+      "aloo samosa"
+    ],
+    "ASC365": [
+      "kachori",
+      "khasta kachori"
+    ],
+    "ASC366": [
+      "veg cutlet"
+    ],
+    "ASC375": [
+      "veg burger",
+      "burger"
+    ],
+    "ASC376": [
+      "pizza",
+      "cheese pizza"
+    ],
+    "ASC378": [
+      "masala vada",
+      "paruppu vadai",
+      "dal vada"
+    ],
+    "ASC381": [
+      "paneer tikka"
+    ],
+    "ASC383": [
+      "spring roll",
+      "veg spring roll"
+    ],
+    "ASC386": [
+      "coconut chutney"
+    ],
+    "ASC387": [
+      "green chutney",
+      "hari chutney",
+      "pudina chutney"
+    ],
+    "ASC474": [
+      "dhokla",
+      "khaman dhokla"
+    ],
+    "BFP039": [
+      "upma",
+      "rava upma"
+    ],
+    "BFP044": [
+      "poha",
+      "kanda poha",
+      "kanda pohe"
+    ],
+    "BFP045": [
+      "veg poha"
+    ],
+    "BFP052": [
+      "egg bhurji",
+      "anda bhurji"
+    ],
+    "BFP134": [
+      "jeera rice"
+    ],
+    "BFP144": [
+      "khichdi",
+      "moong dal khichdi",
+      "dal khichdi"
+    ],
+    "BFP148": [
+      "dosa",
+      "sada dosa"
+    ],
+    "BFP152": [
+      "uttapam",
+      "uthappam"
+    ],
+    "BFP153": [
+      "appam",
+      "palappam"
+    ],
+    "BFP172": [
+      "dal palak",
+      "palak dal"
+    ],
+    "BFP176": [
+      "rasam",
+      "tamarind rasam"
+    ],
+    "BFP185": [
+      "kabuli chana",
+      "chole"
+    ],
+    "BFP187": [
+      "gatte ki sabzi",
+      "besan gatte"
+    ],
+    "BFP194": [
+      "mutton korma"
+    ],
+    "BFP222": [
+      "chicken korma"
+    ],
+    "BFP223": [
+      "macher jhol",
+      "bengali fish curry"
+    ],
+    "BFP230": [
+      "prawn curry",
+      "jhinga curry"
+    ],
+    "BFP240": [
+      "egg curry",
+      "anda curry"
+    ],
+    "BFP263": [
+      "arbi sabzi"
+    ],
+    "BFP269": [
+      "bhindi",
+      "bhindi sabzi",
+      "bhindi fry"
+    ],
+    "BFP392": [
+      "rasgulla",
+      "rosogolla"
+    ],
+    "BFP393": [
+      "rasmalai",
+      "ras malai"
+    ],
+    "BFP431": [
+      "veg samosa"
+    ],
+    "BFP436": [
+      "medu vada",
+      "uzhunnu vada",
+      "vada"
+    ],
+    "BFP439": [
+      "khaman"
+    ],
+    "OSR005": [
+      "thandai"
+    ],
+    "OSR014": [
+      "kesari bath",
+      "rava kesari"
+    ],
+    "OSR024": [
+      "shrikhand"
+    ],
+    "OSR025": [
+      "rabri",
+      "rabdi"
+    ],
+    "OSR076": [
+      "gobi 65",
+      "cauliflower 65"
+    ],
+    "OSR099": [
+      "sabudana khichdi"
+    ],
+    "OSR100": [
+      "besan chilla",
+      "besan cheela"
+    ],
+    "OSR102": [
+      "khakhra"
+    ],
+    "OSR103": [
+      "pesarattu"
+    ],
+    "OSR104": [
+      "thepla"
+    ],
+    "OSR111": [
+      "veg manchurian",
+      "manchurian"
+    ],
+    "OSR112": [
+      "pav bhaji",
+      "bhaji"
+    ],
+    "OSR114": [
+      "bhel",
+      "bhel puri"
+    ],
+    "OSR139": [
+      "dal makhani"
+    ],
+    "OSR141": [
+      "dalma"
+    ],
+    "OSR142": [
+      "chana dal"
+    ],
+    "OSR143": [
+      "kulthi dal",
+      "horse gram"
+    ],
+    "OSR146": [
+      "handvo"
+    ],
+    "OSR147": [
+      "sev",
+      "omapodi"
+    ]
+  },
+  "byId": {
+    "marie-biscuit": [
+      "marie gold",
+      "britannia marie"
+    ],
+    "milk-toned": [
+      "amul taaza",
+      "mother dairy toned",
+      "toned milk"
+    ],
+    "milk-full": [
+      "amul gold",
+      "full cream milk"
+    ],
+    "curd": [
+      "amul masti dahi",
+      "mother dairy dahi"
+    ],
+    "ghee": [
+      "amul ghee"
+    ],
+    "butter": [
+      "white butter"
+    ],
+    "toor-dal": [
+      "dal fry",
+      "arhar ki dal",
+      "tuvar dal",
+      "toor dal"
+    ]
+  },
+  "everyday": [
+    "ASC001",
+    "ASC002",
+    "ASC008",
+    "ASC021",
+    "ASC022",
+    "ASC047",
+    "ASC048",
+    "ASC050",
+    "ASC051",
+    "ASC057",
+    "ASC059",
+    "ASC061",
+    "ASC096",
+    "ASC097",
+    "ASC098",
+    "ASC099",
+    "ASC100",
+    "ASC101",
+    "ASC103",
+    "ASC105",
+    "ASC107",
+    "ASC112",
+    "ASC113",
+    "ASC114",
+    "ASC115",
+    "ASC122",
+    "ASC123",
+    "ASC124",
+    "ASC125",
+    "ASC126",
+    "ASC127",
+    "ASC129",
+    "ASC134",
+    "ASC142",
+    "ASC143",
+    "ASC144",
+    "ASC146",
+    "ASC147",
+    "ASC148",
+    "ASC149",
+    "ASC150",
+    "ASC151",
+    "ASC152",
+    "ASC153",
+    "ASC155",
+    "ASC156",
+    "ASC157",
+    "ASC159",
+    "ASC160",
+    "ASC161",
+    "ASC162",
+    "ASC163",
+    "ASC165",
+    "ASC167",
+    "ASC171",
+    "ASC172",
+    "ASC173",
+    "ASC174",
+    "ASC175",
+    "ASC177",
+    "ASC178",
+    "ASC184",
+    "ASC190",
+    "ASC191",
+    "ASC193",
+    "ASC195",
+    "ASC214",
+    "ASC215",
+    "ASC217",
+    "ASC219",
+    "ASC221",
+    "ASC222",
+    "ASC224",
+    "ASC226",
+    "ASC227",
+    "ASC229",
+    "ASC240",
+    "ASC241",
+    "ASC242",
+    "ASC243",
+    "ASC244",
+    "ASC246",
+    "ASC247",
+    "ASC252",
+    "ASC269",
+    "ASC273",
+    "ASC276",
+    "ASC277",
+    "ASC279",
+    "ASC282",
+    "ASC285",
+    "ASC292",
+    "ASC293",
+    "ASC295",
+    "ASC321",
+    "ASC335",
+    "ASC336",
+    "ASC339",
+    "ASC340",
+    "ASC343",
+    "ASC348",
+    "ASC351",
+    "ASC352",
+    "ASC354",
+    "ASC358",
+    "ASC360",
+    "ASC361",
+    "ASC365",
+    "ASC366",
+    "ASC378",
+    "ASC381",
+    "ASC383",
+    "ASC386",
+    "ASC387",
+    "ASC474",
+    "BFP024",
+    "BFP039",
+    "BFP040",
+    "BFP043",
+    "BFP044",
+    "BFP045",
+    "BFP046",
+    "BFP052",
+    "BFP134",
+    "BFP136",
+    "BFP144",
+    "BFP147",
+    "BFP148",
+    "BFP150",
+    "BFP152",
+    "BFP153",
+    "BFP170",
+    "BFP172",
+    "BFP176",
+    "BFP177",
+    "BFP178",
+    "BFP185",
+    "BFP187",
+    "BFP194",
+    "BFP222",
+    "BFP223",
+    "BFP230",
+    "BFP239",
+    "BFP240",
+    "BFP257",
+    "BFP263",
+    "BFP264",
+    "BFP269",
+    "BFP273",
+    "BFP276",
+    "BFP392",
+    "BFP393",
+    "BFP431",
+    "BFP436",
+    "BFP439",
+    "BFP440",
+    "BFP444",
+    "BFP579",
+    "OSR005",
+    "OSR014",
+    "OSR024",
+    "OSR025",
+    "OSR066",
+    "OSR076",
+    "OSR077",
+    "OSR099",
+    "OSR100",
+    "OSR102",
+    "OSR103",
+    "OSR104",
+    "OSR111",
+    "OSR112",
+    "OSR114",
+    "OSR115",
+    "OSR139",
+    "OSR141",
+    "OSR142",
+    "OSR143",
+    "OSR144",
+    "OSR145",
+    "OSR147"
+  ],
+  "names": {
+    "BFP261": "Cabbage rolls, dry (Pattagobhi rolls)",
+    "BFP262": "Cabbage rolls in curry (Pattagobhi rolls)",
+    "ASC003": "Espresso coffee",
+    "ASC061": "Plain omelette",
+    "ASC062": "Stuffed egg omelette",
+    "BFP054": "French omelette",
+    "BFP055": "Puffy omelette",
+    "BFP056": "Orange omelette",
+    "BFP057": "Cheese and mushroom omelette",
+    "BFP058": "Spanish omelette",
+    "OSR072": "Corn omelette",
+    "ASC380": "Vegetarian scotch egg",
+    "ASC133": "Macaroni cheese pie",
+    "ASC257": "Hawaiian salad",
+    "ASC263": "Waldorf salad",
+    "ASC319": "Trifle pudding",
+    "BFP352": "Pear chocolate sundae",
+    "OSR074": "Paneer do pyaza"
+  },
+  "units": {
+    "ASC241": {
+      "piece": 150
+    },
+    "ASC096": {
+      "roti": 36
+    },
+    "ASC113": {
+      "katori": 130
+    },
+    "BFP044": {
+      "katori": 100
+    },
+    "OSR112": {
+      "katori": 150
+    }
+  },
+  "categories": {
+    "ASC047": "snack",
+    "ASC048": "snack",
+    "ASC050": "snack",
+    "ASC051": "snack",
+    "ASC052": "snack",
+    "ASC053": "snack",
+    "ASC054": "snack",
+    "ASC055": "snack",
+    "ASC134": "indochinese",
+    "ASC135": "indochinese",
+    "ASC129": "indochinese",
+    "ASC092": "soup",
+    "ASC093": "soup",
+    "ASC224": "indochinese",
+    "ASC244": "indochinese",
+    "OSR065": "indochinese",
+    "OSR075": "indochinese",
+    "OSR076": "indochinese",
+    "OSR111": "indochinese",
+    "OSR081": "chutney",
+    "ASC383": "indochinese",
+    "BFP203": "indochinese",
+    "BFP221": "indochinese",
+    "ASC149": "street",
+    "OSR112": "street",
+    "OSR114": "street",
+    "OSR116": "street",
+    "OSR108": "street",
+    "ASC279": "street",
+    "ASC170": "snack",
+    "ASC381": "paneer",
+    "ASC226": "paneer",
+    "ASC215": "paneer",
+    "ASC221": "paneer",
+    "ASC222": "paneer",
+    "ASC223": "paneer",
+    "ASC225": "paneer",
+    "ASC191": "paneer",
+    "ASC195": "paneer",
+    "OSR074": "paneer",
+    "OSR077": "paneer",
+    "BFP091": "paneer",
+    "ASC162": "dal",
+    "ASC161": "dal",
+    "ASC163": "dal",
+    "ASC164": "dal",
+    "ASC165": "dal",
+    "ASC168": "dal",
+    "ASC169": "dal",
+    "BFP185": "dal",
+    "BFP187": "dal",
+    "BFP280": "dal",
+    "ASC167": "dal",
+    "BFP176": "dal",
+    "BFP177": "dal",
+    "ASC474": "snack",
+    "BFP439": "snack",
+    "BFP440": "snack",
+    "BFP573": "snack",
+    "OSR115": "snack",
+    "OSR146": "snack",
+    "ASC144": "south",
+    "BFP147": "south",
+    "BFP579": "south",
+    "BFP436": "south",
+    "BFP437": "south",
+    "ASC378": "south",
+    "BFP039": "south",
+    "BFP040": "south",
+    "BFP041": "south",
+    "BFP042": "south",
+    "BFP043": "south",
+    "BFP578": "south",
+    "OSR103": "south",
+    "OSR105": "south",
+    "OSR014": "sweet",
+    "OSR113": "snack",
+    "OSR102": "bread",
+    "OSR104": "bread",
+    "ASC056": "egg",
+    "ASC256": "egg",
+    "OSR069": "egg",
+    "OSR070": "egg",
+    "OSR071": "egg",
+    "ASC238": "meat",
+    "ASC380": "snack",
+    "ASC044": "continental",
+    "ASC064": "meat",
+    "ASC104": "bread",
+    "ASC362": "snack",
+    "BFP052": "egg",
+    "ASC057": "egg",
+    "ASC058": "egg",
+    "ASC059": "egg",
+    "ASC060": "egg",
+    "ASC061": "egg",
+    "ASC062": "egg",
+    "BFP054": "egg",
+    "BFP055": "egg",
+    "BFP056": "egg",
+    "BFP057": "egg",
+    "BFP058": "egg",
+    "OSR072": "egg",
+    "BFP240": "egg",
+    "BFP428": "snack",
+    "ASC357": "snack",
+    "BFP420": "snack",
+    "BFP421": "snack",
+    "ASC369": "snack",
+    "BFP430": "snack",
+    "ASC024": "continental",
+    "ASC037": "continental",
+    "ASC028": "continental",
+    "ASC043": "continental",
+    "ASC035": "continental",
+    "ASC045": "continental",
+    "ASC031": "continental",
+    "OSR027": "continental",
+    "OSR029": "continental",
+    "BFP461": "continental",
+    "BFP473": "continental",
+    "ASC020": "drink",
+    "OSR004": "sweet",
+    "OSR017": "sweet",
+    "OSR009": "drink",
+    "ASC281": "chutney",
+    "BFP447": "chutney",
+    "ASC269": "dairy",
+    "ASC270": "dairy",
+    "ASC271": "dairy",
+    "ASC272": "dairy",
+    "ASC273": "dairy",
+    "ASC274": "dairy",
+    "ASC275": "dairy",
+    "ASC276": "dairy",
+    "ASC277": "dairy",
+    "ASC278": "dairy",
+    "OSR024": "sweet",
+    "OSR025": "sweet",
+    "ASC461": "snack",
+    "ASC462": "snack",
+    "ASC456": "snack",
+    "ASC457": "snack",
+    "ASC458": "snack",
+    "ASC459": "sweet",
+    "ASC460": "snack",
+    "ASC463": "rice",
+    "ASC464": "bread",
+    "ASC465": "sweet",
+    "ASC466": "sweet",
+    "ASC467": "bread",
+    "ASC468": "snack",
+    "ASC469": "snack",
+    "ASC470": "sweet",
+    "ASC471": "sweet",
+    "ASC472": "bread",
+    "ASC473": "snack",
+    "ASC237": "meat",
+    "ASC367": "snack",
+    "BFP178": "dal",
+    "BFP166": "dal",
+    "ASC065": "snack",
+    "ASC066": "bakery",
+    "ASC067": "sweet",
+    "BFP124": "continental",
+    "BFP125": "continental",
+    "BFP127": "meat",
+    "OSR101": "snack",
+    "ASC450": "bakery",
+    "ASC454": "bakery",
+    "ASC264": "continental",
+    "BFP535": "bakery",
+    "OSR121": "bakery",
+    "OSR152": "snack",
+    "ASC481": "snack",
+    "OSR119": "snack",
+    "ASC477": "snack",
+    "ASC329": "bakery",
+    "ASC403": "bakery",
+    "ASC404": "bakery",
+    "ASC405": "bakery",
+    "BFP529": "bakery",
+    "BFP531": "bakery",
+    "BFP532": "bakery",
+    "BFP386": "sweet"
+  }
+}
