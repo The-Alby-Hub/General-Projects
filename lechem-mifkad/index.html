@@ -544,6 +544,55 @@ button.pill { min-height: 26px; }
   resize: vertical;
 }
 
+/* =========================================================
+   Supplements (Phase 4)
+   ========================================================= */
+.supps-card { padding: 14px 12px 10px 16px; display: grid; gap: 6px; }
+@media (min-width: 880px) { .supps-card { grid-column: 2; } }
+.sp-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.sp-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+.sp-row + .sp-row { border-top: 1px solid var(--line); }
+.sp-tick {
+  width: 40px; height: 40px; flex: none; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 2px solid var(--line); color: transparent; background: var(--surface);
+  transition: background-color .18s, border-color .18s, transform .12s var(--ease);
+}
+.sp-tick svg { width: 18px; height: 18px; }
+.sp-tick:hover:not(:disabled) { border-color: var(--accent); }
+.sp-tick:active:not(:disabled) { transform: scale(.92); }
+.sp-tick[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.sp-tick:disabled { opacity: .45; cursor: not-allowed; }
+.sp-time {
+  flex: none; min-height: 36px; padding: 0 10px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 13px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.sp-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sp-item {
+  width: 100%; display: grid; gap: 2px; text-align: left;
+  padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-2);
+  transition: background-color .2s;
+}
+.sp-item:hover { background: var(--accent-soft); }
+.sp-stats { font-size: 12.5px; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sp-preview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sp-preview + .preview-note { margin-top: -10px; }
+.sp-macros { border-top: 0; padding: 0; }
+.sp-label { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.sp-label td { padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.sp-label td:last-child { text-align: right; white-space: nowrap; padding-left: 12px; color: var(--muted); }
+.sp-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sp-pair { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; }
+.sp-select { appearance: auto; -webkit-appearance: auto; min-width: 0; }
+.sp-dose { display: grid; grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1.25fr) 40px; gap: 8px; align-items: center; }
+.sp-lbl { display: grid; grid-template-columns: minmax(0, 1fr) 76px 60px 44px; gap: 8px; align-items: center; }
+.sp-lbl .text-input, .sp-dose .text-input { padding: 0 8px; }
+.sp-add-row { justify-self: start; display: inline-flex; align-items: center; gap: 4px; }
+.sp-add-row svg { width: 16px; height: 16px; }
+.sp-notes-input { padding: 10px 12px; min-height: 80px; resize: vertical; font: inherit; }
+.icon-btn:disabled { opacity: .35; cursor: not-allowed; }
+
 /* Toast */
 .toast {
   position: fixed; left: 50%; z-index: 60;
@@ -612,9 +661,10 @@ button.pill { min-height: 26px; }
       <div class="ring-grid" id="ring-grid"></div>
     </section>
     <section class="meals" id="meals" aria-label="Meals"></section>
+    <section class="card supps-card" id="supps" aria-label="Supplements"></section>
   </main>
 
-  <p class="foot">Nutrition values are per 100 g and approximate; oil and ghee vary a lot. Foods marked <b>INDB</b> come from the Indian Nutrient Databank (INDB, 2024); <b>Estimate</b> means typical values estimated by Claude (including INDB fried dishes corrected for frying oil); <b>Label</b> and <b>Custom</b> are foods you added. Raw ingredients come from <b>IFCT 2017</b> (ICMR-NIN), with <b>UK CoFID</b> and <b>USDA</b> for a few it lacks; see Settings (⚙) for sources. Your data stays in this browser and in the files you save. Nothing is sent to a server.</p>
+  <p class="foot">Nutrition values are per 100 g and approximate; oil and ghee vary a lot. Foods marked <b>INDB</b> come from the Indian Nutrient Databank (INDB, 2024); <b>Estimate</b> means typical values estimated by Claude (including INDB fried dishes corrected for frying oil); <b>Label</b> and <b>Custom</b> are foods you added. Raw ingredients come from <b>IFCT 2017</b> (ICMR-NIN), with <b>UK CoFID</b> and <b>USDA</b> for a few it lacks; see Settings (⚙) for sources. Supplements you mark as counting toward nutrition add their label values to the day's totals. Your data, supplements included, stays in this browser and in the files you save. Nothing is sent to a server.</p>
 </div>
 
 <div class="backdrop" id="backdrop" data-action="close-sheet" hidden></div>
@@ -2705,7 +2755,7 @@ button.pill { min-height: 26px; }
 const Config = {
   appId: 'lechem-mifkad',
   legacyAppIds: ['food-tracker'], // backups saved before the rename still load
-  schemaVersion: 1,
+  schemaVersion: 2, // 2: supplements and supplementLogs (Phase 4)
   storageKey: 'lechem-mifkad:v1',
   legacyStorageKeys: ['thali-diary:v1'], // moved to storageKey on first load, then removed
   meals: [
@@ -2766,6 +2816,61 @@ const Config = {
   qualifierWords: ['raw', 'kacha', 'kachcha', 'kaccha', 'uncooked', 'tsp', 'teaspoon', 'tbsp', 'tablespoon', 'ingredient', 'ingredients'],
   builtInSources: ['INDB', 'IFCT', 'CoFID', 'USDA', 'estimate'],
   defaultGoals: { kcal: 2000, protein: 60, carbs: 250, fat: 65, fibre: 30 },
+  // Supplements (Phase 4). A supplement's serving is what its label calls "per serving";
+  // each dose (one tick on the checklist) takes some count of that unit.
+  supplementForms: {
+    tablet: { label: 'Tablet', unit: 'tablet' }, capsule: { label: 'Capsule', unit: 'capsule' },
+    softgel: { label: 'Softgel', unit: 'softgel' }, powder: { label: 'Powder', unit: 'scoop' },
+    liquid: { label: 'Liquid', unit: 'ml' }, gummy: { label: 'Gummy', unit: 'gummy' },
+  },
+  supplementUnits: {
+    tablet: { one: 'tablet', many: 'tablets' }, capsule: { one: 'capsule', many: 'capsules' },
+    softgel: { one: 'softgel', many: 'softgels' }, gummy: { one: 'gummy', many: 'gummies' },
+    scoop: { one: 'scoop', many: 'scoops' }, sachet: { one: 'sachet', many: 'sachets' },
+    g: { one: 'g', many: 'g' }, ml: { one: 'ml', many: 'ml' }, drop: { one: 'drop', many: 'drops' },
+  },
+  strengthUnits: ['mg', 'mcg', 'g', 'IU', 'ml'],
+  doseTimes: [
+    { id: 'morning', label: 'Morning' },
+    { id: 'afternoon', label: 'Afternoon' },
+    { id: 'night', label: 'Night' },
+  ],
+  foodTiming: { before: 'before food', with: 'with food', after: 'after food' },
+  weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], // index = Date.getDay()
+  weekOrder: [1, 2, 3, 4, 5, 6, 0],
+  // Preloaded once per browser. Fixed ids and timestamp, so two devices that both preload
+  // merge into one copy, and any edit you make is newer than the preload.
+  supplementSeedAt: '2026-09-27T00:00:00.000Z',
+  seedSupplements: [
+    {
+      id: 'sup_seed_wn_fishoil', name: 'Wellbeing Nutrition Fish Oil', form: 'softgel',
+      serving: { count: 2, unit: 'softgel' }, strength: null, countsToNutrition: true,
+      nutrients: { kcal: 24.74, protein: 0.01, carbs: 0.55, fat: 2.5, fibre: 0 },
+      doses: [{ time: 'morning', food: null, count: 2 }],
+      label: [
+        ['Sugar', 0, 'g'], ['Saturated fat', 0.26, 'g'], ['MUFA', 0.23, 'g'], ['PUFA', 2.00, 'g'], ['Trans fat', 0, 'g'],
+        ['Cholesterol', 0, 'mg'], ['Sodium', 2.15, 'mg'], ['Fish oil (marine lipid concentrate)', 1850, 'mg'],
+        ['Total omega-3', 1537, 'mg'], ['EPA', 763, 'mg'], ['DHA', 508, 'mg'], ['Other omega-3', 266, 'mg'],
+        ['Curcumin extract', 50, 'mg'], ['Peppermint oil', 20, 'mg'],
+      ],
+    },
+    {
+      id: 'sup_seed_wn_multi', name: 'Wellbeing Nutrition Multivitamin', form: 'capsule',
+      serving: { count: 2, unit: 'capsule' }, strength: null, countsToNutrition: true,
+      nutrients: { kcal: 10.33, protein: 0.24, carbs: 0.43, fat: 0.85, fibre: 0 },
+      doses: [{ time: 'morning', food: null, count: 2 }],
+      label: [
+        ['Sugar', 0, 'g'], ['Sodium', 1.66, 'mg'],
+        ['Vitamin B1', 1.8, 'mg'], ['Vitamin B2', 2.5, 'mg'], ['Vitamin B3', 18, 'mg'], ['Vitamin B5', 5, 'mg'],
+        ['Vitamin B6', 2.4, 'mg'], ['Vitamin B7 (biotin)', 40, 'mcg'], ['Vitamin E', 10, 'mg'], ['Iron', 3.6, 'mg'],
+        ['Copper', 0.9, 'mg'], ['Iodine', 140, 'mcg'], ['Zinc', 11, 'mg'], ['Chromium', 35, 'mcg'],
+        ['Molybdenum', 45, 'mcg'], ['Inositol', 20, 'mg'], ['Folic acid (B9)', 300, 'mcg'], ['Vitamin B12', 2.2, 'mcg'],
+        ['Vegan DHA', 800, 'mg'], ['Vitamin C', 80, 'mg'], ['Vitamin D3', 600, 'IU'], ['Vitamin K2', 55, 'mcg'],
+        ['Vitamin A', 1000, 'mcg'], ['Manganese', 2.3, 'mg'], ['Selenium', 40, 'mcg'], ['Boron', 1, 'mg'],
+        ['Superfood blend', 150, 'mg'], ['Digestive enzymes', 40, 'mg'], ['Antioxidant blend', 100, 'mg'],
+      ],
+    },
+  ],
 };
 const NUTRIENT_KEYS = Config.nutrients.map(n => n.key);
 const MEAL_IDS = new Set(Config.meals.map(m => m.id));
@@ -2821,8 +2926,10 @@ const Bus = {
      goals:       { kcal, protein, carbs, fat, fibre, updatedAt }
      customFoods: { [id]: FoodItem & { source:'label'|'custom', updatedAt } }  (foods you add yourself)
      favourites:  { [foodId]: { on, updatedAt } }  (un-starring keeps the record, so merges respect it)
+     supplements:    { [id]: Supplement }     (see Supplements below; deleted ones stay, flagged)
+     supplementLogs: { [id]: SupplementLog }  (one per dose taken; unticking flags it deleted)
      settings:    { theme, features: { ai: false } }
-     meta:        { lastExportedAt, dirty }
+     meta:        { lastExportedAt, dirty, supplementsSeeded }
    ========================================================= */
 const Store = {
   available: true,
@@ -2834,8 +2941,10 @@ const Store = {
       goals: { ...Config.defaultGoals, updatedAt: null },
       customFoods: {},
       favourites: {},
+      supplements: {},
+      supplementLogs: {},
       settings: { theme: 'system', features: { ai: false } },
-      meta: { lastExportedAt: null, dirty: false },
+      meta: { lastExportedAt: null, dirty: false, supplementsSeeded: false },
     };
   },
   load() {
@@ -2870,6 +2979,8 @@ const Store = {
       goals: { ...base.goals, ...(data.goals || {}) },
       customFoods: data.customFoods && typeof data.customFoods === 'object' ? data.customFoods : {},
       favourites: data.favourites && typeof data.favourites === 'object' ? data.favourites : {},
+      supplements: data.supplements && typeof data.supplements === 'object' ? data.supplements : {},
+      supplementLogs: data.supplementLogs && typeof data.supplementLogs === 'object' ? data.supplementLogs : {},
       settings: { ...base.settings, ...settings, features: { ...base.settings.features, ...(settings.features || {}) } },
       meta: { ...base.meta, ...(data.meta || {}) },
     };
@@ -3232,6 +3343,205 @@ const Totals = {
 };
 
 /* =========================================================
+   Supplements (Phase 4): your supplements, the daily checklist and adherence.
+   Supplement:
+     { id, name, form, serving:{count, unit}, strength:{amount, unit}|null,
+       countsToNutrition, nutrients:{kcal,protein,carbs,fat,fibre}|null  (per serving),
+       label:[{name, amount, unit}]  (the rest of the label; shown, never totalled),
+       notes,
+       plan:[{ from:'YYYY-MM-DD', status:'active'|'paused'|'archived', days:[0-6],
+               doses:[{ time:'morning'|'afternoon'|'night', food:'before'|'with'|'after'|null, count }] }],
+       createdAt, updatedAt, deleted }
+   The plan is a history, oldest first: a day is judged by the last entry dated on or before it,
+   so pausing or changing the schedule never rewrites past adherence.
+   SupplementLog (one per dose taken):
+     { id:'<supplementId>|<date>|<doseIndex>', supplementId, date, doseIndex, label, count, takenAt,
+       nutrients|null, createdAt, updatedAt, deleted }
+   The id comes from the dose itself, so ticking the same dose on two devices merges into one record.
+   A log keeps the nutrients it was ticked with, so editing the supplement later never changes past days.
+   ========================================================= */
+const Supplements = {
+  statuses: ['active', 'paused', 'archived'],
+  get(id) { const s = Store.state.supplements[id]; return s && !s.deleted ? s : null; },
+  all() {
+    return Object.values(Store.state.supplements).filter(s => !s.deleted)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+  current(sup) { return sup.plan[sup.plan.length - 1]; },
+  status(sup) { return this.current(sup).status; },
+  start(sup) { return sup.plan[0].from; },
+  planOn(sup, date) {
+    let p = null;
+    for (const x of sup.plan) if (x.from <= date) p = x;
+    return p;
+  },
+  // The doses due on a date: none before the supplement existed, on days off, or while paused or archived.
+  dueOn(sup, date) {
+    const p = this.planOn(sup, date);
+    if (!p || p.status !== 'active' || !p.days.includes(U.fromYmd(date).getDay())) return [];
+    return p.doses;
+  },
+  logId(supId, date, i) { return `${supId}|${date}|${i}`; },
+  log(supId, date, i) {
+    const l = Store.state.supplementLogs[this.logId(supId, date, i)];
+    return l && !l.deleted ? l : null;
+  },
+  // Taken doses on a date that count: logs of deleted supplements are hidden everywhere.
+  logsOn(date) {
+    return Object.values(Store.state.supplementLogs)
+      .filter(l => !l.deleted && l.date === date && this.get(l.supplementId));
+  },
+  unitName(unit, n) { const u = Config.supplementUnits[unit] || { one: unit, many: unit }; return n === 1 ? u.one : u.many; },
+  amountText(count, unit) { return `${U.qty(count)} ${this.unitName(unit, count)}`; },
+  doseLabel(sup, dose) {
+    const t = (Config.doseTimes.find(x => x.id === dose.time) || { label: dose.time }).label;
+    return dose.food ? `${t}, ${Config.foodTiming[dose.food]}` : t;
+  },
+  daysText(days) {
+    if (days.length === 7) return 'Every day';
+    return Config.weekOrder.filter(d => days.includes(d)).map(d => Config.weekdays[d]).join(', ');
+  },
+  scheduleText(sup) {
+    const p = this.current(sup);
+    const doses = p.doses.map(d => `${this.amountText(d.count, sup.serving.unit)} ${this.doseLabel(sup, d).toLowerCase()}`).join(' + ');
+    return `${doses} · ${this.daysText(p.days)}`;
+  },
+  // A dose's share of the label's per-serving values; null when the supplement adds nothing.
+  doseNutrients(sup, count) {
+    if (!sup.countsToNutrition || !sup.nutrients) return null;
+    const k = count / sup.serving.count;
+    return Object.fromEntries(NUTRIENT_KEYS.map(n => [n, Math.round((Number(sup.nutrients[n]) || 0) * k * 100) / 100]));
+  },
+  // Dose i on a date, ticked now: the time is today's clock time placed on that date.
+  tick(supId, date, i) {
+    const sup = this.get(supId);
+    const dose = sup && this.dueOn(sup, date)[i];
+    if (!dose || date > U.ymd()) return null;
+    const now = new Date();
+    const at = U.fromYmd(date);
+    at.setHours(now.getHours(), now.getMinutes(), 0, 0);
+    const id = this.logId(supId, date, i);
+    const cur = Store.state.supplementLogs[id];
+    const t = U.now();
+    Store.state.supplementLogs[id] = {
+      id, supplementId: supId, date, doseIndex: i,
+      label: this.doseLabel(sup, dose), count: dose.count,
+      takenAt: at.toISOString(),
+      nutrients: this.doseNutrients(sup, dose.count),
+      createdAt: cur ? cur.createdAt : t, updatedAt: t, deleted: false,
+    };
+    Store.commit();
+    return Store.state.supplementLogs[id];
+  },
+  untick(id) {
+    const cur = Store.state.supplementLogs[id];
+    if (!cur || cur.deleted) return;
+    Store.state.supplementLogs[id] = { ...cur, deleted: true, updatedAt: U.now() };
+    Store.commit();
+  },
+  setTime(id, hhmm) {
+    const cur = Store.state.supplementLogs[id];
+    const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || '');
+    if (!cur || cur.deleted || !m) return false;
+    const at = U.fromYmd(cur.date);
+    at.setHours(Number(m[1]), Number(m[2]), 0, 0);
+    Store.state.supplementLogs[id] = { ...cur, takenAt: at.toISOString(), updatedAt: U.now() };
+    Store.commit();
+    return true;
+  },
+  // data: { name, form, serving, strength, countsToNutrition, nutrients, label, notes, days, doses }
+  add(data, { commit = true } = {}) {
+    const t = U.now();
+    const { days, doses, ...rest } = data;
+    const sup = { id: U.uid('sup'), ...rest, plan: [{ from: U.ymd(), status: 'active', days, doses }], createdAt: t, updatedAt: t, deleted: false };
+    Store.state.supplements[sup.id] = sup;
+    if (commit) Store.commit();
+    return sup;
+  },
+  // A change to the schedule or status adds a plan entry from today (or replaces today's).
+  withPlan(sup, patch) {
+    const last = this.current(sup);
+    const next = { ...last, ...patch, from: U.ymd() };
+    if (JSON.stringify(next) === JSON.stringify(last)) return sup.plan;
+    return last.from >= next.from ? [...sup.plan.slice(0, -1), { ...next, from: last.from }] : [...sup.plan, next];
+  },
+  update(id, data) {
+    const sup = this.get(id);
+    if (!sup) return null;
+    const { days, doses, ...rest } = data;
+    const next = { ...sup, ...rest, plan: this.withPlan(sup, { days, doses }), updatedAt: U.now() };
+    Store.state.supplements[id] = next;
+    Store.commit();
+    return next;
+  },
+  setStatus(id, status) {
+    const sup = this.get(id);
+    if (!sup || !this.statuses.includes(status)) return;
+    Store.state.supplements[id] = { ...sup, plan: this.withPlan(sup, { status }), updatedAt: U.now() };
+    Store.commit();
+  },
+  remove(id) {
+    const sup = this.get(id);
+    if (!sup) return;
+    Store.state.supplements[id] = { ...sup, deleted: true, updatedAt: U.now() };
+    Store.commit();
+  },
+  // Doses taken ÷ doses due over the last `days` days. Today counts only once every dose is taken,
+  // so an unfinished morning doesn't look like a miss.
+  adherence(sup, days, today = U.ymd()) {
+    let due = 0, taken = 0;
+    const start = this.start(sup);
+    for (let n = 0; n < days; n++) {
+      const d = U.addDays(today, -n);
+      if (d < start) break;
+      const doses = this.dueOn(sup, d);
+      if (!doses.length) continue;
+      const got = doses.filter((_, i) => this.log(sup.id, d, i)).length;
+      if (d === today && got < doses.length) continue;
+      due += doses.length; taken += got;
+    }
+    return { due, taken, pct: due ? Math.round(taken / due * 100) : null };
+  },
+  overall(days, today = U.ymd()) {
+    let due = 0, taken = 0;
+    for (const s of this.all()) { const a = this.adherence(s, days, today); due += a.due; taken += a.taken; }
+    return { due, taken, pct: due ? Math.round(taken / due * 100) : null };
+  },
+  // Scheduled days in a row with every dose taken, back from yesterday (plus today once it's complete).
+  // Days off and paused days are skipped without breaking the streak.
+  streak(sup, today = U.ymd()) {
+    const start = this.start(sup);
+    let n = 0;
+    for (let k = 0, d = today; k < 3660 && d >= start; k++, d = U.addDays(d, -1)) {
+      const doses = this.dueOn(sup, d);
+      if (!doses.length) continue;
+      const all = doses.every((_, i) => this.log(sup.id, d, i));
+      if (all) n++;
+      else if (d !== today) break;
+    }
+    return n;
+  },
+  // Once per browser: add the preloaded supplements (a deleted one never comes back).
+  seed() {
+    const st = Store.state;
+    if (st.meta.supplementsSeeded) return false;
+    const at = Config.supplementSeedAt;
+    for (const s of Config.seedSupplements) {
+      if (st.supplements[s.id]) continue;
+      const { doses, label, ...rest } = s;
+      st.supplements[s.id] = {
+        ...rest, notes: '',
+        label: label.map(([name, amount, unit]) => ({ name, amount, unit })),
+        plan: [{ from: U.ymd(), status: 'active', days: [0, 1, 2, 3, 4, 5, 6], doses }],
+        createdAt: at, updatedAt: at, deleted: false,
+      };
+    }
+    st.meta.supplementsSeeded = true;
+    return true;
+  },
+};
+
+/* =========================================================
    Features: optional add-ons, off by default.
    A future AI logger registers a log source here, for example:
      Features.register({ id: 'ai', flag: 'ai', label: 'Describe a meal',
@@ -3264,6 +3574,9 @@ const Host = {
    updatedAt wins (a tie keeps this device's copy). Deletions travel as entries
    with deleted:true, so they win over older copies too. Goals, your own foods and
    favourites: newer wins. Files saved before Phase 2 simply have no favourites.
+   Supplements and their logs follow the diary's rules exactly (match by id, newer
+   updatedAt wins, a tie keeps this device's copy, deletions travel as deleted:true).
+   Files saved before Phase 4 simply have none.
    ========================================================= */
 const Sync = {
   filename() { return `lechem-mifkad-${U.ymd()}.json`; },
@@ -3277,6 +3590,8 @@ const Sync = {
       goals: s.goals,
       customFoods: Object.values(s.customFoods),
       favourites: Object.entries(s.favourites).map(([foodId, f]) => ({ foodId, on: !!f.on, updatedAt: f.updatedAt })),
+      supplements: Object.values(s.supplements),
+      supplementLogs: Object.values(s.supplementLogs).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)),
       settings: { features: s.settings.features },
     };
   },
@@ -3305,6 +3620,99 @@ const Sync = {
       deleted: !!raw.deleted,
       ...unknownField(raw.unknown),
     };
+  },
+  cleanNutrients(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const out = {};
+    for (const k of NUTRIENT_KEYS) {
+      const v = Number(raw[k]);
+      out[k] = isFinite(v) && v >= 0 && v <= 5000 ? v : 0;
+    }
+    return out;
+  },
+  cleanSupplement(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (typeof raw.id !== 'string' || !raw.id || raw.id.length > 100) return null;
+    const name = String(raw.name || '').trim().slice(0, 120);
+    if (!name || !Array.isArray(raw.plan)) return null;
+    const cnt = n => { const v = Number(n); return v > 0 && v <= 1000 ? v : null; };
+    const srv = raw.serving || {};
+    const serving = { count: cnt(srv.count) || 1, unit: Config.supplementUnits[srv.unit] ? srv.unit : 'tablet' };
+    const str = raw.strength;
+    const strength = str && Number(str.amount) > 0 && Config.strengthUnits.includes(str.unit)
+      ? { amount: Number(str.amount), unit: str.unit } : null;
+    const plan = [];
+    for (const p of raw.plan.slice(0, 500)) {
+      if (!p || !U.isYmd(p.from) || !Supplements.statuses.includes(p.status)) continue;
+      const days = [...new Set((Array.isArray(p.days) ? p.days : []).map(Number).filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort();
+      const doses = (Array.isArray(p.doses) ? p.doses : []).slice(0, 12)
+        .filter(d => d && Config.doseTimes.some(t => t.id === d.time) && cnt(d.count))
+        .map(d => ({ time: d.time, food: Config.foodTiming[d.food] ? d.food : null, count: cnt(d.count) }));
+      if (!days.length || !doses.length) continue;
+      plan.push({ from: p.from, status: p.status, days, doses });
+    }
+    if (!plan.length) return null;
+    plan.sort((a, b) => a.from.localeCompare(b.from));
+    const epoch = new Date(0).toISOString();
+    const createdAt = U.isoOr(raw.createdAt, epoch);
+    const countsToNutrition = !!raw.countsToNutrition;
+    return {
+      id: raw.id, name,
+      form: Config.supplementForms[raw.form] ? raw.form : 'tablet',
+      serving, strength, countsToNutrition,
+      nutrients: this.cleanNutrients(raw.nutrients),
+      label: (Array.isArray(raw.label) ? raw.label : []).slice(0, 100)
+        .filter(r => r && String(r.name || '').trim())
+        .map(r => ({
+          name: String(r.name).trim().slice(0, 80),
+          amount: r.amount === null || r.amount === '' || !isFinite(Number(r.amount)) || Number(r.amount) < 0 ? null : Number(r.amount),
+          unit: String(r.unit || '').trim().slice(0, 12),
+        })),
+      notes: String(raw.notes || '').slice(0, 2000),
+      plan, createdAt, updatedAt: U.isoOr(raw.updatedAt, createdAt),
+      deleted: !!raw.deleted,
+    };
+  },
+  cleanSupplementLog(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (typeof raw.supplementId !== 'string' || !raw.supplementId || raw.supplementId.length > 100) return null;
+    const i = Number(raw.doseIndex);
+    if (!U.isYmd(raw.date) || !Number.isInteger(i) || i < 0 || i > 50) return null;
+    const count = Number(raw.count);
+    const epoch = new Date(0).toISOString();
+    const createdAt = U.isoOr(raw.createdAt, epoch);
+    return {
+      id: Supplements.logId(raw.supplementId, raw.date, i), // always rebuilt, so one dose is one record
+      supplementId: raw.supplementId, date: raw.date, doseIndex: i,
+      label: String(raw.label || '').slice(0, 80),
+      count: count > 0 && count <= 1000 ? count : 1,
+      takenAt: U.isoOr(raw.takenAt, createdAt),
+      nutrients: this.cleanNutrients(raw.nutrients),
+      createdAt, updatedAt: U.isoOr(raw.updatedAt, createdAt),
+      deleted: !!raw.deleted,
+    };
+  },
+  // Same rules as diary entries, for any collection of records with id, updatedAt and deleted.
+  mergeRecords(local, incoming, clean) {
+    const out = { ...(local || {}) };
+    const r = { added: 0, updated: 0, removed: 0, localAhead: 0, skipped: 0 };
+    const seen = new Set();
+    for (const raw of Array.isArray(incoming) ? incoming : []) {
+      const e = clean(raw);
+      if (!e) { r.skipped++; continue; }
+      seen.add(e.id);
+      const cur = out[e.id];
+      if (!cur) { out[e.id] = e; if (!e.deleted) r.added++; continue; }
+      const a = U.ts(e.updatedAt), b = U.ts(cur.updatedAt);
+      if (a > b) {
+        out[e.id] = e;
+        if (e.deleted && !cur.deleted) r.removed++;
+        else if (!e.deleted && cur.deleted) r.added++;
+        else r.updated++;
+      } else if (a < b) r.localAhead++;
+    }
+    for (const id in local || {}) if (!seen.has(id)) r.localAhead++;
+    return { records: out, stats: r };
   },
   cleanGoals(raw) {
     if (!raw || typeof raw !== 'object') return null;
@@ -3378,8 +3786,13 @@ const Sync = {
     }
     for (const id in local.favourites || {}) if (!inFavs.has(id)) favsAhead++;
 
-    stats.localAhead = stats.localNewer + stats.localOnly + goalsAhead + foodsAhead + favsAhead;
-    return { entries, goals, customFoods, favourites, stats };
+    const sups = this.mergeRecords(local.supplements, incoming.supplements, r => this.cleanSupplement(r));
+    const logs = this.mergeRecords(local.supplementLogs, incoming.supplementLogs, r => this.cleanSupplementLog(r));
+    stats.supplements = sups.stats;
+    stats.supplementLogs = logs.stats;
+
+    stats.localAhead = stats.localNewer + stats.localOnly + goalsAhead + foodsAhead + favsAhead + sups.stats.localAhead + logs.stats.localAhead;
+    return { entries, goals, customFoods, favourites, supplements: sups.records, supplementLogs: logs.records, stats };
   },
   markSaved(at) {
     Store.state.meta.lastExportedAt = at;
@@ -3430,8 +3843,9 @@ const Sync = {
       return;
     }
     const s = Store.state;
-    const { entries, goals, customFoods, favourites, stats } = this.merge(s, data);
+    const { entries, goals, customFoods, favourites, supplements, supplementLogs, stats } = this.merge(s, data);
     s.entries = entries; s.goals = goals; s.customFoods = customFoods; s.favourites = favourites;
+    s.supplements = supplements; s.supplementLogs = supplementLogs;
     if (stats.localAhead === 0) {
       // This device now matches the file exactly, so nothing is unsaved.
       s.meta.dirty = false;
@@ -3448,7 +3862,12 @@ const Sync = {
     if (stats.goalsUpdated) msg += ' Goals updated.';
     if (stats.foodsUpdated) msg += ` ${stats.foodsUpdated} of your foods updated.`;
     if (stats.favsUpdated) msg += ` ${stats.favsUpdated} favourite${stats.favsUpdated === 1 ? '' : 's'} updated.`;
-    if (stats.skipped) msg += ` ${stats.skipped} unreadable skipped.`;
+    const sp = stats.supplements, sl = stats.supplementLogs;
+    const spN = sp.added + sp.updated + sp.removed, slN = sl.added + sl.updated + sl.removed;
+    if (spN) msg += ` ${spN} supplement${spN === 1 ? '' : 's'} updated.`;
+    if (slN) msg += ` ${slN} supplement dose${slN === 1 ? '' : 's'} updated.`;
+    const skipped = stats.skipped + sp.skipped + sl.skipped;
+    if (skipped) msg += ` ${skipped} unreadable skipped.`;
     if (stats.localAhead) msg += ' This device has newer changes, so tap Save to update your master copy.';
     UI.toast(msg, { ms: 7000 });
   },
@@ -3541,6 +3960,7 @@ const UI = {
     if (actions[a]) { actions[a](); return; }
     AddFlow.onAction(a, el);
     GoalsForm.onAction(a, el);
+    SuppUI.onAction(a, el);
     CopySheet.onAction(a, el);
     CopyMeal.onAction(a, el);
     FoodForm.onAction(a, el);
@@ -3560,6 +3980,7 @@ const UI = {
     this.renderDate();
     this.renderRings();
     this.renderMeals();
+    SuppUI.renderCard();
   },
   renderThemeButton() {
     const mode = Store.state.settings.theme;
@@ -3576,7 +3997,9 @@ const UI = {
   },
   renderStatus() {
     const m = Store.state.meta;
-    const hasData = Object.keys(Store.state.entries).length > 0;
+    const st = Store.state;
+    const hasData = Object.keys(st.entries).length > 0 || Object.keys(st.supplementLogs).length > 0
+      || Object.values(st.supplements).some(x => x.updatedAt !== Config.supplementSeedAt);
     let html = `<span>Last saved: <strong>${m.lastExportedAt ? U.esc(U.fmtDateTime(m.lastExportedAt)) : 'not yet'}</strong></span>`;
     if (m.dirty && hasData) {
       html += `<button class="pill pill-warn" data-action="save">Unsaved changes · Save a copy</button>`;
@@ -3631,7 +4054,8 @@ const UI = {
     const goals = Store.state.goals;
     const byMeal = Diary.byMeal(View.date);
     const all = Object.values(byMeal).flat();
-    const t = Totals.of(all);
+    const supLogs = Supplements.logsOn(View.date).filter(l => l.nutrients);
+    const t = Totals.of([...all, ...supLogs]);
     for (const n of Config.nutrients) {
       const el = document.querySelector(`[data-ring="${n.key}"]`);
       const goal = goals[n.key] || 1;
@@ -3660,7 +4084,7 @@ const UI = {
     $('#meal-split').innerHTML = Config.meals.map(m => {
       const k = Totals.of(byMeal[m.id] || []).kcal;
       return `<li><span>${U.esc(m.label)}</span><b>${U.num(k, 0)}</b></li>`;
-    }).join('');
+    }).join('') + (supLogs.length ? `<li><span>Supplements</span><b>${U.num(Totals.of(supLogs).kcal, 0)}</b></li>` : '');
   },
   // "Fibre not known for 1 item": foods whose source didn't give a value add 0 to the totals.
   unknownNote(list) {
@@ -4317,6 +4741,362 @@ const GoalsForm = {
   },
 };
 
+/* Supplements: the day's checklist card, and the sheet to manage them (list, details, form, time taken). */
+const SuppUI = {
+  s: null, // sheet state: { view:'list'|'detail'|'form'|'time', tab, id, logId, confirmDelete }
+  f: null, // form values while the form is open
+  pct(a) { return a.pct === null ? '–' : `${a.pct}%`; },
+  time(iso) { return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); },
+  statusLabel: { active: 'Active', paused: 'Paused', archived: 'Archived' },
+  kcalText(n) { return n ? ` · ${U.num(n.kcal, n.kcal < 10 ? 1 : 0)} kcal` : ''; },
+
+  // The day card: one tick per dose due on the viewed day.
+  renderCard() {
+    const date = View.date, today = U.ymd(), future = date > today;
+    const sups = Supplements.all();
+    const order = t => Config.doseTimes.findIndex(x => x.id === t);
+    const rows = [];
+    for (const sup of sups) {
+      Supplements.dueOn(sup, date).forEach((d, i) => rows.push({
+        sup, i, t: order(d.time), count: d.count, label: Supplements.doseLabel(sup, d), log: Supplements.log(sup.id, date, i),
+        nutrients: Supplements.doseNutrients(sup, d.count),
+      }));
+    }
+    rows.sort((a, b) => a.t - b.t || a.sup.name.localeCompare(b.sup.name) || a.i - b.i);
+    // Doses taken but no longer due (ticked, then paused or rescheduled) still count, so they stay listed.
+    const shown = new Set(rows.map(r => Supplements.logId(r.sup.id, date, r.i)));
+    for (const l of Supplements.logsOn(date)) {
+      if (!shown.has(l.id)) rows.push({ sup: Supplements.get(l.supplementId), i: l.doseIndex, count: l.count, label: l.label, log: l, nutrients: l.nutrients });
+    }
+    const taken = rows.filter(r => r.log).length;
+    const o7 = Supplements.overall(7);
+    const sub = !sups.length ? 'Add the supplements you take'
+      : !rows.length ? 'Nothing due on this day'
+      : `${taken} of ${rows.length} taken${o7.pct === null ? '' : ` · last 7 days ${o7.pct}%`}`;
+    const list = rows.map(r => {
+      const name = U.esc(r.sup.name);
+      const portion = `${Supplements.amountText(r.count, r.sup.serving.unit)} · ${r.label}${this.kcalText(r.log ? r.log.nutrients : r.nutrients)}`;
+      const tick = r.log
+        ? `<button class="sp-tick" role="checkbox" aria-checked="true" data-action="sp-untick" data-id="${U.esc(r.log.id)}" aria-label="${name}, ${U.esc(r.label)}: taken. Tap to untick">${ICON.check}</button>`
+        : `<button class="sp-tick" role="checkbox" aria-checked="false" data-action="sp-tick" data-sup="${U.esc(r.sup.id)}" data-i="${r.i}" aria-label="Mark ${name}, ${U.esc(r.label)} as taken"${future ? ' disabled title="You can tick a dose on the day or later"' : ''}>${ICON.check}</button>`;
+      return `<li class="sp-row">${tick}
+        <span class="entry-main"><span class="entry-name">${name}</span><span class="entry-portion">${U.esc(portion)}</span></span>
+        ${r.log ? `<button class="sp-time" data-action="sp-time" data-id="${U.esc(r.log.id)}" aria-label="Taken at ${this.time(r.log.takenAt)}. Change time">${this.time(r.log.takenAt)}</button>` : ''}
+      </li>`;
+    }).join('');
+    $('#supps').innerHTML = `
+      <header class="meal-head">
+        <div><h2 class="meal-title">Supplements</h2><p class="meal-sub">${U.esc(sub)}</p></div>
+        <button class="link-btn" data-action="sp-manage">${sups.length ? 'Manage' : 'Add'}</button>
+      </header>
+      ${rows.length ? `<ul class="sp-list">${list}</ul>` : ''}`;
+  },
+
+  open(view = 'list', extra = {}) {
+    this.s = { view, tab: (this.s && this.s.tab) || 'active', ...extra };
+    this.show();
+  },
+  show() {
+    const v = this.s.view;
+    if (v === 'list') Sheet.open('Supplements', this.listHtml());
+    if (v === 'detail') Sheet.open('Supplement', this.detailHtml());
+    if (v === 'form') Sheet.open(this.f.id ? 'Edit supplement' : 'Add a supplement', this.formHtml());
+    if (v === 'time') Sheet.open('Time taken', this.timeHtml());
+  },
+  statsText(sup) {
+    const st = Supplements.streak(sup);
+    return `7 days ${this.pct(Supplements.adherence(sup, 7))} · 30 days ${this.pct(Supplements.adherence(sup, 30))} · streak ${st} day${st === 1 ? '' : 's'}`;
+  },
+  listHtml() {
+    const all = Supplements.all();
+    const tab = this.s.tab;
+    const count = st => all.filter(x => Supplements.status(x) === st).length;
+    const list = all.filter(x => Supplements.status(x) === tab);
+    const o7 = Supplements.overall(7), o30 = Supplements.overall(30);
+    const empty = { active: 'No active supplements. Add one below.', paused: 'Nothing paused.', archived: 'Nothing archived.' }[tab];
+    return `<div class="detail">
+      ${all.length ? `<p class="info-box">All supplements: last 7 days <b>${this.pct(o7)}</b> · last 30 days <b>${this.pct(o30)}</b> of doses taken.</p>` : ''}
+      <div class="chips" role="radiogroup" aria-label="Show">
+        ${Supplements.statuses.map(st => `<button type="button" class="chip" role="radio" aria-checked="${tab === st}" data-action="sp-tab" data-val="${st}">${this.statusLabel[st]} <span class="chip-g">${count(st)}</span></button>`).join('')}
+      </div>
+      ${list.length ? `<ul class="sp-items">${list.map(x => `
+        <li><button class="sp-item" data-action="sp-open" data-id="${U.esc(x.id)}">
+          <span class="entry-name">${U.esc(x.name)}</span>
+          <span class="entry-portion">${U.esc(Supplements.scheduleText(x))}</span>
+          <span class="sp-stats">${U.esc(this.statsText(x))}${x.countsToNutrition ? ' · adds to totals' : ''}</span>
+        </button></li>`).join('')}</ul>` : `<p class="sheet-text">${empty}</p>`}
+      <div class="sheet-actions">
+        <button class="btn" type="button" data-action="close-sheet">Close</button>
+        <button class="btn btn-primary" type="button" data-action="sp-new">${ICON.plus} Add supplement</button>
+      </div>
+    </div>`;
+  },
+  detailHtml() {
+    const x = Supplements.get(this.s.id);
+    if (!x) return '<p class="sheet-text">This supplement was deleted.</p>';
+    const st = Supplements.status(x);
+    const a7 = Supplements.adherence(x, 7), a30 = Supplements.adherence(x, 30), streak = Supplements.streak(x);
+    const srv = Supplements.amountText(x.serving.count, x.serving.unit);
+    const nut = x.countsToNutrition && x.nutrients
+      ? Config.nutrients.map(n => `<span><i class="dot" style="background:${nutrientColor(n.key)}"></i>${U.esc(n.label)} ${U.qty(x.nutrients[n.key])} ${n.unit}</span>`).join('')
+      : '';
+    const fmtAmt = r => r.amount === null ? '' : `${U.qty(r.amount)} ${r.unit}`;
+    return `<div class="detail">
+      <button class="back-btn" data-action="sp-back">${ICON.left} All supplements</button>
+      <div class="detail-head"><div>
+        <h3 class="detail-name">${U.esc(x.name)}</h3>
+        <p class="detail-meta">${U.esc(Config.supplementForms[x.form].label)}${x.strength ? ` · ${U.qty(x.strength.amount)} ${U.esc(x.strength.unit)} per serving` : ''} · ${this.statusLabel[st]} · since ${U.esc(U.fromYmd(Supplements.start(x)).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))}</p>
+      </div></div>
+      <div class="preview sp-preview">
+        <div class="pv"><b>${this.pct(a7)}</b><span>Last 7 days</span></div>
+        <div class="pv"><b>${this.pct(a30)}</b><span>Last 30 days</span></div>
+        <div class="pv"><b>${streak}</b><span>Day streak</span></div>
+      </div>
+      <p class="preview-note">${a30.due ? `${a30.taken} of ${a30.due} doses taken in the last 30 days.` : 'No doses due yet.'} Today counts once all its doses are ticked.</p>
+      <div class="field"><span class="field-label">Schedule</span><p>${U.esc(Supplements.scheduleText(x))}</p></div>
+      <div class="field"><span class="field-label">Nutrition per serving (${U.esc(srv)})</span>
+        ${nut ? `<div class="meal-macros sp-macros">${nut}</div>` : `<p class="sheet-text">Tracked only; adds nothing to your daily totals.</p>`}</div>
+      ${x.label.length ? `<div class="field"><span class="field-label">Label, per serving</span>
+        <table class="sp-label"><tbody>${x.label.map(r => `<tr><td>${U.esc(r.name)}</td><td>${U.esc(fmtAmt(r))}</td></tr>`).join('')}</tbody></table>
+        <p class="sheet-text">Shown for reference; only calories, protein, carbs, fat and fibre go into your totals.</p></div>` : ''}
+      ${x.notes ? `<div class="field"><span class="field-label">Notes</span><p class="sp-notes">${U.esc(x.notes)}</p></div>` : ''}
+      <div class="field"><span class="field-label">Status</span><div class="chips">
+        ${st === 'active' ? '<button class="btn btn-sm" data-action="sp-status" data-val="paused">Pause</button>' : '<button class="btn btn-sm" data-action="sp-status" data-val="active">Resume</button>'}
+        ${st !== 'archived' ? '<button class="btn btn-sm" data-action="sp-status" data-val="archived">Archive</button>' : ''}
+        <button class="btn btn-sm btn-danger" data-action="sp-delete">${this.s.confirmDelete ? 'Tap again to delete' : 'Delete'}</button>
+      </div>
+      <p class="sheet-text">Paused and archived supplements leave the checklist; their history and adherence are kept. Delete removes it and its ticks from every day.</p></div>
+      <div class="sheet-actions">
+        <button class="btn" type="button" data-action="sp-back">Back</button>
+        <button class="btn btn-primary" type="button" data-action="sp-edit">Edit</button>
+      </div>
+    </div>`;
+  },
+
+  // Form
+  startForm(x) {
+    const p = x ? Supplements.current(x) : null;
+    this.f = x ? {
+      id: x.id, name: x.name, form: x.form, scount: x.serving.count, sunit: x.serving.unit,
+      stramt: x.strength ? x.strength.amount : '', strunit: x.strength ? x.strength.unit : 'mg',
+      counts: x.countsToNutrition, n: { ...(x.nutrients || {}) },
+      doses: p.doses.map(d => ({ ...d })), days: [...p.days],
+      label: x.label.map(r => ({ name: r.name, amount: r.amount === null ? '' : r.amount, unit: r.unit })), notes: x.notes,
+    } : {
+      id: null, name: '', form: 'tablet', scount: 1, sunit: 'tablet', stramt: '', strunit: 'mg', counts: false, n: {},
+      doses: [{ time: 'morning', food: null, count: 1 }], days: [0, 1, 2, 3, 4, 5, 6], label: [], notes: '',
+    };
+    this.s.view = 'form';
+    this.show();
+    if (!x) { const el = $('#sp-name'); if (el) el.focus({ preventScroll: true }); }
+  },
+  select(id, opts, val, label) {
+    return `<select class="text-input sp-select" id="${id}" aria-label="${U.esc(label)}">${opts.map(([v, l]) =>
+      `<option value="${U.esc(v)}"${String(v) === String(val) ? ' selected' : ''}>${U.esc(l)}</option>`).join('')}</select>`;
+  },
+  formHtml() {
+    const f = this.f;
+    const unitOpts = Object.entries(Config.supplementUnits).map(([k, u]) => [k, u.many]);
+    return `<div class="detail" id="sp-form">
+      <label class="field"><span class="field-label">Name</span>
+        <input class="text-input" id="sp-name" type="text" autocomplete="off" placeholder="e.g. Vitamin D3" value="${U.esc(f.name)}"></label>
+      <div class="field"><span class="field-label">Form</span><div class="chips" role="radiogroup">
+        ${Object.entries(Config.supplementForms).map(([k, v]) => `<button type="button" class="chip" role="radio" aria-checked="${f.form === k}" data-action="sp-form" data-val="${k}">${v.label}</button>`).join('')}
+      </div></div>
+      <div class="field"><span class="field-label">Serving, as on the label</span>
+        <div class="sp-pair"><input class="goal-input" id="sp-scount" type="text" inputmode="decimal" autocomplete="off" aria-label="Serving amount" value="${U.esc(f.scount)}">
+        ${this.select('sp-sunit', unitOpts, f.sunit, 'Serving unit')}</div></div>
+      <div class="field"><span class="field-label">Strength per serving (optional)</span>
+        <div class="sp-pair"><input class="goal-input" id="sp-stramt" type="text" inputmode="decimal" autocomplete="off" aria-label="Strength" placeholder="e.g. 1000" value="${U.esc(f.stramt)}">
+        ${this.select('sp-strunit', Config.strengthUnits.map(u => [u, u]), f.strunit, 'Strength unit')}</div></div>
+      <div class="field"><span class="field-label">Doses each day</span>
+        <p class="sheet-text">Each dose is one tick. Taking 2 together is one dose of 2.</p>
+        ${f.doses.map((d, i) => `<div class="sp-dose">
+          <input class="goal-input" id="sp-dc-${i}" type="text" inputmode="decimal" autocomplete="off" aria-label="Dose ${i + 1} amount" value="${U.esc(d.count)}">
+          ${this.select(`sp-dt-${i}`, Config.doseTimes.map(t => [t.id, t.label]), d.time, `Dose ${i + 1} time`)}
+          ${this.select(`sp-df-${i}`, [['', 'Any time'], ...Object.entries(Config.foodTiming).map(([k, v]) => [k, v[0].toUpperCase() + v.slice(1)])], d.food || '', `Dose ${i + 1} and food`)}
+          <button type="button" class="icon-btn" data-action="sp-dose-del" data-i="${i}" aria-label="Remove dose ${i + 1}"${f.doses.length === 1 ? ' disabled' : ''}>${ICON.minus}</button>
+        </div>`).join('')}
+        <button type="button" class="link-btn sp-add-row" data-action="sp-dose-add">${ICON.plus} Add a dose</button></div>
+      <div class="field"><span class="field-label">Days</span><div class="chips">
+        ${Config.weekOrder.map(d => `<button type="button" class="chip sp-day" role="checkbox" aria-checked="${f.days.includes(d)}" data-action="sp-day" data-val="${d}">${Config.weekdays[d]}</button>`).join('')}
+        <button type="button" class="link-btn" data-action="sp-days-all">Every day</button>
+      </div></div>
+      <div class="field"><span class="field-label">Nutrition</span>
+        <div class="chips"><button type="button" class="chip" role="switch" aria-checked="${f.counts}" data-action="sp-counts">Counts toward nutrition</button></div>
+        <p class="sheet-text">${f.counts ? 'Values per serving from the label. Each dose adds its share (1 of a 2-softgel serving adds half).' : 'Off: tracked for adherence only, like most vitamins and minerals.'}</p>
+        ${f.counts ? Config.nutrients.map(n => `<label class="ff-row" for="sp-n-${n.key}"><span><i class="dot" style="background:${nutrientColor(n.key)}"></i>${U.esc(n.label)}</span>
+          <input class="goal-input" id="sp-n-${n.key}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${U.esc(f.n[n.key] ?? '')}">
+          <span class="goal-unit">${n.unit}</span></label>`).join('') : ''}</div>
+      <div class="field"><span class="field-label">Label contents (optional)</span>
+        ${f.label.map((r, i) => `<div class="sp-lbl">
+          <input class="text-input" id="sp-ln-${i}" type="text" autocomplete="off" aria-label="Ingredient ${i + 1}" placeholder="e.g. Vitamin C" value="${U.esc(r.name)}">
+          <input class="goal-input" id="sp-la-${i}" type="text" inputmode="decimal" autocomplete="off" aria-label="Amount ${i + 1}" value="${U.esc(r.amount)}">
+          <input class="text-input" id="sp-lu-${i}" type="text" autocomplete="off" aria-label="Unit ${i + 1}" placeholder="mg" value="${U.esc(r.unit)}">
+          <button type="button" class="icon-btn" data-action="sp-lbl-del" data-i="${i}" aria-label="Remove ${U.esc(r.name || 'row')}">${ICON.minus}</button>
+        </div>`).join('')}
+        <button type="button" class="link-btn sp-add-row" data-action="sp-lbl-add">${ICON.plus} Add a row</button></div>
+      <label class="field"><span class="field-label">Notes (optional)</span>
+        <textarea class="text-input sp-notes-input" id="sp-notes" rows="3">${U.esc(f.notes)}</textarea></label>
+      <p class="field-error" id="sp-error" hidden></p>
+      <div class="sheet-actions">
+        <button class="btn" type="button" data-action="sp-cancel">Cancel</button>
+        <button class="btn btn-primary" type="button" data-action="sp-save">Save supplement</button>
+      </div>
+    </div>`;
+  },
+  // Copy what's typed into this.f, so re-drawing the form (adding a row, toggling a chip) keeps it.
+  read() {
+    const f = this.f;
+    const val = id => { const el = $('#' + id); return el ? el.value.trim() : ''; };
+    if (!$('#sp-form')) return;
+    f.name = val('sp-name'); f.scount = val('sp-scount'); f.sunit = val('sp-sunit');
+    f.stramt = val('sp-stramt'); f.strunit = val('sp-strunit'); f.notes = $('#sp-notes').value;
+    f.doses = f.doses.map((d, i) => ({ count: val(`sp-dc-${i}`), time: val(`sp-dt-${i}`), food: val(`sp-df-${i}`) || null }));
+    if (f.counts) for (const k of NUTRIENT_KEYS) f.n[k] = val(`sp-n-${k}`);
+    f.label = f.label.map((r, i) => ({ name: val(`sp-ln-${i}`), amount: val(`sp-la-${i}`), unit: val(`sp-lu-${i}`) }));
+  },
+  redraw() { const top = $('#sheet-body').scrollTop; $('#sheet-body').innerHTML = this.formHtml(); $('#sheet-body').scrollTop = top; },
+  error(msg, id) {
+    const el = $('#sp-error');
+    el.textContent = msg; el.hidden = false;
+    if (id && $('#' + id)) $('#' + id).focus();
+  },
+  save() {
+    this.read();
+    const f = this.f;
+    const num = v => { const x = parseFloat(String(v).replace(',', '.')); return isFinite(x) ? x : NaN; };
+    if (!f.name) return this.error('Give the supplement a name.', 'sp-name');
+    const scount = num(f.scount);
+    if (!(scount > 0 && scount <= 1000)) return this.error('Enter how much one serving is (for example 2).', 'sp-scount');
+    let strength = null;
+    if (f.stramt !== '') {
+      const a = num(f.stramt);
+      if (!(a > 0)) return this.error('Enter the strength as a number, or leave it empty.', 'sp-stramt');
+      strength = { amount: a, unit: f.strunit };
+    }
+    const doses = [];
+    for (let i = 0; i < f.doses.length; i++) {
+      const c = num(f.doses[i].count);
+      if (!(c > 0 && c <= 1000)) return this.error(`Enter how many for dose ${i + 1}.`, `sp-dc-${i}`);
+      doses.push({ time: f.doses[i].time, food: f.doses[i].food, count: c });
+    }
+    if (!f.days.length) return this.error('Pick at least one day.');
+    const nutrients = {};
+    for (const n of Config.nutrients) {
+      const raw = f.n[n.key] ?? '';
+      const v = raw === '' ? 0 : num(raw);
+      if (!(v >= 0 && v <= 5000)) return this.error(`Enter ${n.label.toLowerCase()} as a number (or leave it empty for 0).`, `sp-n-${n.key}`);
+      nutrients[n.key] = v;
+    }
+    const label = [];
+    for (let i = 0; i < f.label.length; i++) {
+      const r = f.label[i];
+      if (!r.name) continue;
+      const a = r.amount === '' ? null : num(r.amount);
+      if (a !== null && !(a >= 0)) return this.error(`Enter the amount for ${r.name} as a number, or leave it empty.`, `sp-la-${i}`);
+      label.push({ name: r.name.slice(0, 80), amount: a, unit: r.unit.slice(0, 12) });
+    }
+    const data = {
+      name: f.name.slice(0, 120), form: f.form, serving: { count: scount, unit: f.sunit }, strength,
+      countsToNutrition: !!f.counts, nutrients, label, notes: f.notes.slice(0, 2000),
+      days: [...f.days].sort(), doses,
+    };
+    const sup = f.id ? Supplements.update(f.id, data) : Supplements.add(data);
+    this.f = null;
+    UI.toast(f.id ? `Saved ${sup.name}` : `Added ${sup.name}`);
+    this.s = { ...this.s, view: 'detail', id: sup.id, tab: Supplements.status(sup), confirmDelete: false };
+    this.show();
+  },
+
+  timeHtml() {
+    const l = Store.state.supplementLogs[this.s.logId];
+    if (!l) return '';
+    const d = new Date(l.takenAt);
+    const hhmm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const sup = Supplements.get(l.supplementId);
+    return `<div class="detail">
+      <p class="sheet-text">${U.esc(sup ? sup.name : 'Supplement')} · ${U.esc(l.label)} · ${U.esc(U.fromYmd(l.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }))}</p>
+      <label class="field"><span class="field-label">Taken at</span>
+        <input class="text-input" id="sp-time-input" type="time" value="${hhmm}"></label>
+      <div class="sheet-actions">
+        <button class="btn btn-danger" type="button" data-action="sp-time-clear">Not taken</button>
+        <button class="btn btn-primary" type="button" data-action="sp-time-save">Save time</button>
+      </div>
+    </div>`;
+  },
+
+  onAction(a, el) {
+    if (!a.startsWith('sp-')) return;
+    // The day card works whether or not the sheet is open.
+    if (a === 'sp-tick') { Supplements.tick(el.dataset.sup, View.date, Number(el.dataset.i)); return; }
+    if (a === 'sp-untick') { Supplements.untick(el.dataset.id); return; }
+    if (a === 'sp-time') { this.open('time', { logId: el.dataset.id }); return; }
+    if (a === 'sp-manage') { this.open('list'); return; }
+    if (!this.s || !Sheet.isOpen) return;
+    const v = this.s.view;
+    if (v === 'list') {
+      if (a === 'sp-tab') { this.s.tab = el.dataset.val; this.show(); }
+      if (a === 'sp-open') { this.s = { ...this.s, view: 'detail', id: el.dataset.id, confirmDelete: false }; this.show(); }
+      if (a === 'sp-new') this.startForm(null);
+    }
+    if (v === 'detail') {
+      if (a === 'sp-back') { this.s.view = 'list'; this.show(); }
+      if (a === 'sp-edit') { const x = Supplements.get(this.s.id); if (x) this.startForm(x); }
+      if (a === 'sp-status') {
+        Supplements.setStatus(this.s.id, el.dataset.val);
+        const x = Supplements.get(this.s.id);
+        this.s.tab = el.dataset.val; this.s.confirmDelete = false;
+        UI.toast(`${x.name}: ${{ active: 'resumed', paused: 'paused', archived: 'archived' }[el.dataset.val]}`);
+        this.show();
+      }
+      if (a === 'sp-delete') {
+        if (!this.s.confirmDelete) { this.s.confirmDelete = true; this.show(); return; }
+        const x = Supplements.get(this.s.id);
+        Supplements.remove(this.s.id);
+        this.s = { ...this.s, view: 'list', confirmDelete: false };
+        UI.toast(`Deleted ${x ? x.name : 'supplement'}`);
+        this.show();
+      }
+    }
+    if (v === 'form') {
+      const f = this.f;
+      this.read();
+      if (a === 'sp-form') {
+        const prevUnit = Config.supplementForms[f.form].unit;
+        f.form = el.dataset.val;
+        if (f.sunit === prevUnit) f.sunit = Config.supplementForms[f.form].unit;
+      }
+      if (a === 'sp-day') {
+        const d = Number(el.dataset.val);
+        f.days = f.days.includes(d) ? f.days.filter(x => x !== d) : [...f.days, d];
+      }
+      if (a === 'sp-days-all') f.days = [0, 1, 2, 3, 4, 5, 6];
+      if (a === 'sp-counts') f.counts = !f.counts;
+      if (a === 'sp-dose-add') f.doses.push({ time: 'night', food: null, count: 1 });
+      if (a === 'sp-dose-del' && f.doses.length > 1) f.doses.splice(Number(el.dataset.i), 1);
+      if (a === 'sp-lbl-add') f.label.push({ name: '', amount: '', unit: 'mg' });
+      if (a === 'sp-lbl-del') f.label.splice(Number(el.dataset.i), 1);
+      if (a === 'sp-save') { this.save(); return; }
+      if (a === 'sp-cancel') {
+        this.f = null;
+        this.s.view = this.s.id && Supplements.get(this.s.id) ? 'detail' : 'list';
+        this.show();
+        return;
+      }
+      this.redraw();
+      if (a === 'sp-lbl-add') { const el2 = $(`#sp-ln-${f.label.length - 1}`); if (el2) el2.focus(); }
+    }
+    if (v === 'time') {
+      if (a === 'sp-time-save') {
+        if (!Supplements.setTime(this.s.logId, $('#sp-time-input').value)) { UI.toast('Pick a time.'); return; }
+        this.s = null; Sheet.close(); UI.toast('Time saved');
+      }
+      if (a === 'sp-time-clear') { Supplements.untick(this.s.logId); this.s = null; Sheet.close(); }
+    }
+  },
+};
+
 /* Shown only if this view can't save files: lets you copy the backup instead. */
 const CopySheet = {
   text: '', exportedAt: null, active: false,
@@ -4361,6 +5141,7 @@ if (Array.isArray(FOOD_DATA)) FOOD_DATA = { foods: FOOD_DATA };
 SEED = Array.isArray(FOOD_DATA.foods) ? FOOD_DATA.foods : [];
 
 Store.load();
+if (Supplements.seed()) Store.persist(); // the preload alone isn't an unsaved change: every device makes the same one
 Foods.configure({ redirects: FOOD_DATA.redirects || {}, synonyms: FOOD_DATA.synonyms || [] });
 Foods.init(SEED, Object.values(Store.state.customFoods));
 Theme.apply(Store.state.settings.theme);
@@ -4371,6 +5152,6 @@ UI.render();
 if (!SEED.length) UI.toast('The food list failed to load. Check the seed-foods block.', { ms: 8000 });
 
 // Other code (later phases, tests) reaches the app through this object.
-window.LechemMifkad = { Config, Store, Foods, Favs, Diary, Totals, Sync, Features, UI, View, AddFlow, CopyMeal, FoodForm };
+window.LechemMifkad = { Config, Store, Foods, Favs, Diary, Totals, Supplements, Sync, Features, UI, View, AddFlow, CopyMeal, FoodForm, SuppUI };
 })();
 </script>
