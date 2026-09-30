@@ -15,11 +15,14 @@ Status of each part in the implementation:
 | Golden test files (password mode) | §8 | Phase 2 |
 | Recipient-mode stanzas (HPKE X-Wing) | yes | fields parsed in Phase 1, HPKE in Phase 5 |
 | Trailer (ML-DSA-65 signature) | yes | framing in Phase 1, signing in Phase 5 |
+| Key IDs (§6.1) | yes | Phase 4 |
+| Public identity file `.pqid` and fingerprints (§9) | yes | Phase 4 |
+| Keychain records for your identity and contacts (§10) | yes | Phase 4 |
 
-Sizes marked **(verify)** come from the relevant standard and are rechecked against
-the macOS 26 SDK when the phase that uses them is implemented. If the SDK differs,
-the format is corrected before it is ever used to write a file; it is not frozen
-until Phase 7.
+Every key, ciphertext and signature size here comes from the relevant standard and is
+**confirmed against the macOS 26 SDK** by `IdentityKeyTests` (passed on macOS,
+2026-09-30): X-Wing public key 1216, encapsulated key 1120, HPKE-wrapped Data Key 48,
+ML-DSA-65 public key 1952, signature 3309. The format is not frozen until Phase 7.
 
 ---
 
@@ -94,7 +97,7 @@ Each stanza:
 | Size | Field | Rule |
 |---:|---|---|
 | 32 | keyID | recipient's encryption-key ID (§6.1); no duplicates within a header |
-| 2 | encLength | must equal `1120`, the X-Wing encapsulated-key size **(verify)** |
+| 2 | encLength | must equal `1120`, the X-Wing encapsulated-key size |
 | 1120 | encapsulatedKey | HPKE `enc` |
 | 2 | wrappedLength | must equal `48` (32-byte Data Key + 16-byte GCM tag) |
 | 48 | wrappedDataKey | HPKE ciphertext of the Data Key |
@@ -231,7 +234,7 @@ The reader never reads more than `S + T + 1` bytes at a time.
 
 ## 6. Recipient mode (implemented in Phase 5)
 
-### 6.1 Key IDs
+### 6.1 Key IDs (implemented in Phase 4)
 
 ```
 encryptionKeyID = SHA-256("Chotam v1 encryption key id" ‖ XWing public key, raw representation)
@@ -240,6 +243,10 @@ signingKeyID    = SHA-256("Chotam v1 signing key id"    ‖ ML-DSA-65 public key
 
 The labels keep the two kinds of key ID from ever colliding. (The spec said "SHA-256
 of the public key"; this adds domain separation and is otherwise identical.)
+"Raw representation" is CryptoKit's `rawRepresentation`: for X-Wing the 1216-byte
+`ML-KEM-768 encapsulation key (1184) ‖ X25519 public key (32)`, for ML-DSA-65 the
+1952-byte FIPS 204 encoding. The labels are ASCII with no terminator. Golden values
+are in §9.4.
 
 ### 6.2 Wrapping the Data Key (HPKE, X-Wing)
 
@@ -271,7 +278,7 @@ signedMessage = "Chotam v1 signature"
               ‖ SHA-256(chunk_0 ‖ chunk_1 ‖ … ‖ chunk_{n-1})   (ciphertext, including tags)
               ‖ UInt64BE(n)
 
-trailer = ML-DSA-65.sign(senderSigningKey, signedMessage)      (3309 bytes (verify))
+trailer = ML-DSA-65.sign(senderSigningKey, signedMessage)      (3309 bytes)
 ```
 
 - The header hash covers every stanza, so re-targeting a file to new recipients
@@ -302,6 +309,8 @@ to the debug log, as a fixed string that never contains secret material.
 
 ## 8. Test vectors
 
+The identity vector (`.pqid`, key IDs, fingerprint) is described in §9.5.
+
 `EncryptionCore/Tests/EncryptionCoreTests/Vectors/` holds password-mode files built by
 `make_password_vectors.py`. That script implements this document independently of
 the Swift code: the reference Argon2 (argon2-cffi) plus pyca/cryptography for
@@ -314,3 +323,135 @@ HKDF-SHA256 and AES-256-GCM. All inputs are fixed, so the output is reproducible
 
 Both use the password `correct horse battery staple`, `argon2Salt = 00 01 … 0f`,
 `opsLimit = 3`, `memLimit = 256 MiB`, `hkdfSalt = 20 21 … 3f`, `baseNonce = 40 41 … 4b`.
+
+## 9. Public identity file (`.pqid`), version 1
+
+A public identity is what users exchange so they can encrypt to each other and check
+each other's signatures. It holds **public keys only**, never private material. It
+travels as a `.pqid` file, or as a copyable string: standard Base64 (RFC 4648 §4, with
+padding) of exactly the same bytes.
+
+### 9.1 Layout
+
+| Offset | Size | Field | Rule |
+|---:|---:|---|---|
+| 0 | 8 | magic | ASCII `CHOTAMID` |
+| 8 | 2 | version | must be `1` (anything else: "made by a newer version") |
+| 10 | 2 | encryptionKeyLength | must equal `1216` |
+| 12 | 1216 | encryptionKey | X-Wing public key, raw representation (§6.1) |
+| 1228 | 2 | signingKeyLength | must equal `1952` |
+| 1230 | 1952 | signingKey | ML-DSA-65 public key, raw representation |
+| 3182 | 1 | nameLength | `0 … 64`; `0` means no name |
+| 3183 | n | name | UTF-8, the owner's suggested name |
+| 3183 + n | 2 | signatureLength | must equal `3309` |
+| 3185 + n | 3309 | selfSignature | see §9.2 |
+
+Total size: `6494 + n` bytes, so `6494 … 6558`.
+
+The name must be strict UTF-8, 1–64 bytes, not only whitespace, and without C0/C1 control
+characters or Unicode bidirectional controls (the same rule as §3). It is **untrusted
+text**, shown only as a suggestion when importing. The user picks the contact's actual
+name, and keys are identified only by key IDs and fingerprints, never by name.
+
+### 9.2 Self-signature
+
+```
+selfSignature = ML-DSA-65.sign(signingKey, "Chotam v1 identity signature" ‖ bytes[0 ..< 3183 + n])
+```
+
+- It is pure ML-DSA-65 (FIPS 204) with an empty context string. The label gives domain
+  separation: it differs from the file-signature label (§6.3) from its 11th byte.
+- It covers every byte before `signatureLength`: magic, version, both keys and the name.
+- It proves the holder of `signingKey` vouches for `encryptionKey` and the name, so
+  nobody can publish an identity that pairs **someone else's signing key** with their
+  own encryption key (SECURITY.md D14).
+- It says nothing about **who** that holder is. Only comparing fingerprints (§9.3) does.
+- ML-DSA signatures may be randomised, so two exports of the same identity can differ
+  byte for byte. Chotam signs once, when the identity is created, and stores the result.
+
+### 9.3 Fingerprint
+
+```
+digest      = SHA-256("Chotam v1 identity fingerprint" ‖ encryptionKey (1216) ‖ signingKey (1952))
+fingerprint = CrockfordBase32(digest[0 ..< 20])        160 bits → 32 symbols
+display     = 8 groups of 4 symbols, separated by spaces
+```
+
+- **Crockford base32** alphabet: `0123456789ABCDEFGHJKMNPQRSTVWXYZ` (no I, L, O or U).
+  The bits are taken most significant first, 5 per symbol; 160 is a multiple of 5, so
+  there is no padding.
+- It covers **both** public keys, because a user who verifies a contact trusts both. It
+  covers nothing else: renaming a contact or re-signing the `.pqid` never changes it.
+- Fixed-length fields after a fixed label, so the concatenation is unambiguous. The label
+  keeps fingerprints apart from key IDs (§6.1), which hash one key each.
+- **Comparing:** both people read all 8 groups aloud, in order, for example on a call
+  where they recognise each other's voice, and check every symbol. The UI numbers the
+  groups. When a fingerprint is typed rather than read, Chotam compares it the Crockford
+  way: case, spaces and hyphens don't matter, `O` counts as `0`, and `I` or `L` as `1`.
+  All 32 symbols must match; there is no partial match.
+
+### 9.4 Parser rules, in order
+
+1. The input is at most 8 KiB (file) or 12 KiB (string). Larger input is refused unread.
+2. String form only: ASCII spaces, tabs and line breaks are removed; the rest must be
+   standard Base64 with correct padding and zero spare bits (one canonical string per
+   identity).
+3. The magic matches and `version = 1`.
+4. Every length field has its exact value; the name follows §9.1; nothing follows the
+   signature.
+5. Every ML-KEM-768 coefficient in `encryptionKey[0 ..< 1152]` is below `q = 3329`
+   (FIPS 203 §7.2 modulus check). Chotam checks this itself, on every platform.
+6. Both keys parse (CryptoKit).
+7. The self-signature verifies.
+
+Only then is the identity accepted. It is still **unverified** until the user compares
+its fingerprint (SECURITY.md D5).
+
+### 9.5 Test vector
+
+`EncryptionCore/Tests/EncryptionCoreTests/Vectors/identity-v1.pqid`, built by
+`make_identity_vectors.py` independently of the Swift code: X-Wing key generation from
+the draft's seed expansion (checked against the draft's own test vectors), ML-KEM-768 from
+kyber-py, ML-DSA-65 from dilithium-py, and OpenSSL (via pyca/cryptography) as a second
+implementation of both. The signature is ML-DSA's deterministic variant, so the file is
+reproducible.
+
+| Value | |
+|---|---|
+| X-Wing seed | `60 61 … 7f` (32 bytes) |
+| ML-DSA-65 seed (ξ) | `80 81 … 9f` (32 bytes) |
+| name | `Alice` |
+| SHA-256(X-Wing public key) | `d13209d86547a31ae86a67d9a26c90e5efc1310514195ab06e9b9e12bf328b6a` |
+| SHA-256(ML-DSA-65 public key) | `e00c3ad05e18901d30ebc2c9044f4b0756ae6922ff258d688292e8ead8d4a2d5` |
+| encryptionKeyID | `19e469ef9a47e5d47b905b1f363d49d62394fec96d55fa6574214f41d65fd2bd` |
+| signingKeyID | `68b63822246c6146ecf92cd83e96fd9d3a78d795ca9a59a9ca53a3b5cbd751ef` |
+| digest[0 ..< 20] | `b196c8d1de4e5595b9406c2790f8717b6c9df574` |
+| fingerprint | `P6BC HMEY 9SAS BEA0 DGKS 1Y3H FDP9 VXBM` |
+| file | 6,499 bytes, SHA-256 `2f3016a2e1d19d27202dfc29ef49c71eb9eba5e2a9d271b661b3cb05c3f47fad` |
+
+## 10. Keychain records (local storage, not exchanged)
+
+Chotam keeps its identity and contacts as generic-password items in the data-protection
+Keychain (SECURITY.md D7, D15). Every item is `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
+and not synchronizable. The private-key items also need user presence for every read.
+
+| Service | Account | Contents | Extra protection |
+|---|---|---|---|
+| `app.chotam.identity` | `encryption` | X-Wing private key, CryptoKit `integrityCheckedRepresentation` (seed ‖ SHA3-256 of the public key, 64 bytes) | user presence |
+| `app.chotam.identity` | `signing` | Secure Enclave: the key's `dataRepresentation` (a handle only this Mac's Secure Enclave can use). Keychain fallback: the ML-DSA-65 `integrityCheckedRepresentation` (64 bytes) | Secure Enclave: the key's own access control (user presence). Fallback: user presence |
+| `app.chotam.identity` | `public` | own-identity record, below | none |
+| `app.chotam.contacts` | hex of the contact's `encryptionKeyID` | contact record, below | none |
+
+**Own-identity record:**
+`"CHOTAMME" ‖ version = 1 (u16) ‖ signingKeyStorage (u8: 1 = Secure Enclave, 2 = Keychain)
+‖ pqidLength (u16) ‖ your .pqid`. It is written **last** when an identity is created,
+and deleted **first** when it is deleted, so its presence is what makes an identity exist.
+
+**Contact record:**
+`"CHOTAMCT" ‖ version = 1 (u16) ‖ verified (u8: 0 or 1) ‖ nameLength (u8, 1…64) ‖ name
+‖ pqidLength (u16) ‖ the contact's .pqid`.
+
+Both are parsed as strictly as an import: exact lengths, no trailing bytes, and the
+embedded `.pqid` goes through §9.4 again, signature included. A contact record must be
+stored under its own key ID. A damaged or misfiled contact is skipped (and logged at
+debug level), so one bad item can't hide the others.

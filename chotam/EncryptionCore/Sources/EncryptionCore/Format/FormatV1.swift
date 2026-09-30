@@ -36,12 +36,12 @@ enum FormatV1 {
     // Recipient mode.
     static let maxRecipients = 64
     /// X-Wing ciphertext: ML-KEM-768 ciphertext (1088) + X25519 share (32).
-    /// Rechecked against the macOS 26 SDK in Phase 5.
+    /// Asserted against the SDK by `IdentityKeyTests` (Phase 4).
     static let xwingEncapsulatedKeySize = 1120
     /// 32-byte Data Key + 16-byte AES-GCM tag.
     static let wrappedDataKeySize = 48
     static let recipientStanzaSize = keyIDSize + 2 + xwingEncapsulatedKeySize + 2 + wrappedDataKeySize
-    /// FIPS 204 ML-DSA-65 signature size. Rechecked against the SDK in Phase 5.
+    /// FIPS 204 ML-DSA-65 signature size. Asserted against the SDK by `IdentityKeyTests`.
     static let mldsa65SignatureSize = 3309
 
     // Encrypted metadata record (FORMAT.md §3).
