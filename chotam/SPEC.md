@@ -21,6 +21,7 @@ They're listed first.
 | Public errors (D13) | Encryption: `weakPassword`, `invalidFilename`, `notEnoughMemory`, `file(FileProblem)`, `unexpected`. Decryption: **`failed` (the one generic message)** for anything about the contents or the password, plus `notEnoughMemory` and `file(FileProblem)`, which reveal nothing about either. **Chosen by the user (2026-09-30).** `FileProblem`: `inputNotAFile`, `outputExists`, `invalidDestination`, `accessDenied`, `readFailed`, `writeFailed`. |
 | Restored filename (D12) | Used only to name a new file inside a `.folder` destination, and only if it's safe (no leading `.`, no `:`, ≤ 255 bytes, on top of FORMAT.md §3's rules); otherwise the `.enc` name without `.enc` is used. It never replaces a file (`Report 2.pdf`, …) and is never treated as a path. With a `.file` destination it's only returned for display. |
 | Output permissions | Outputs (encrypted and decrypted) are created owner-only, mode 0600. |
+| Fingerprint format (D5) | **Approved by the user (2026-09-30):** 8 groups of 4 Crockford base32 characters = 160 bits (about 2^80 against a quantum second-preimage search), instead of the brief's 128-bit hex. The exact bytes hashed are defined in Phase 4. |
 | Where tests run | On the user's Mac: `~/Developer/General-Projects/chotam/EncryptionCore`, `swift test`, Xcode (not the Command Line Tools). The repo must not be on an iCloud-synced folder, or code signing fails. |
 
 ## Phase status
