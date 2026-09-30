@@ -1,6 +1,6 @@
-# PQENC file format, version 1
+# Chotam file format, version 1
 
-This document specifies every byte of a `.enc` file produced by PQENC.
+This document specifies every byte of a `.enc` file produced by Chotam (חוֹתָם, Hebrew for "seal").
 All integers are **unsigned big-endian**. `‖` means concatenation.
 `SHA-256` and `HKDF-SHA256` are as in FIPS 180-4 and RFC 5869.
 
@@ -26,7 +26,7 @@ until Phase 7.
 
 ```
 +----------------------+  header (plaintext, authenticated)
-| prelude     12 bytes |
+| prelude     13 bytes |
 | common      80 bytes |
 | mode params variable |
 +----------------------+
@@ -45,30 +45,30 @@ attacker cannot lie about either.
 
 ## 2. Header
 
-### 2.1 Prelude (12 bytes)
+### 2.1 Prelude (13 bytes)
 
 | Offset | Size | Field | Rule |
 |---:|---:|---|---|
-| 0 | 5 | magic | ASCII `PQENC` (`50 51 45 4E 43`) |
-| 5 | 2 | version | must be `1` |
-| 7 | 1 | mode | `1` = password, `2` = recipients; anything else is rejected |
-| 8 | 4 | headerLength | total header size **including** the prelude (see §2.4) |
+| 0 | 6 | magic | ASCII `CHOTAM` (`43 48 4F 54 41 4D`) |
+| 6 | 2 | version | must be `1` |
+| 8 | 1 | mode | `1` = password, `2` = recipients; anything else is rejected |
+| 9 | 4 | headerLength | total header size **including** the prelude (see §2.4) |
 
 A reader validates the prelude **before reading anything else**. It only then reads
-`headerLength − 12` more bytes, so a hostile length can never trigger a large allocation.
+`headerLength − 13` more bytes, so a hostile length can never trigger a large allocation.
 
 ### 2.2 Common fields (80 bytes)
 
 | Offset | Size | Field | Rule |
 |---:|---:|---|---|
-| 12 | 4 | chunkSize | must be `65536` in v1 |
-| 16 | 32 | hkdfSalt | random per file |
-| 48 | 12 | baseNonce | random per file |
-| 60 | 32 | commitment | key-commitment tag (§4.2) |
+| 13 | 4 | chunkSize | must be `65536` in v1 |
+| 17 | 32 | hkdfSalt | random per file |
+| 49 | 12 | baseNonce | random per file |
+| 61 | 32 | commitment | key-commitment tag (§4.2) |
 
 ### 2.3 Mode parameters
 
-**Password mode (`mode = 1`), 32 bytes, offset 92:**
+**Password mode (`mode = 1`), 32 bytes, offset 93:**
 
 | Size | Field | Rule |
 |---:|---|---|
@@ -80,7 +80,7 @@ Encryption always writes libsodium's `OPSLIMIT_SENSITIVE` (4) and
 `MEMLIMIT_SENSITIVE` (1 GiB). Decryption rejects values outside the ranges above
 **before** running Argon2id, so a crafted file cannot force a huge memory or CPU cost.
 
-**Recipient mode (`mode = 2`), offset 92:**
+**Recipient mode (`mode = 2`), offset 93:**
 
 | Size | Field | Rule |
 |---:|---|---|
@@ -105,8 +105,8 @@ KEM without redesigning the framing. v1 rejects any other value.
 
 | Mode | headerLength |
 |---|---|
-| password | exactly `124` |
-| recipients | exactly `125 + 1204 × recipientCount` (so `1329 … 77181`) |
+| password | exactly `125` |
+| recipients | exactly `126 + 1204 × recipientCount` (so `1330 … 77182`) |
 
 The reader also enforces a hard ceiling of 128 KiB. A header whose `headerLength`
 doesn't match its contents exactly, or that has bytes left over after the last field,
@@ -150,8 +150,8 @@ The IKM is always exactly 32 bytes:
 ### 4.2 Derived values
 
 ```
-fileKey    = HKDF-SHA256(IKM, salt = hkdfSalt, info = "PQENC v1 file key",       L = 32)
-commitment = HKDF-SHA256(IKM, salt = hkdfSalt, info = "PQENC v1 key commitment", L = 32)
+fileKey    = HKDF-SHA256(IKM, salt = hkdfSalt, info = "Chotam v1 file key",       L = 32)
+commitment = HKDF-SHA256(IKM, salt = hkdfSalt, info = "Chotam v1 key commitment", L = 32)
 ```
 
 - `hkdfSalt` is fresh for every file, so `fileKey` is unique per file even if the IKM
@@ -221,8 +221,8 @@ The reader never reads more than `S + T + 1` bytes at a time.
 ### 6.1 Key IDs
 
 ```
-encryptionKeyID = SHA-256("PQENC v1 encryption key id" ‖ XWing public key, raw representation)
-signingKeyID    = SHA-256("PQENC v1 signing key id"    ‖ ML-DSA-65 public key, raw representation)
+encryptionKeyID = SHA-256("Chotam v1 encryption key id" ‖ XWing public key, raw representation)
+signingKeyID    = SHA-256("Chotam v1 signing key id"    ‖ ML-DSA-65 public key, raw representation)
 ```
 
 The labels keep the two kinds of key ID from ever colliding. (The spec said "SHA-256
@@ -237,8 +237,8 @@ of the public key"; this adds domain separation and is otherwise identical.)
   `encapsulatedKey` and `wrappedDataKey`:
 
 ```
-wrapContext = SHA-256( "PQENC v1 wrap context"
-                     ‖ prelude (12 bytes, incl. final headerLength)
+wrapContext = SHA-256( "Chotam v1 wrap context"
+                     ‖ prelude (13 bytes, incl. final headerLength)
                      ‖ common fields (80 bytes, incl. commitment)
                      ‖ senderKeyID ‖ recipientCount
                      ‖ keyID_1 ‖ … ‖ keyID_n )
@@ -253,7 +253,7 @@ with a different recipient list or commitment.
 ### 6.3 Trailer: ML-DSA-65 signature
 
 ```
-signedMessage = "PQENC v1 signature"
+signedMessage = "Chotam v1 signature"
               ‖ headerHash
               ‖ SHA-256(chunk_0 ‖ chunk_1 ‖ … ‖ chunk_{n-1})   (ciphertext, including tags)
               ‖ UInt64BE(n)
@@ -271,7 +271,7 @@ trailer = ML-DSA-65.sign(senderSigningKey, signedMessage)      (3309 bytes (veri
 
 In order:
 
-1. The prelude is complete (12 bytes).
+1. The prelude is complete (13 bytes).
 2. The magic matches, `version = 1`, and the mode is known.
 3. `headerLength` is within the per-mode range and ≤ 128 KiB.
 4. The rest of the header is complete, and nothing is left over.

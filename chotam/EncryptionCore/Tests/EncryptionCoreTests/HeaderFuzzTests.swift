@@ -33,16 +33,16 @@ final class HeaderFuzzTests: XCTestCase {
     /// and version checks and exercises the field and stanza parsing.
     func testRandomBytesBehindValidPrelude() throws {
         var rng = SeededGenerator(seed: 0xBEEF)
-        let passwordPrelude = Array(try HeaderCodec.encode(Fixtures.header()).prefix(12))
+        let passwordPrelude = Array(try HeaderCodec.encode(Fixtures.header()).prefix(FormatV1.preludeSize))
         let recipientPrelude = Array(try HeaderCodec.encode(
-            Fixtures.header(parameters: Fixtures.recipientParameters(count: 1))).prefix(12))
+            Fixtures.header(parameters: Fixtures.recipientParameters(count: 1))).prefix(FormatV1.preludeSize))
         for i in 0 ..< 100_000 {
             let usePassword = i % 2 == 0
             let prelude = usePassword ? passwordPrelude : recipientPrelude
-            let targetLength = usePassword ? 124 : 1329
+            let targetLength = usePassword ? FormatV1.passwordHeaderLength : FormatV1.recipientHeaderLength(count: 1)
             // Mostly exact length, sometimes off by a little.
             let jitter = Int(rng.next() % 5) - 2
-            var bytes = prelude + rng.bytes(max(0, targetLength - 12 + (i % 7 == 0 ? jitter : 0)))
+            var bytes = prelude + rng.bytes(max(0, targetLength - FormatV1.preludeSize + (i % 7 == 0 ? jitter : 0)))
             // Make the fixed-size checks pass sometimes so deeper code runs.
             if bytes.count > 16, rng.next() % 2 == 0 {
                 bytes.put(UInt32(FormatV1.chunkSize), at: HeaderOffsets.chunkSize)

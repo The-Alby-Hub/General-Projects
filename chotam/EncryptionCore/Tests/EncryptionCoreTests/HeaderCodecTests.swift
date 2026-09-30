@@ -7,10 +7,10 @@ final class HeaderCodecTests: XCTestCase {
     func testPasswordHeaderGoldenBytes() throws {
         let encoded = try HeaderCodec.encode(Fixtures.header())
         let expected: [UInt8] =
-            hex("5051454E43")  // "PQENC"
+            hex("43484F54414D")  // "CHOTAM"
             + hex("0001")  // version 1
             + hex("01")  // password mode
-            + hex("0000007C")  // header length 124
+            + hex("0000007D")  // header length 125
             + hex("00010000")  // chunk size 65536
             + [UInt8](repeating: 0x11, count: 32)  // HKDF salt
             + [UInt8](repeating: 0x22, count: 12)  // base nonce
@@ -24,13 +24,13 @@ final class HeaderCodecTests: XCTestCase {
 
     func testRecipientHeaderLayout() throws {
         let encoded = try HeaderCodec.encode(Fixtures.header(parameters: Fixtures.recipientParameters(count: 2)))
-        XCTAssertEqual(encoded.count, 125 + 2 * 1204)
+        XCTAssertEqual(encoded.count, 126 + 2 * 1204)
         XCTAssertEqual(encoded[HeaderOffsets.mode], 2)
-        XCTAssertEqual(Array(encoded[8 ..< 12]), hex("000009E5"))  // 2533
-        XCTAssertEqual(Array(encoded[92 ..< 124]), [UInt8](repeating: 0x55, count: 32))
+        XCTAssertEqual(Array(encoded[9 ..< 13]), hex("000009E6"))  // 2534
+        XCTAssertEqual(Array(encoded[93 ..< 125]), [UInt8](repeating: 0x55, count: 32))
         XCTAssertEqual(encoded[HeaderOffsets.recipientCount], 2)
-        XCTAssertEqual(Array(encoded[157 ..< 159]), hex("0460"))  // 1120
-        XCTAssertEqual(Array(encoded[1279 ..< 1281]), hex("0030"))  // 48
+        XCTAssertEqual(Array(encoded[158 ..< 160]), hex("0460"))  // 1120
+        XCTAssertEqual(Array(encoded[1280 ..< 1282]), hex("0030"))  // 48
     }
 
     func testRoundTripBothModes() throws {
@@ -50,7 +50,7 @@ final class HeaderCodecTests: XCTestCase {
 
     func testMaximumRecipientHeaderFitsLimit() throws {
         let encoded = try HeaderCodec.encode(Fixtures.header(parameters: Fixtures.recipientParameters(count: 64)))
-        XCTAssertEqual(encoded.count, 77_181)
+        XCTAssertEqual(encoded.count, 77_182)
         XCTAssertLessThanOrEqual(encoded.count, FormatV1.maxHeaderLength)
     }
 
@@ -106,7 +106,7 @@ final class HeaderCodecTests: XCTestCase {
 
     func testRejectsWrongHeaderLengths() throws {
         var bytes = try passwordHeaderBytes()
-        bytes.put(UInt32(125), at: HeaderOffsets.headerLength)
+        bytes.put(UInt32(FormatV1.passwordHeaderLength + 1), at: HeaderOffsets.headerLength)
         assertCoreFailure(.headerLengthMismatch) { _ = try HeaderCodec.decode(bytes) }
 
         var recipient = try recipientHeaderBytes()
@@ -120,7 +120,7 @@ final class HeaderCodecTests: XCTestCase {
         assertCoreFailure(.headerLengthMismatch) { _ = try HeaderCodec.decode(mismatched) }
     }
 
-    /// A hostile length is rejected after reading only the 12-byte prelude.
+    /// A hostile length is rejected after reading only the 13-byte prelude.
     func testHostileLengthIsRejectedBeforeReadingMore() throws {
         var bytes = try recipientHeaderBytes()
         bytes.put(UInt32.max, at: HeaderOffsets.headerLength)

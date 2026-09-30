@@ -52,7 +52,7 @@ enum HeaderCodec {
 
     // MARK: Parsing
 
-    /// Validates the 12-byte prelude and returns the declared header length.
+    /// Validates the 13-byte prelude and returns the declared header length.
     /// This runs before the rest of the header is read, so a hostile length
     /// can't cause a large read or allocation.
     static func parsePrelude(_ prelude: [UInt8]) throws -> (mode: FileHeader.Mode, headerLength: Int) {

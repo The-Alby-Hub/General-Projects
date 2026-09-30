@@ -1,10 +1,10 @@
-# PQENC security model
+# Chotam security model
 
-This document says what PQENC protects, what it doesn't, and what is known to be
+This document says what Chotam protects, what it doesn't, and what is known to be
 imperfect. It is kept honest on purpose: a gap listed here is better than one a user
 discovers the hard way. The byte-level format is in [FORMAT.md](FORMAT.md).
 
-## 1. What PQENC is for
+## 1. What Chotam is for
 
 It encrypts **individual local files** on a Mac, so they can sit on disk, go on a USB
 stick, or travel over email or cloud storage and stay confidential and tamper-evident,
@@ -34,7 +34,7 @@ file-system extensions.
 | A5 | **Malicious recipient or insider** | Legitimately receives a file and tries to reuse it: forward it as if newly signed, or re-target it. |
 | A6 | **Impostor** | Tries to get the user to trust a public identity that isn't the claimed person's. |
 
-## 4. What PQENC protects against
+## 4. What Chotam protects against
 
 | Threat | Protection | Adversary |
 |---|---|---|
@@ -52,7 +52,7 @@ file-system extensions.
 | Trusting the wrong key | Fingerprints, imported contacts start unverified, and an explicit confirmation to encrypt to an unverified contact (Phase 4). | A6 |
 | Half-written or corrupted outputs | Temp file, then an atomic replace. The original is never touched on failure (Phase 3). | — |
 
-## 5. What PQENC does NOT protect against
+## 5. What Chotam does NOT protect against
 
 1. **A compromised Mac.** Malware, a keylogger, a malicious admin, or anyone who can
    read the app's memory while it runs sees passwords, keys and plaintext. Nothing
@@ -64,13 +64,13 @@ file-system extensions.
      64 KiB and a fixed header);
    - timestamps and extended attributes set by the file system;
    - the `.enc` file's own name;
-   - the fact that PQENC was used (the magic bytes);
+   - the fact that Chotam was used (the magic bytes);
    - in recipient mode, the **key IDs of all recipients and of the sender**. Anyone who
      has those public keys can see who a file was sent to and who signed it.
 
    Hiding recipients is possible in a future version.
 4. **Secure deletion.** On APFS and SSDs, overwriting a file doesn't reliably erase the
-   old blocks (copy-on-write, snapshots, wear levelling, Time Machine). PQENC never
+   old blocks (copy-on-write, snapshots, wear levelling, Time Machine). Chotam never
    deletes originals by itself and doesn't claim to wipe them. **Use FileVault.** It is
    the only thing that protects deleted plaintext remnants and temp files.
 5. **Password mode doesn't authenticate the sender.** Anyone who knows the password can

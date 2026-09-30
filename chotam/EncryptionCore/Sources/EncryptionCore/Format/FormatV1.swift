@@ -1,11 +1,11 @@
 /// Fixed parameters of format version 1 (see FORMAT.md). Anything a file
 /// declares that doesn't match these is rejected before any key derivation.
 enum FormatV1 {
-    static let magic: [UInt8] = Array("PQENC".utf8)
+    static let magic: [UInt8] = Array("CHOTAM".utf8)
     static let version: UInt16 = 1
 
-    /// magic(5) + version(2) + mode(1) + headerLength(4)
-    static let preludeSize = 12
+    /// magic(6) + version(2) + mode(1) + headerLength(4)
+    static let preludeSize = 13
     /// chunkSize(4) + hkdfSalt(32) + baseNonce(12) + commitment(32)
     static let commonFieldsSize = 80
     /// Hard ceiling, checked before the rest of the header is read, so a hostile

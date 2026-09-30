@@ -118,7 +118,7 @@ final class StreamRoundTripTests: XCTestCase {
         XCTAssertEqual(opened.summary.headerHash, sealSummary.headerHash)
         XCTAssertEqual(opened.summary.ciphertextDigest, sealSummary.ciphertextDigest)
         XCTAssertEqual(opened.summary.chunkCount, sealSummary.chunkCount)
-        XCTAssertEqual(sealSummary.headerHash, Array(SHA256.hash(data: sink.bytes.prefix(124))))
+        XCTAssertEqual(sealSummary.headerHash, Array(SHA256.hash(data: sink.bytes.prefix(FormatV1.passwordHeaderLength))))
     }
 
     func testSameInputEncryptsDifferentlyEachTime() throws {
@@ -126,15 +126,15 @@ final class StreamRoundTripTests: XCTestCase {
         let plaintext = Fixtures.pattern(1000)
         let a = try sealBytes(plaintext, ikm: ikm)
         let b = try sealBytes(plaintext, ikm: ikm)
-        XCTAssertNotEqual(Array(a[16 ..< 92]), Array(b[16 ..< 92]), "salt, nonce and commitment must be fresh")
-        XCTAssertNotEqual(Array(a[124...]), Array(b[124...]))
+        XCTAssertNotEqual(Array(a[17 ..< 93]), Array(b[17 ..< 93]), "salt, nonce and commitment must be fresh")
+        XCTAssertNotEqual(Array(a[FormatV1.passwordHeaderLength...]), Array(b[FormatV1.passwordHeaderLength...]))
     }
 
     /// > 100 MB through real files, bounded memory: no read ever asks for more
     /// than one sealed chunk (+1 byte of lookahead).
     func testLargeFileRoundTripThroughFiles() throws {
         let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("pqenc-tests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("chotam-tests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
 
@@ -177,7 +177,7 @@ final class StreamRoundTripTests: XCTestCase {
         let sizeProbe = try FileHandle(forReadingFrom: encrypted)
         let encryptedSize = try sizeProbe.seekToEnd()
         try sizeProbe.close()
-        XCTAssertEqual(encryptedSize, UInt64(124 + 2 + 9 + totalSize + expectedChunks * 16))
+        XCTAssertEqual(encryptedSize, UInt64(FormatV1.passwordHeaderLength + 2 + 9 + totalSize + expectedChunks * 16))
 
         // Decrypt.
         let readEnc = try FileHandle(forReadingFrom: encrypted)

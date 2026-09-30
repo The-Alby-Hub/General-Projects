@@ -9,8 +9,8 @@ import Crypto
 enum KeySchedule {
     // Distinct HKDF `info` labels give independent outputs from one IKM, so the
     // public commitment tag reveals nothing about the file key.
-    static let fileKeyInfo = Array("PQENC v1 file key".utf8)
-    static let commitmentInfo = Array("PQENC v1 key commitment".utf8)
+    static let fileKeyInfo = Array("Chotam v1 file key".utf8)
+    static let commitmentInfo = Array("Chotam v1 key commitment".utf8)
 
     struct Keys {
         /// AES-256-GCM key for this file's chunks. Stays inside `SymmetricKey`.

@@ -48,7 +48,7 @@ final class TamperingTests: XCTestCase {
         let file = try sealBytes(Fixtures.pattern(5000), ikm: ikm, parameters: parameters, trailer: trailer)
         let headerLength = FormatV1.recipientHeaderLength(count: 2)
         // One flip in each field region, incl. both stanzas and their length fields.
-        let offsets = [0, 5, 7, 8, 12, 16, 48, 60, 92, 124, 125, 157, 159, 1279, 1281, 1328, 1329, 1361, 2532]
+        let offsets = [0, 6, 8, 9, 13, 17, 49, 61, 93, 125, 126, 158, 160, 1280, 1282, 1329, 1330, 1362, 2533]
         for offset in offsets where offset < headerLength {
             var tampered = file
             tampered[offset] ^= 0x01

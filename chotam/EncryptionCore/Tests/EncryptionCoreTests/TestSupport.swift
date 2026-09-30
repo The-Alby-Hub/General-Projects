@@ -153,21 +153,21 @@ func assertCoreFailure(
 
 /// Byte ranges of the encoded header, for targeted tampering.
 enum HeaderOffsets {
-    static let version = 5
-    static let mode = 7
-    static let headerLength = 8
-    static let chunkSize = 12
-    static let hkdfSalt = 16
-    static let baseNonce = 48
-    static let commitment = 60
-    static let modeParameters = 92
+    static let version = 6
+    static let mode = 8
+    static let headerLength = 9
+    static let chunkSize = 13
+    static let hkdfSalt = 17
+    static let baseNonce = 49
+    static let commitment = 61
+    static let modeParameters = 93
     // Password mode
-    static let opsLimit = 108
-    static let memLimit = 116
+    static let opsLimit = 109
+    static let memLimit = 117
     // Recipient mode
-    static let recipientCount = 124
-    static let firstStanza = 125
-    static let firstEncLength = 125 + 32
+    static let recipientCount = 125
+    static let firstStanza = 126
+    static let firstEncLength = 126 + 32
 }
 
 extension Array where Element == UInt8 {

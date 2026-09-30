@@ -1,4 +1,6 @@
-# PQENC: local, post-quantum file encryption for macOS
+# Chotam (חוֹתָם): local, post-quantum file encryption for macOS
+
+*Chotam* is Hebrew for "seal", as in a signet seal pressed into wax: it keeps a document closed and proves who sealed it.
 
 **Local files. Local encryption. Post-quantum safe. Minimal privileges. No unnecessary system extensions.**
 
@@ -17,7 +19,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 
 | Phase | Scope | State |
 |---|---|---|
-| 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | done: 71 tests pass on macOS (Xcode) |
+| 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | 71 tests passed on macOS; re-run pending after the rename to Chotam |
 | 2 | Password mode (Argon2id via libsodium) | — |
 | 3 | Atomic file processor | — |
 | 4 | Identities, Keychain / Secure Enclave, fingerprints | — |
@@ -28,7 +30,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 ## Layout
 
 ```
-pqenc/
+chotam/
   FORMAT.md, SECURITY.md
   EncryptionCore/                Swift package: all crypto, format and file logic
     Sources/EncryptionCore/
@@ -44,7 +46,7 @@ pqenc/
 **macOS 26 with Xcode 26** (authoritative):
 
 ```sh
-cd pqenc/EncryptionCore
+cd chotam/EncryptionCore
 swift test
 ```
 
@@ -56,6 +58,6 @@ both pinned exactly. They provide the same `AES.GCM` / `HKDF` / `SHA256` / `Symm
 API. They are declared inside `#if os(Linux)`, so a macOS build never resolves them.
 
 ```sh
-cd pqenc/EncryptionCore
+cd chotam/EncryptionCore
 swift build && swift test
 ```

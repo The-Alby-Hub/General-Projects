@@ -63,7 +63,7 @@ struct CoreFailure: Error, Equatable {
 
 enum DebugLog {
     #if canImport(os)
-    private static let logger = Logger(subsystem: "app.pqenc.EncryptionCore", category: "crypto")
+    private static let logger = Logger(subsystem: "app.chotam.EncryptionCore", category: "crypto")
     #endif
 
     /// Logs a failure reason at debug level. Only the fixed enum string is logged.
