@@ -19,12 +19,10 @@ Status of each part in the implementation:
 | Public identity file `.pqid` and fingerprints (§9) | yes | Phase 4 |
 | Keychain records for your identity and contacts (§10) | yes | Phase 4 |
 
-Sizes marked **(verify)** come from the relevant standard and are rechecked against
-the macOS 26 SDK when the phase that uses them is implemented. If the SDK differs,
-the format is corrected before it is ever used to write a file; it is not frozen
-until Phase 7. Phase 4 added tests that assert them on the SDK (`IdentityKeyTests`:
-X-Wing public key 1216, encapsulated key 1120, HPKE-wrapped Data Key 48, ML-DSA-65
-public key 1952, signature 3309). The marks are removed once those pass on macOS.
+Every key, ciphertext and signature size here comes from the relevant standard and is
+**confirmed against the macOS 26 SDK** by `IdentityKeyTests` (passed on macOS,
+2026-09-30): X-Wing public key 1216, encapsulated key 1120, HPKE-wrapped Data Key 48,
+ML-DSA-65 public key 1952, signature 3309. The format is not frozen until Phase 7.
 
 ---
 
@@ -99,7 +97,7 @@ Each stanza:
 | Size | Field | Rule |
 |---:|---|---|
 | 32 | keyID | recipient's encryption-key ID (§6.1); no duplicates within a header |
-| 2 | encLength | must equal `1120`, the X-Wing encapsulated-key size **(verify)** |
+| 2 | encLength | must equal `1120`, the X-Wing encapsulated-key size |
 | 1120 | encapsulatedKey | HPKE `enc` |
 | 2 | wrappedLength | must equal `48` (32-byte Data Key + 16-byte GCM tag) |
 | 48 | wrappedDataKey | HPKE ciphertext of the Data Key |
@@ -280,7 +278,7 @@ signedMessage = "Chotam v1 signature"
               ‖ SHA-256(chunk_0 ‖ chunk_1 ‖ … ‖ chunk_{n-1})   (ciphertext, including tags)
               ‖ UInt64BE(n)
 
-trailer = ML-DSA-65.sign(senderSigningKey, signedMessage)      (3309 bytes (verify))
+trailer = ML-DSA-65.sign(senderSigningKey, signedMessage)      (3309 bytes)
 ```
 
 - The header hash covers every stanza, so re-targeting a file to new recipients
