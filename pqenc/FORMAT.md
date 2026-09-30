@@ -1,0 +1,288 @@
+# PQENC file format, version 1
+
+This document specifies every byte of a `.enc` file produced by PQENC.
+All integers are **unsigned big-endian**. `‖` means concatenation.
+`SHA-256` and `HKDF-SHA256` are as in FIPS 180-4 and RFC 5869.
+
+Status of each part in the implementation:
+
+| Part | Specified here | Implemented |
+|---|---|---|
+| Header prelude, common fields, parser limits | yes | Phase 1 |
+| Chunked AES-256-GCM body, key schedule, key commitment | yes | Phase 1 |
+| Encrypted metadata record (filename) | yes | Phase 1 |
+| Password-mode parameters (Argon2id) | yes | fields parsed in Phase 1, KDF in Phase 2 |
+| Recipient-mode stanzas (HPKE X-Wing) | yes | fields parsed in Phase 1, HPKE in Phase 5 |
+| Trailer (ML-DSA-65 signature) | yes | framing in Phase 1, signing in Phase 5 |
+
+Sizes marked **(verify)** come from the relevant standard and are rechecked against
+the macOS 26 SDK when the phase that uses them is implemented. If the SDK differs,
+the format is corrected before it is ever used to write a file; it is not frozen
+until Phase 7.
+
+---
+
+## 1. Overall layout
+
+```
++----------------------+  header (plaintext, authenticated)
+| prelude     12 bytes |
+| common      80 bytes |
+| mode params variable |
++----------------------+
+| chunk 0              |  body: AES-256-GCM chunks
+| chunk 1              |
+| ...                  |
+| chunk n-1 (final)    |
++----------------------+
+| trailer              |  recipient mode only: ML-DSA-65 signature
++----------------------+
+```
+
+There are **no length fields for the body or the trailer**. The trailer has a fixed size
+for its mode, and chunk boundaries follow from the fixed chunk size (§5.4), so an
+attacker cannot lie about either.
+
+## 2. Header
+
+### 2.1 Prelude (12 bytes)
+
+| Offset | Size | Field | Rule |
+|---:|---:|---|---|
+| 0 | 5 | magic | ASCII `PQENC` (`50 51 45 4E 43`) |
+| 5 | 2 | version | must be `1` |
+| 7 | 1 | mode | `1` = password, `2` = recipients; anything else is rejected |
+| 8 | 4 | headerLength | total header size **including** the prelude (see §2.4) |
+
+A reader validates the prelude **before reading anything else**. It only then reads
+`headerLength − 12` more bytes, so a hostile length can never trigger a large allocation.
+
+### 2.2 Common fields (80 bytes)
+
+| Offset | Size | Field | Rule |
+|---:|---:|---|---|
+| 12 | 4 | chunkSize | must be `65536` in v1 |
+| 16 | 32 | hkdfSalt | random per file |
+| 48 | 12 | baseNonce | random per file |
+| 60 | 32 | commitment | key-commitment tag (§4.2) |
+
+### 2.3 Mode parameters
+
+**Password mode (`mode = 1`), 32 bytes, offset 92:**
+
+| Size | Field | Rule |
+|---:|---|---|
+| 16 | argon2Salt | random per file |
+| 8 | opsLimit | accepted range `3…8` |
+| 8 | memLimit | bytes; accepted range `256 MiB … 1 GiB` |
+
+Encryption always writes libsodium's `OPSLIMIT_SENSITIVE` (4) and
+`MEMLIMIT_SENSITIVE` (1 GiB). Decryption rejects values outside the ranges above
+**before** running Argon2id, so a crafted file cannot force a huge memory or CPU cost.
+
+**Recipient mode (`mode = 2`), offset 92:**
+
+| Size | Field | Rule |
+|---:|---|---|
+| 32 | senderKeyID | signing-key ID of the sender (§6.1) |
+| 1 | recipientCount | `1…64` |
+| 1204 × count | stanzas | see below |
+
+Each stanza:
+
+| Size | Field | Rule |
+|---:|---|---|
+| 32 | keyID | recipient's encryption-key ID (§6.1); no duplicates within a header |
+| 2 | encLength | must equal `1120`, the X-Wing encapsulated-key size **(verify)** |
+| 1120 | encapsulatedKey | HPKE `enc` |
+| 2 | wrappedLength | must equal `48` (32-byte Data Key + 16-byte GCM tag) |
+| 48 | wrappedDataKey | HPKE ciphertext of the Data Key |
+
+The length fields are redundant in v1 but kept so a later version can change the
+KEM without redesigning the framing. v1 rejects any other value.
+
+### 2.4 Header length rules
+
+| Mode | headerLength |
+|---|---|
+| password | exactly `124` |
+| recipients | exactly `125 + 1204 × recipientCount` (so `1329 … 77181`) |
+
+The reader also enforces a hard ceiling of 128 KiB. A header whose `headerLength`
+doesn't match its contents exactly, or that has bytes left over after the last field,
+is rejected.
+
+### 2.5 Header hash
+
+`headerHash = SHA-256(rawHeaderBytes)`. It is computed over the **exact bytes read
+from the file**, never over a re-encoding. It is bound into every chunk (§5.3) and into
+the signature (§6.3), so changing any header byte breaks decryption.
+
+## 3. Plaintext stream and metadata record
+
+The encrypted stream carries a small metadata record followed by the file contents:
+
+```
+plaintextStream = nameLength (UInt16) ‖ name (nameLength bytes, UTF-8) ‖ fileBytes
+```
+
+- `nameLength = 0` means no filename was stored.
+- The name must be valid UTF-8 and at most 1024 bytes. It must not be `.` or `..`, and must
+  not contain `/`, C0 or C1 control characters, or Unicode bidirectional controls
+  (U+061C, U+200E, U+200F, U+202A–U+202E, U+2066–U+2069). The last rule stops a name such as
+  `invoice` + U+202E + `fdp.exe` from displaying as `invoiceexe.pdf`.
+- The record always fits inside chunk 0: it is at most 1026 bytes and a chunk holds 65536.
+
+The filename is therefore **encrypted and authenticated**. It isn't visible in the
+header.
+
+## 4. Key schedule
+
+### 4.1 Input keying material (IKM)
+
+The IKM is always exactly 32 bytes:
+
+- **Password mode:** `IKM = Argon2id(password, argon2Salt, opsLimit, memLimit, outLen = 32)`.
+  The password is normalised to Unicode NFC and encoded as UTF-8 first, so the same
+  password typed on a different keyboard layout derives the same key.
+- **Recipient mode:** `IKM = DataKey`, 32 random bytes generated per file.
+
+### 4.2 Derived values
+
+```
+fileKey    = HKDF-SHA256(IKM, salt = hkdfSalt, info = "PQENC v1 file key",       L = 32)
+commitment = HKDF-SHA256(IKM, salt = hkdfSalt, info = "PQENC v1 key commitment", L = 32)
+```
+
+- `hkdfSalt` is fresh for every file, so `fileKey` is unique per file even if the IKM
+  repeats (the same password, for example).
+- AES-GCM is not key-committing: a ciphertext can be built to decrypt validly under
+  two different keys. The commitment tag stops that. It is derived from the same IKM and
+  salt as `fileKey` but with a distinct `info` label, so a header commits to exactly one
+  IKM, and therefore one `fileKey`, under the collision resistance of HKDF-SHA256.
+- The decryptor recomputes `commitment` and compares it with the header value in
+  **constant time before opening any chunk**. On mismatch, decryption stops.
+
+## 5. Body
+
+### 5.1 Chunking
+
+- The plaintext stream is split into chunks of exactly `chunkSize` (65536) bytes,
+  except the last.
+- The last chunk (the **final** chunk) holds `0 … 65536` bytes.
+- If the stream length is an exact multiple of 65536, the last full chunk is the final
+  one; no empty chunk follows it.
+- An empty chunk only ever appears as the single chunk of an empty stream (not possible
+  in v1, since the metadata record is always at least 2 bytes). A reader rejects an
+  empty final chunk at index > 0.
+- The chunk count must be below 2³².
+
+Each chunk on disk is `ciphertext ‖ tag`: the chunk's plaintext length plus 16 bytes.
+
+### 5.2 Nonces
+
+```
+nonce(i) = baseNonce XOR (0x00000000 ‖ UInt64BE(i))
+```
+
+The chunk index is XORed into the last 8 bytes of the 12-byte base nonce. Nonces are
+unique within a file because the index is. They are unique across files because
+`fileKey` itself is unique per file (§4.2). The random `baseNonce` is extra defence in
+depth.
+
+### 5.3 Associated data
+
+```
+aad(i) = headerHash (32) ‖ UInt64BE(i) (8) ‖ finalFlag (1: 0x01 if final, else 0x00)
+```
+
+This binds each chunk to its file (the header hash), its position (the index) and
+whether it is last (the final flag). As a result:
+
+- **reordered or duplicated chunks** fail (wrong index);
+- **truncation at a chunk boundary** fails (the new last chunk was sealed as non-final);
+- **appended data** fails (the old final chunk is no longer last, or the extra bytes
+  don't authenticate);
+- **header edits** fail (the header hash changes).
+
+### 5.4 Finding chunk boundaries when reading
+
+With `S = chunkSize + 16` and `T` = the trailer size for the mode (`0` for password
+mode, see §6.3 for recipient mode), the reader keeps a read-ahead buffer:
+
+- If more than `S + T` bytes remain, the next `S` bytes are a **non-final** chunk.
+- Otherwise the input has ended. The remaining bytes are the **final** chunk followed by
+  exactly `T` trailer bytes. The final chunk must be at least 16 bytes.
+
+The reader never reads more than `S + T + 1` bytes at a time.
+
+## 6. Recipient mode (implemented in Phase 5)
+
+### 6.1 Key IDs
+
+```
+encryptionKeyID = SHA-256("PQENC v1 encryption key id" ‖ XWing public key, raw representation)
+signingKeyID    = SHA-256("PQENC v1 signing key id"    ‖ ML-DSA-65 public key, raw representation)
+```
+
+The labels keep the two kinds of key ID from ever colliding. (The spec said "SHA-256
+of the public key"; this adds domain separation and is otherwise identical.)
+
+### 6.2 Wrapping the Data Key (HPKE, X-Wing)
+
+- Ciphersuite: `HPKE.Ciphersuite.XWingMLKEM768X25519_SHA256_AES_GCM_256`, base mode.
+  X-Wing has no authenticated mode; sender authentication comes from §6.3.
+- The HPKE `info` can't include the stanzas it helps produce. It is set to the
+  **wrap context**, which covers every header field except each stanza's
+  `encapsulatedKey` and `wrappedDataKey`:
+
+```
+wrapContext = SHA-256( "PQENC v1 wrap context"
+                     ‖ prelude (12 bytes, incl. final headerLength)
+                     ‖ common fields (80 bytes, incl. commitment)
+                     ‖ senderKeyID ‖ recipientCount
+                     ‖ keyID_1 ‖ … ‖ keyID_n )
+```
+
+- For each recipient: `(enc, ct) = HPKE.seal(pk_i, info = wrapContext, aad = keyID_i, pt = DataKey)`.
+- The stanza stores `keyID_i ‖ enc ‖ ct`.
+
+Binding `wrapContext` means a stanza can't be moved into another file, or into a header
+with a different recipient list or commitment.
+
+### 6.3 Trailer: ML-DSA-65 signature
+
+```
+signedMessage = "PQENC v1 signature"
+              ‖ headerHash
+              ‖ SHA-256(chunk_0 ‖ chunk_1 ‖ … ‖ chunk_{n-1})   (ciphertext, including tags)
+              ‖ UInt64BE(n)
+
+trailer = ML-DSA-65.sign(senderSigningKey, signedMessage)      (3309 bytes (verify))
+```
+
+- The header hash covers every stanza, so re-targeting a file to new recipients
+  invalidates the signature.
+- The reader looks up `senderKeyID` among trusted contacts, verifies the signature, and
+  releases the output only after both the signature and every chunk verify.
+- Password-mode files have no trailer.
+
+## 7. Parser limits, checked before any expensive work
+
+In order:
+
+1. The prelude is complete (12 bytes).
+2. The magic matches, `version = 1`, and the mode is known.
+3. `headerLength` is within the per-mode range and ≤ 128 KiB.
+4. The rest of the header is complete, and nothing is left over.
+5. `chunkSize = 65536`, and every fixed field has its exact size.
+6. Password mode: `opsLimit` and `memLimit` are in range.
+7. Recipient mode: `recipientCount` is in `1…64`, the stanza sizes are exact, and there
+   are no duplicate key IDs.
+
+Only after all of that does key derivation (HKDF, Argon2id or HPKE) happen, then the
+commitment check, then chunk decryption.
+
+Every failure, at any stage, becomes the single public error
+**"Decryption failed: file is damaged or not for you."** The detailed reason goes only
+to the debug log, as a fixed string that never contains secret material.
