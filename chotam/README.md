@@ -19,7 +19,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 
 | Phase | Scope | State |
 |---|---|---|
-| 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | 71 tests passed on macOS; re-run pending after the rename to Chotam |
+| 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | done: 71 tests pass on macOS (Xcode) |
 | 2 | Password mode (Argon2id via libsodium) | — |
 | 3 | Atomic file processor | — |
 | 4 | Identities, Keychain / Secure Enclave, fingerprints | — |
