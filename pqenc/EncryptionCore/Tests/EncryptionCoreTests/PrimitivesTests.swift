@@ -138,10 +138,12 @@ final class PrimitivesTests: XCTestCase {
 
     func testByteReaderNeverReadsPastEnd() throws {
         var r = ByteReader([1, 2, 3])
-        XCTAssertEqual(try r.readUInt16(), 0x0102)
+        let first = try r.readUInt16()
+        XCTAssertEqual(first, 0x0102)
         assertCoreFailure(.truncatedHeader) { _ = try r.readUInt16() }
         assertCoreFailure(.truncatedHeader) { _ = try r.readBytes(-1) }
-        XCTAssertEqual(try r.readUInt8(), 3)
+        let last = try r.readUInt8()
+        XCTAssertEqual(last, 3)
         XCTAssertTrue(r.isAtEnd)
         assertCoreFailure(.truncatedHeader) { _ = try r.readUInt8() }
     }
