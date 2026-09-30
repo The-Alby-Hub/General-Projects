@@ -13,6 +13,11 @@ enum Wipe {
         data.withUnsafeMutableBytes { zero($0) }
     }
 
+    /// For buffers we allocate ourselves, e.g. the password bytes handed to libsodium.
+    static func raw(_ buffer: UnsafeMutableRawBufferPointer) {
+        zero(buffer)
+    }
+
     private static func zero(_ raw: UnsafeMutableRawBufferPointer) {
         guard let base = raw.baseAddress, raw.count > 0 else { return }
         #if canImport(Darwin)

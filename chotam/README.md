@@ -21,7 +21,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 | Phase | Scope | State |
 |---|---|---|
 | 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | done: 71 tests pass on macOS (Xcode) |
-| 2 | Password mode (Argon2id via libsodium) | — |
+| 2 | Password mode (Argon2id via libsodium), password rule, passphrase generator | done: 113 tests pass on macOS (Xcode) |
 | 3 | Atomic file processor | — |
 | 4 | Identities, Keychain / Secure Enclave, fingerprints | — |
 | 5 | Recipient mode: HPKE wrapping, ML-DSA signatures | — |
@@ -39,7 +39,10 @@ chotam/
       Format/                    v1 constants, header model, strict codec, byte reader/writer
       Crypto/                    HKDF key schedule + commitment, nonces/AAD, constant-time, wiping
       Stream/                    chunked sealer/opener, byte sources/sinks, metadata record
+      Password/                  Argon2id (libsodium), password mode, strength rule, passphrase generator
+      Resources/                 EFF large wordlist (CC-BY 3.0 US)
     Tests/EncryptionCoreTests/   XCTest
+      Vectors/                   golden .enc files from an independent implementation (FORMAT.md §8)
 ```
 
 ## Building and testing
@@ -51,14 +54,28 @@ cd chotam/EncryptionCore
 swift test
 ```
 
-This uses the system CryptoKit. No packages are fetched.
+This uses the system CryptoKit. The first run fetches one package,
+[jedisct1/swift-sodium](https://github.com/jedisct1/swift-sodium) 0.11.0, pinned exactly. Only
+its `Clibsodium` product (libsodium itself) is linked, for Argon2id. `Package.resolved`
+should show revision `cfd195c76882aa9b997560ca7cb95d72fbf5db00`.
+
+Password-mode tests run Argon2id for real. Most use the cheapest cost a file may declare
+(ops 3, 256 MiB). A few use the production preset (ops 4, 1 GiB) and take several
+seconds each.
 
 **Linux** (development convenience only). Needs a Swift 6.2 toolchain. The manifest then adds
 [apple/swift-crypto](https://github.com/apple/swift-crypto) 5.0.0 and swift-asn1 1.7.3,
 both pinned exactly. They provide the same `AES.GCM` / `HKDF` / `SHA256` / `SymmetricKey`
 API. They are declared inside `#if os(Linux)`, so a macOS build never resolves them.
+libsodium comes from the system: `apt install libsodium-dev`.
 
 ```sh
 cd chotam/EncryptionCore
 swift build && swift test
 ```
+
+## Credits
+
+The passphrase generator uses the [EFF large wordlist](https://www.eff.org/dice) by the
+Electronic Frontier Foundation, licensed under
+[CC BY 3.0 US](https://creativecommons.org/licenses/by/3.0/us/). It is bundled unmodified.

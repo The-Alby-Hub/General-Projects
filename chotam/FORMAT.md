@@ -12,6 +12,7 @@ Status of each part in the implementation:
 | Chunked AES-256-GCM body, key schedule, key commitment | yes | Phase 1 |
 | Encrypted metadata record (filename) | yes | Phase 1 |
 | Password-mode parameters (Argon2id) | yes | fields parsed in Phase 1, KDF in Phase 2 |
+| Golden test files (password mode) | §8 | Phase 2 |
 | Recipient-mode stanzas (HPKE X-Wing) | yes | fields parsed in Phase 1, HPKE in Phase 5 |
 | Trailer (ML-DSA-65 signature) | yes | framing in Phase 1, signing in Phase 5 |
 
@@ -145,6 +146,17 @@ The IKM is always exactly 32 bytes:
 - **Password mode:** `IKM = Argon2id(password, argon2Salt, opsLimit, memLimit, outLen = 32)`.
   The password is normalised to Unicode NFC and encoded as UTF-8 first, so the same
   password typed on a different keyboard layout derives the same key.
+  Exact parameters, as libsodium's `crypto_pwhash` with `crypto_pwhash_ALG_ARGON2ID13` uses them:
+  - Argon2id, version `0x13` (RFC 9106);
+  - parallelism (lanes) `1`, fixed by libsodium;
+  - time cost `t = opsLimit`;
+  - memory cost `m = memLimit / 1024` KiB (`memLimit` is stored in bytes);
+  - no secret key and no associated data;
+  - 32-byte output.
+
+  Nothing is trimmed: leading and trailing spaces are part of the password. The format
+  accepts any password, even an empty one; the strength rule (SECURITY.md D6) is applied
+  by the encryptor, never by the decryptor.
 - **Recipient mode:** `IKM = DataKey`, 32 random bytes generated per file.
 
 ### 4.2 Derived values
@@ -286,3 +298,18 @@ commitment check, then chunk decryption.
 Every failure, at any stage, becomes the single public error
 **"Decryption failed: file is damaged or not for you."** The detailed reason goes only
 to the debug log, as a fixed string that never contains secret material.
+
+## 8. Test vectors
+
+`EncryptionCore/Tests/EncryptionCoreTests/Vectors/` holds password-mode files built by
+`make_password_vectors.py`. That script implements this document independently of
+the Swift code: the reference Argon2 (argon2-cffi) plus pyca/cryptography for
+HKDF-SHA256 and AES-256-GCM. All inputs are fixed, so the output is reproducible.
+
+| File | Size | Contents |
+|---|---:|---|
+| `password-small.enc` | 190 | `"Chotam golden vector: password mode.\n"`, filename `vector.txt`: one chunk |
+| `password-two-chunks.enc` | 65,793 | bytes `i mod 251` for `i` in `0 ..< 65634`, no filename: one full chunk, then a 100-byte final chunk |
+
+Both use the password `correct horse battery staple`, `argon2Salt = 00 01 … 0f`,
+`opsLimit = 3`, `memLimit = 256 MiB`, `hkdfSalt = 20 21 … 3f`, `baseNonce = 40 41 … 4b`.

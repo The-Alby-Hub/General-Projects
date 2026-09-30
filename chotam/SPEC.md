@@ -10,10 +10,12 @@ They're listed first.
 |---|---|
 | Name | **Chotam** (חוֹתָם, "seal"). Folder `chotam/`, file magic `CHOTAM` (6 bytes), domain labels `"Chotam v1 …"`. |
 | Original filename | Stored **encrypted** in a metadata record inside the stream, not in the plaintext header (FORMAT.md §3). |
-| Other spec deviations | See SECURITY.md §6 (D1–D10): HPKE wrap context, domain-separated key IDs, Argon2id limits, fingerprint length, the password rule, Secure Enclave coverage, Keychain entitlement, sandbox and sibling files, and two-pass decryption. |
+| Other spec deviations | See SECURITY.md §6 (D1–D11): HPKE wrap context, domain-separated key IDs, Argon2id limits, fingerprint length, the password rule, Secure Enclave coverage, Keychain entitlement, sandbox and sibling files, two-pass decryption, and bypassing swift-sodium's Swift wrapper. |
 | Linux test shim | apple/swift-crypto 5.0.0 + swift-asn1 1.7.3, declared only under `#if os(Linux)`. Never used on macOS. |
-| Passphrase wordlist | **Approved:** the EFF large wordlist (7,776 words, CC-BY), bundled as a data file. |
-| Argon2id library | **Pending approval:** jedisct1/swift-sodium, pinned exactly. On macOS it links a prebuilt libsodium binary (`Clibsodium.xcframework`) shipped in that repo. |
+| Passphrase wordlist | **Approved by the user (2026-09-30):** the EFF large wordlist (7,776 words, CC-BY 3.0 US), bundled as `EncryptionCore/Sources/EncryptionCore/Resources/eff_large_wordlist.txt`, byte-identical to EFF's file. Its SHA-256 (`addd3553…b903e`) is pinned in code and tests. |
+| Argon2id library | **Approved by the user (2026-09-30):** jedisct1/swift-sodium, pinned `exact: "0.11.0"` (tag 0.11.0 = commit `cfd195c76882aa9b997560ca7cb95d72fbf5db00`). Only its `Clibsodium` product (the C library) is used: its Swift wrapper traps on non-ASCII passwords (SECURITY.md D11). On macOS it links the prebuilt static libsodium (`Clibsodium.xcframework`) shipped in that repo; on Linux it needs `libsodium-dev`. |
+| Password rule | 14+ characters with an effective length of 14+ (repeats, sequences, years and common words count as one character), **or** 6+ distinct EFF words. Enforced when encrypting, never when decrypting. See SECURITY.md D6. |
+| Passphrase generator | 6 distinct EFF words by default (about 77.5 bits), 6–10 allowed, separated by spaces (four EFF words contain hyphens). |
 | Where tests run | On the user's Mac: `~/Developer/General-Projects/chotam/EncryptionCore`, `swift test`, Xcode (not the Command Line Tools). The repo must not be on an iCloud-synced folder, or code signing fails. |
 
 ## Phase status
@@ -21,8 +23,9 @@ They're listed first.
 | Phase | State |
 |---|---|
 | 1. FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | **Done.** 71 tests pass on macOS. |
-| 2. Password mode (Argon2id) | Next |
-| 3–7 | Not started |
+| 2. Password mode (Argon2id) | **Done.** 113 tests pass on macOS (2026-09-30). `Package.resolved` pins swift-sodium at `cfd195c7…`; the bundled wordlist matches eff.org's SHA-256. |
+| 3. Atomic file processor | Next, after the go-ahead |
+| 4–7 | Not started |
 
 ---
 
