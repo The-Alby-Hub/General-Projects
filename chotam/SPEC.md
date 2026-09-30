@@ -10,12 +10,17 @@ They're listed first.
 |---|---|
 | Name | **Chotam** (חוֹתָם, "seal"). Folder `chotam/`, file magic `CHOTAM` (6 bytes), domain labels `"Chotam v1 …"`. |
 | Original filename | Stored **encrypted** in a metadata record inside the stream, not in the plaintext header (FORMAT.md §3). |
-| Other spec deviations | See SECURITY.md §6 (D1–D11): HPKE wrap context, domain-separated key IDs, Argon2id limits, fingerprint length, the password rule, Secure Enclave coverage, Keychain entitlement, sandbox and sibling files, two-pass decryption, and bypassing swift-sodium's Swift wrapper. |
+| Other spec deviations | See SECURITY.md §6 (D1–D13): HPKE wrap context, domain-separated key IDs, Argon2id limits, fingerprint length, the password rule, Secure Enclave coverage, Keychain entitlement, sandbox and sibling files, two-pass decryption, bypassing swift-sodium's Swift wrapper, the restored filename, and the public errors. |
 | Linux test shim | apple/swift-crypto 5.0.0 + swift-asn1 1.7.3, declared only under `#if os(Linux)`. Never used on macOS. |
 | Passphrase wordlist | **Approved by the user (2026-09-30):** the EFF large wordlist (7,776 words, CC-BY 3.0 US), bundled as `EncryptionCore/Sources/EncryptionCore/Resources/eff_large_wordlist.txt`, byte-identical to EFF's file. Its SHA-256 (`addd3553…b903e`) is pinned in code and tests. |
 | Argon2id library | **Approved by the user (2026-09-30):** jedisct1/swift-sodium, pinned `exact: "0.11.0"` (tag 0.11.0 = commit `cfd195c76882aa9b997560ca7cb95d72fbf5db00`). Only its `Clibsodium` product (the C library) is used: its Swift wrapper traps on non-ASCII passwords (SECURITY.md D11). On macOS it links the prebuilt static libsodium (`Clibsodium.xcframework`) shipped in that repo; on Linux it needs `libsodium-dev`. |
 | Password rule | 14+ characters with an effective length of 14+ (repeats, sequences, years and common words count as one character), **or** 6+ distinct EFF words. Enforced when encrypting, never when decrypting. See SECURITY.md D6. |
 | Passphrase generator | 6 distinct EFF words by default (about 77.5 bits), 6–10 allowed, separated by spaces (four EFF words contain hyphens). |
+| File API (Phase 3) | `FileProcessor.encrypt(_:to:using:)` / `decrypt(_:to:using:)`. Callers pass URLs, a `Destination` (`.file(url, replacingExisting:)` or `.folder(url)`) and a mode (`.password(…)`), never streams, salts or keys. Modes are opaque structs with static factories, so recipient mode (Phase 5) is added without changing the shape. Synchronous: the app calls it off the main thread. |
+| Safe writes and the sandbox (D9) | The temp file goes in a private `.itemReplacementDirectory` folder on the destination's volume (fallback: a hidden `.chotam-<UUID>.tmp` in the destination folder). It is created lazily (a wrong or weak password creates nothing), mode 0600, and flushed with `F_FULLFSYNC`. A new output is moved in with an exclusive rename (`renamex_np(RENAME_EXCL)`), so nothing is ever overwritten by accident. An existing output is replaced (`replaceItemAt`) only with `replacingExisting: true`, i.e. after the user confirmed it. On any failure the temp file is deleted and the destination is untouched. The original is never modified or deleted. See SECURITY.md D9. |
+| Public errors (D13) | Encryption: `weakPassword`, `invalidFilename`, `notEnoughMemory`, `file(FileProblem)`, `unexpected`. Decryption: **`failed` (the one generic message)** for anything about the contents or the password, plus `notEnoughMemory` and `file(FileProblem)`, which reveal nothing about either. **Chosen by the user (2026-09-30).** `FileProblem`: `inputNotAFile`, `outputExists`, `invalidDestination`, `accessDenied`, `readFailed`, `writeFailed`. |
+| Restored filename (D12) | Used only to name a new file inside a `.folder` destination, and only if it's safe (no leading `.`, no `:`, ≤ 255 bytes, on top of FORMAT.md §3's rules); otherwise the `.enc` name without `.enc` is used. It never replaces a file (`Report 2.pdf`, …) and is never treated as a path. With a `.file` destination it's only returned for display. |
+| Output permissions | Outputs (encrypted and decrypted) are created owner-only, mode 0600. |
 | Where tests run | On the user's Mac: `~/Developer/General-Projects/chotam/EncryptionCore`, `swift test`, Xcode (not the Command Line Tools). The repo must not be on an iCloud-synced folder, or code signing fails. |
 
 ## Phase status
@@ -24,7 +29,7 @@ They're listed first.
 |---|---|
 | 1. FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | **Done.** 71 tests pass on macOS. |
 | 2. Password mode (Argon2id) | **Done.** 113 tests pass on macOS (2026-09-30). `Package.resolved` pins swift-sodium at `cfd195c7…`; the bundled wordlist matches eff.org's SHA-256. |
-| 3. Atomic file processor | Next, after the go-ahead |
+| 3. Atomic file processor | **Written, awaiting the macOS test run.** Public `FileProcessor` API, safe writes, restored-filename rules, public errors; 25 new tests (138 in total). (The Linux container couldn't install Swift, so nothing has been compiled yet.) |
 | 4–7 | Not started |
 
 ---

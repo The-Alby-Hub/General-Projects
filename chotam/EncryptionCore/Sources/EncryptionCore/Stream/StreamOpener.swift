@@ -19,7 +19,7 @@ struct OpenSummary {
 ///
 /// Plaintext is written to `sink` only after its own chunk authenticates. It
 /// isn't yet proven that later chunks (or the signature) are intact, so the
-/// file processor (Phase 3) points `sink` at a temp file that's only moved into
+/// file processor (`AtomicOutput`) points `sink` at a temp file that's only moved into
 /// place after `open` returns successfully.
 enum StreamOpener {
     /// - Parameters:

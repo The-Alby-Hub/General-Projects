@@ -48,9 +48,10 @@ file-system extensions.
 | Parser crashes and resource exhaustion | Strict bounded parser. The prelude is checked before any allocation, then sizes, then counts ≤ 64, then Argon2id limits, **before** any key derivation (FORMAT §7). Fuzz-tested. | A4 |
 | Moving a wrapped key into another file | HPKE `info` = wrap context; HPKE AAD = recipient key ID (FORMAT §6.2). | A3, A4 |
 | Re-targeting a signed file to new recipients | The signature covers the header, including every stanza. | A5 |
-| Error messages as an oracle | One generic error for every failure. Details go only to the debug log, as fixed strings. | A3, A4 |
+| Error messages as an oracle | One generic error for every failure that depends on the file's contents or the key. Only file-system and memory problems, which reveal neither, are reported separately (D13). Details go only to the debug log, as fixed strings. | A3, A4 |
 | Trusting the wrong key | Fingerprints, imported contacts start unverified, and an explicit confirmation to encrypt to an unverified contact (Phase 4). | A6 |
-| Half-written or corrupted outputs | Temp file, then an atomic replace. The original is never touched on failure (Phase 3). | — |
+| Half-written or corrupted outputs | Temp file, flushed to disk, then an atomic exclusive rename or replace. On any failure the temp file is deleted and the destination, including any file already there, is untouched. The original is never modified or deleted (D9). | — |
+| A hostile restored filename (`../x`, `.zshrc`, a name that looks like a path) | The name is never used as a path, never replaces a file, and must pass strict rules before it names anything (D12). | A4 |
 
 ## 5. What Chotam does NOT protect against
 
@@ -91,8 +92,17 @@ file-system extensions.
     gets the plaintext.
 12. **Memory hygiene is best-effort.** See §7.3.
 13. **Password-mode files need about 1 GiB of free memory to open.** If Argon2id can't
-    allocate it, opening fails with the same generic error (the debug log says
-    `keyDerivationFailed`). Encrypting needs the same.
+    allocate it, opening fails with "not enough memory" (D13): the memory cost is public
+    header data, and it fails before anything is authenticated. Encrypting needs the same.
+14. **A crash can leave a temp file behind.** If the app is killed or the Mac loses power
+    mid-operation, the temp file stays in the system's `TemporaryItems` folder (or, as a
+    fallback, as a hidden `.chotam-<UUID>.tmp` beside the output). After a decryption,
+    that file holds plaintext, some of it possibly not yet authenticated. Only FileVault
+    protects it. The app may sweep leftovers at the next launch (Phase 6).
+15. **The restored filename is chosen by whoever made the file.** Even when it passes
+    D12's rules, it can carry any extension, e.g. `.command` or `.app`. (So can the
+    `.enc` file's own name.) The app should mark decrypted outputs as quarantined
+    (Phase 6).
 
 ## 6. Design notes and deviations from the original spec
 
@@ -108,9 +118,11 @@ Each of these was flagged before any code was written.
 | D6 | **"≥ 14 characters" accepts `aaaaaaaaaaaaaa`** | Decided in Phase 2 (`PasswordPolicy`). A password is accepted if it is **6 or more distinct EFF words**, or it has **14 or more characters and an effective length of 14 or more**. In the effective length, each of these counts as one character: a run of 3+ identical characters, an ascending/descending or keyboard-row run of 3+, an immediate repeat of the preceding 2+ characters, a year 1900–2099, and a common word from a hand-written list of about 120 entries (also matched after undoing `p@ssw0rd`-style substitutions). This is a floor against obvious mistakes, not an entropy estimate. It is enforced inside the encrypt function, not only in the UI, and never on decryption. The generator uses the approved EFF large wordlist: 6 distinct words by default, drawn from the CSPRNG with rejection sampling (no modulo bias). |
 | D7 | **Secure Enclave coverage** | Per Apple (WWDC25 session 314), the Secure Enclave supports ML-KEM and ML-DSA. X-Wing includes X25519, which the Secure Enclave doesn't provide. Expected result: **ML-DSA-65 in the Secure Enclave, X-Wing private key in the Keychain** (`WhenUnlockedThisDeviceOnly` + user presence). Confirmed against the real SDK in Phase 4. |
 | D8 | **Keychain entitlement** | The data-protection keychain and the Secure Enclave need a signed app with a `keychain-access-groups` entitlement. This is needed in addition to `user-selected read-write`. Keychain and Secure Enclave tests need an app-hosted Xcode test target; `swift test` can't reach them. |
-| D9 | **Sandbox and sibling files** | `user-selected read-write` grants access to the chosen file, not its folder, so `Document.pdf.enc` can't be created beside it without more. Plan: an NSSavePanel prefilled with the `.enc` name (or user-granted folder access). The temp file goes in `FileManager.url(for: .itemReplacementDirectory, …)` on the same volume, then `replaceItemAt`; a new file uses a no-overwrite rename. Phase 3/6. |
+| D9 | **Sandbox and sibling files** | `user-selected read-write` grants access to the chosen file, not its folder, so `Document.pdf.enc` can't be created beside it without more. **Decided in Phase 3.** The core never assumes it may write beside the input. Callers pass a `Destination`: an exact file (from an NSSavePanel prefilled with `FileProcessor.encryptedName(for:)`) or a folder the user granted. Security-scoped access stays in the app. **Temp file:** in a private folder from `FileManager.url(for: .itemReplacementDirectory, appropriateFor: destination folder)`, on the destination's volume. If the system can't provide one, it falls back to a hidden `.chotam-<UUID>.tmp` in the destination folder; if neither works, the operation fails with an I/O error. It is created only on the first write, with `O_EXCL` and mode 0600 (the output keeps 0600). It is flushed with `F_FULLFSYNC` (else `fsync`) before it is moved. **New output:** an exclusive rename (`renamex_np(RENAME_EXCL)`, or `link` + `unlink` where that's unsupported). It fails atomically if anything appeared at the name, with no check-then-rename race. There is no cross-volume copy fallback, because a copy isn't atomic. **Existing output:** refused with `outputExists` before any work, unless the caller passes `replacingExisting: true` (the user confirmed in the save panel). It is then replaced with `replaceItemAt(…, options: .usingNewMetadataOnly)`, so the old file's tags, quarantine flag or download origin don't carry over. The destination can't be the input itself (same device and inode), a folder or a symbolic link. **Failure:** the temp file and its private folder are deleted, and the destination is exactly as before. Whether `.itemReplacementDirectory` works for a sandboxed app on external volumes is confirmed in Phase 6 on a signed build; `swift test` can't check it. |
 | D10 | **Unverified plaintext on disk** | Proposal for Phase 5: pass 1 verifies the signature over the ciphertext only; pass 2 decrypts to a temp file and checks the ciphertext hash hasn't changed. Plaintext of a forged file is then never written. Some plaintext still touches the temp file before the final chunk is checked (see 5.4). |
 | D11 | **swift-sodium's Swift wrapper is not used** | In swift-sodium 0.11.0, `PWHash.hash` converts every password byte with `Int8.init`, which traps on any byte ≥ 0x80: every non-ASCII password (Hebrew, accented letters, emoji) would crash the app. It also copies the password into an array that can't be wiped. Chotam depends only on the package's `Clibsodium` product and calls `crypto_pwhash` directly, with the password in a buffer it allocates and wipes. A regression test derives keys from Hebrew and emoji passwords. |
+| D12 | **The restored filename is attacker-chosen** | The name stored inside a file (FORMAT §3) comes from its author. Decided in Phase 3. It is used **only** to name a new file inside a `Destination.folder`, and only if it passes the decoder's rules (no `/`, control or bidirectional characters, not `.`/`..`) **and** doesn't start with `.` (no planting `.zshrc` or `.lldbinit`), doesn't contain `:` (Finder shows it as `/`), and is at most 255 bytes. Otherwise the `.enc` file's own name without `.enc` is used, and failing that, `Decrypted file`. The final URL is checked to be exactly one component inside the chosen folder. On a name clash it tries `Report 2.pdf`, `Report 3.pdf`, … (up to 100) with an exclusive rename, so it never replaces anything, and case-insensitive or normalising file systems are handled by the file system itself. With `Destination.file` the name is ignored and only returned in `DecryptedFile.storedFilename`, for display as text. |
+| D13 | **Public errors** | Decided in Phase 3; the split was chosen by the user. Decryption keeps **one generic error**, `DecryptionError.failed`, for everything that depends on the file's bytes or the password: wrong password, tampering, truncation, malformed or wrong-mode files. Failures that reveal neither are reported as they are: `notEnoughMemory` (Argon2id's cost is public header data and fails before any authentication), and `file(FileProblem)`: the input isn't a file, the output exists, an invalid destination, access denied, a read or write failure. A write failure can only happen after chunk 0 authenticated, so in principle it tells the user their password was right; it tells an attacker without access to the user's screen nothing. Encryption works on the user's own file and can't be an oracle, so its errors are precise: `weakPassword`, `invalidFilename`, `notEnoughMemory`, `file(FileProblem)`, `unexpected`. Messages are fixed strings and never include paths. |
 
 ## 7. Implementation hygiene
 
@@ -141,7 +153,8 @@ Each of these was flagged before any code was written.
   - The OS may page memory to swap. macOS encrypts swap, and FileVault covers the disk.
 
 ### 7.4 Errors and logging
-- Every decryption failure maps to the single public message.
+- Every decryption failure that depends on the file's contents or the key maps to the
+  single public message. File-system and memory problems are reported separately (D13).
 - Detailed reasons are fixed enum strings, logged at debug level via `os.Logger`, and
   never include key material, passwords, plaintext or filenames.
 

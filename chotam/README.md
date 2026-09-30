@@ -22,7 +22,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 |---|---|---|
 | 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | done: 71 tests pass on macOS (Xcode) |
 | 2 | Password mode (Argon2id via libsodium), password rule, passphrase generator | done: 113 tests pass on macOS (Xcode) |
-| 3 | Atomic file processor | — |
+| 3 | Atomic file processor: public `FileProcessor` API, safe writes, restored filenames | written; awaiting the macOS test run (138 tests) |
 | 4 | Identities, Keychain / Secure Enclave, fingerprints | — |
 | 5 | Recipient mode: HPKE wrapping, ML-DSA signatures | — |
 | 6 | SwiftUI app | — |
@@ -40,10 +40,42 @@ chotam/
       Crypto/                    HKDF key schedule + commitment, nonces/AAD, constant-time, wiping
       Stream/                    chunked sealer/opener, byte sources/sinks, metadata record
       Password/                  Argon2id (libsodium), password mode, strength rule, passphrase generator
+      Files/                     public file API: FileProcessor, safe temp-file writes, output naming, public errors
       Resources/                 EFF large wordlist (CC-BY 3.0 US)
     Tests/EncryptionCoreTests/   XCTest
       Vectors/                   golden .enc files from an independent implementation (FORMAT.md §8)
 ```
+
+## Using the core
+
+The public API works on files. Callers never handle streams, salts, nonces or keys.
+
+```swift
+import EncryptionCore
+
+// Encrypt: Document.pdf → Document.pdf.enc in a folder the user granted
+// (or pass .file(url) from a save panel prefilled with FileProcessor.encryptedName(for:)).
+let encrypted = try FileProcessor.encrypt(
+    documentURL, to: .folder(folderURL), using: .password(password))
+
+// Decrypt: into a folder, named after the filename stored inside the file.
+let result = try FileProcessor.decrypt(
+    encrypted, to: .folder(folderURL), using: .password(password))
+result.url             // where the plaintext was saved, e.g. Document.pdf (or "Document 2.pdf")
+result.storedFilename  // the original name, for display only
+```
+
+- Both calls are slow on purpose (Argon2id: about a second and 1 GiB), so run them off
+  the main thread.
+- The result is written to a temp file and moved into place atomically, only once it
+  is complete (for decryption, only once every chunk has authenticated). On any failure
+  nothing is left behind, and an existing file is never overwritten unless you pass
+  `.file(url, replacingExisting: true)`.
+- The original is never modified or deleted.
+- Errors are `EncryptionError` and `DecryptionError`. Every problem with an encrypted
+  file's contents, or a wrong password, is the single
+  `DecryptionError.failed`: "Decryption failed: file is damaged or not for you."
+  See [SECURITY.md](SECURITY.md) D9, D12 and D13.
 
 ## Building and testing
 
