@@ -29,8 +29,9 @@ They're listed first.
 |---|---|
 | 1. FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | **Done.** 71 tests pass on macOS. |
 | 2. Password mode (Argon2id) | **Done.** 113 tests pass on macOS (2026-09-30). `Package.resolved` pins swift-sodium at `cfd195c7…`; the bundled wordlist matches eff.org's SHA-256. |
-| 3. Atomic file processor | **Written, awaiting the macOS test run.** Public `FileProcessor` API, safe writes, restored-filename rules, public errors; 25 new tests (138 in total). (The Linux container couldn't install Swift, so nothing has been compiled yet.) |
-| 4–7 | Not started |
+| 3. Atomic file processor | **Done.** 138 tests pass on macOS (2026-09-30), 25 of them new: public `FileProcessor` API, safe writes, restored-filename rules, public errors. |
+| 4. Identities | Next, after the go-ahead |
+| 5–7 | Not started |
 
 ---
 
