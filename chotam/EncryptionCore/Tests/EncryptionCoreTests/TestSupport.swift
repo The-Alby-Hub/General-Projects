@@ -270,3 +270,86 @@ final class DigestSink: ByteSink {
         Array(hash.finalize())
     }
 }
+
+// MARK: Files
+
+/// A fresh folder per test, deleted afterwards, for tests through real files.
+final class Scratch {
+    let folder: URL
+
+    init() throws {
+        folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("chotam-files-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    }
+
+    func remove() {
+        try? FileManager.default.removeItem(at: folder)
+    }
+
+    func url(_ path: String) -> URL {
+        folder.appendingPathComponent(path, isDirectory: false)
+    }
+
+    @discardableResult
+    func write(_ bytes: [UInt8], to path: String) throws -> URL {
+        let url = self.url(path)
+        try Data(bytes).write(to: url)
+        return url
+    }
+
+    @discardableResult
+    func makeFolder(_ path: String) throws -> URL {
+        let url = folder.appendingPathComponent(path, isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    /// Every file and folder inside (hidden ones included), with file contents. Two
+    /// equal snapshots prove an operation left nothing behind and changed nothing.
+    func snapshot() throws -> [String: [UInt8]] {
+        var result: [String: [UInt8]] = [:]
+        guard let walker = FileManager.default.enumerator(atPath: folder.path) else { return result }
+        while let path = walker.nextObject() as? String {
+            // Folders, and links to nothing, have no contents to compare.
+            let data = try? Data(contentsOf: folder.appendingPathComponent(path))
+            result[path] = data.map { [UInt8]($0) } ?? []
+        }
+        return result
+    }
+}
+
+func readFile(_ url: URL) throws -> [UInt8] {
+    [UInt8](try Data(contentsOf: url))
+}
+
+func fileExists(_ url: URL) -> Bool {
+    FileManager.default.fileExists(atPath: url.path)
+}
+
+/// The permission bits of a file (e.g. 0o600).
+func permissions(_ url: URL) throws -> Int {
+    let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+    return ((attributes[.posixPermissions] as? NSNumber)?.intValue ?? -1) & 0o777
+}
+
+/// Records what `AtomicOutput` does, and can make it fail on purpose.
+final class OutputProbe {
+    struct SimulatedFailure: Error {}
+
+    private(set) var tempFiles: [URL] = []
+    /// Fail the write that would start at or after this many bytes.
+    var failWriteAt: Int?
+    var failAtCommit = false
+
+    var hooks: AtomicOutput.Hooks {
+        AtomicOutput.Hooks(
+            onTempCreated: { [unowned self] url in tempFiles.append(url) },
+            beforeWrite: { [unowned self] written in
+                if let limit = failWriteAt, written >= limit { throw SimulatedFailure() }
+            },
+            beforeCommit: { [unowned self] in
+                if failAtCommit { throw SimulatedFailure() }
+            })
+    }
+}

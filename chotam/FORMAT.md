@@ -135,7 +135,8 @@ plaintextStream = nameLength (UInt16) ‖ name (nameLength bytes, UTF-8) ‖ fil
 - The record always fits inside chunk 0: it is at most 1026 bytes and a chunk holds 65536.
 
 The filename is therefore **encrypted and authenticated**. It isn't visible in the
-header.
+header. It is still chosen by the file's author, so a reader must treat it as untrusted
+text. How Chotam uses it when saving a decrypted file is in SECURITY.md D12.
 
 ## 4. Key schedule
 

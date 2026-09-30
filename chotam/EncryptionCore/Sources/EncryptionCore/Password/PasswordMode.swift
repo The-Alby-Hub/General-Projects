@@ -2,8 +2,8 @@
 /// (FORMAT.md §2.3, §4). Salts, nonces and keys are generated inside; callers only
 /// pass a password and streams.
 ///
-/// Internal until the atomic file processor (Phase 3) puts a file-level public API
-/// in front of it.
+/// Internal: callers use `FileProcessor` with `EncryptionMode.password` /
+/// `DecryptionMode.password`, which adds the safe temp-file handling.
 enum PasswordMode {
     /// Encrypts `source` to `sink`.
     ///
@@ -40,7 +40,7 @@ enum PasswordMode {
     /// Every failure (wrong password, tampering, malformed input, not a password-mode
     /// file, or Argon2id running out of memory) is the single `DecryptionFailed`.
     /// Plaintext reaches `sink` chunk by chunk as each authenticates, so `sink` must
-    /// be a temp file that is only kept if this returns (Phase 3).
+    /// be a temp file that is only kept if this returns (`AtomicOutput`).
     static func decrypt(
         password: String,
         from source: any ByteSource,
