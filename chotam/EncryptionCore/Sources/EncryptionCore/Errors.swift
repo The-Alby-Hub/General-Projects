@@ -38,7 +38,9 @@ struct CoreFailure: Error, Equatable {
         case duplicateRecipient
         // Keys
         case invalidKeyLength
+        case keyDerivationFailed
         case commitmentMismatch
+        case wrongMode
         // Body
         case chunkAuthenticationFailed
         case truncatedBody
@@ -48,6 +50,7 @@ struct CoreFailure: Error, Equatable {
         // Encrypt-side input validation
         case invalidFilename
         case invalidHeaderFields
+        case weakPassword
         // I/O and anything unexpected
         case readFailed
         case writeFailed

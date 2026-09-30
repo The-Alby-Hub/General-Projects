@@ -41,7 +41,7 @@ file-system extensions.
 | Reading file contents or the original filename | AES-256-GCM. The filename sits inside the encrypted stream. | A1, A2 |
 | Quantum attack on the key exchange | HPKE with X-Wing (ML-KEM-768 + X25519 hybrid): both parts would have to be broken. | A2 |
 | Quantum attack on the symmetric layer | 256-bit keys. Grover's algorithm leaves about 128-bit security. | A2 |
-| Quantum attack on the password | Argon2id at about 1 GiB of memory. Grover gives at most a square-root speed-up on a password's entropy, so this holds **only for strong passwords**. The minimum-strength rule and the generator exist for this reason. | A2 |
+| Quantum attack on the password | Argon2id at about 1 GiB of memory. Grover gives at most a square-root speed-up on a password's entropy, so this holds **only for strong passwords**. The minimum-strength rule (D6) and the generator exist for this reason. A generated 6-word passphrase is about 77.5 bits: classically 2^77 Argon2id runs, and even under Grover about 2^39 *sequential* runs of a 1 GiB memory-hard function inside a quantum computer. | A2 |
 | Forged or impersonated sender | ML-DSA-65 signature over the header and all ciphertext, checked against a **verified** contact. | A3, A6 |
 | Bit flips, splicing, reordering, truncation, appended data | Per-chunk GCM tags with AAD = header hash, index and final flag (FORMAT §5.3), plus the signature in recipient mode. | A3 |
 | One ciphertext decrypting differently for different recipients | Key-commitment tag, checked before any chunk is opened (FORMAT §4.2), plus the signature. | A4 |
@@ -90,6 +90,9 @@ file-system extensions.
 11. **Coercion.** Anyone who can compel the user to reveal a password or unlock the Mac
     gets the plaintext.
 12. **Memory hygiene is best-effort.** See §7.3.
+13. **Password-mode files need about 1 GiB of free memory to open.** If Argon2id can't
+    allocate it, opening fails with the same generic error (the debug log says
+    `keyDerivationFailed`). Encrypting needs the same.
 
 ## 6. Design notes and deviations from the original spec
 
@@ -102,11 +105,12 @@ Each of these was flagged before any code was written.
 | D3 | **Key IDs** | Domain-separated SHA-256 of the raw public key, so encryption and signing IDs can never collide (FORMAT §6.1). |
 | D4 | **Argon2id parameters from a file are attacker-controlled** | Hard ranges are enforced before running Argon2id (FORMAT §2.3). |
 | D5 | **Fingerprint length** | 8 groups of 4 **hex** characters is only 128 bits: a quantum second-preimage search (Grover) costs about 2^64. Proposal: 8 × 4 **Crockford base32** = 160 bits (about 2^80), same visual length. Decided in Phase 4. |
-| D6 | **"≥ 14 characters" accepts `aaaaaaaaaaaaaa`** | Phase 2 adds dependency-free checks: repeats, sequences, a common-password list. The passphrase generator needs a wordlist (e.g. EFF large list, CC-BY data); it will be approved first. |
+| D6 | **"≥ 14 characters" accepts `aaaaaaaaaaaaaa`** | Decided in Phase 2 (`PasswordPolicy`). A password is accepted if it is **6 or more distinct EFF words**, or it has **14 or more characters and an effective length of 14 or more**. In the effective length, each of these counts as one character: a run of 3+ identical characters, an ascending/descending or keyboard-row run of 3+, an immediate repeat of the preceding 2+ characters, a year 1900–2099, and a common word from a hand-written list of about 120 entries (also matched after undoing `p@ssw0rd`-style substitutions). This is a floor against obvious mistakes, not an entropy estimate. It is enforced inside the encrypt function, not only in the UI, and never on decryption. The generator uses the approved EFF large wordlist: 6 distinct words by default, drawn from the CSPRNG with rejection sampling (no modulo bias). |
 | D7 | **Secure Enclave coverage** | Per Apple (WWDC25 session 314), the Secure Enclave supports ML-KEM and ML-DSA. X-Wing includes X25519, which the Secure Enclave doesn't provide. Expected result: **ML-DSA-65 in the Secure Enclave, X-Wing private key in the Keychain** (`WhenUnlockedThisDeviceOnly` + user presence). Confirmed against the real SDK in Phase 4. |
 | D8 | **Keychain entitlement** | The data-protection keychain and the Secure Enclave need a signed app with a `keychain-access-groups` entitlement. This is needed in addition to `user-selected read-write`. Keychain and Secure Enclave tests need an app-hosted Xcode test target; `swift test` can't reach them. |
 | D9 | **Sandbox and sibling files** | `user-selected read-write` grants access to the chosen file, not its folder, so `Document.pdf.enc` can't be created beside it without more. Plan: an NSSavePanel prefilled with the `.enc` name (or user-granted folder access). The temp file goes in `FileManager.url(for: .itemReplacementDirectory, …)` on the same volume, then `replaceItemAt`; a new file uses a no-overwrite rename. Phase 3/6. |
 | D10 | **Unverified plaintext on disk** | Proposal for Phase 5: pass 1 verifies the signature over the ciphertext only; pass 2 decrypts to a temp file and checks the ciphertext hash hasn't changed. Plaintext of a forged file is then never written. Some plaintext still touches the temp file before the final chunk is checked (see 5.4). |
+| D11 | **swift-sodium's Swift wrapper is not used** | In swift-sodium 0.11.0, `PWHash.hash` converts every password byte with `Int8.init`, which traps on any byte ≥ 0x80: every non-ASCII password (Hebrew, accented letters, emoji) would crash the app. It also copies the password into an array that can't be wiped. Chotam depends only on the package's `Clibsodium` product and calls `crypto_pwhash` directly, with the password in a buffer it allocates and wipes. A regression test derives keys from Hebrew and emoji passwords. |
 
 ## 7. Implementation hygiene
 
@@ -131,7 +135,9 @@ Each of these was flagged before any code was written.
   - Swift arrays and `Data` are copy-on-write and may be copied by the runtime or by
     Foundation, and those copies can't be tracked.
   - Strings, including passwords from SwiftUI text fields, are immutable and can't be
-    wiped.
+    wiped. Neither can the NFC-normalised copy of the password. The UTF-8 bytes handed to
+    libsodium sit in a buffer Chotam allocates and wipes after use. libsodium wipes its own
+    Argon2id working memory.
   - The OS may page memory to swap. macOS encrypts swap, and FileVault covers the disk.
 
 ### 7.4 Errors and logging
@@ -141,7 +147,15 @@ Each of these was flagged before any code was written.
 
 ### 7.5 Dependencies
 - Apple CryptoKit (system framework).
-- libsodium for Argon2id only (Phase 2), with its version pinned.
+- libsodium for Argon2id only, via jedisct1/swift-sodium pinned `exact: "0.11.0"`
+  (commit `cfd195c76882aa9b997560ca7cb95d72fbf5db00`). Only the `Clibsodium` product is
+  linked (D11). On Apple platforms it is a **prebuilt static libsodium** shipped in that
+  repository (`Clibsodium.xcframework`). We didn't build it ourselves, so we trust its
+  publisher: swift-sodium is maintained by libsodium's author. The exact pin plus the
+  commit recorded in `Package.resolved` stops it changing silently. On Linux the system
+  `libsodium-dev` is used instead.
+- The EFF large wordlist (CC-BY 3.0 US, Electronic Frontier Foundation), bundled as data
+  and checked against a pinned SHA-256 before use.
 - apple/swift-crypto and swift-asn1 are declared **only when building on Linux**, so the
   core can be tested in a Linux container. They are not declared, fetched or linked on
   macOS.

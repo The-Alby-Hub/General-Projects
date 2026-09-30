@@ -149,7 +149,10 @@ final class PrimitivesTests: XCTestCase {
     }
 
     func testPublicErrorIsGenericForEveryReason() {
-        let reasons: [CoreFailure.Reason] = [.badMagic, .commitmentMismatch, .chunkAuthenticationFailed, .truncatedBody]
+        let reasons: [CoreFailure.Reason] = [
+            .badMagic, .commitmentMismatch, .chunkAuthenticationFailed, .truncatedBody,
+            .wrongMode, .keyDerivationFailed, .argon2ParametersOutOfRange,
+        ]
         for reason in reasons {
             XCTAssertEqual(publicDecryptionError(CoreFailure(reason)), DecryptionFailed())
         }

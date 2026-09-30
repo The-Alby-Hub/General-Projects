@@ -180,3 +180,93 @@ extension Array where Element == UInt8 {
         }
     }
 }
+
+// MARK: Password mode
+
+enum PasswordFixtures {
+    /// Accepted by the policy (28 characters, no patterns).
+    static let password = "correct horse battery staple"
+    /// The cheapest cost v1 accepts (ops 3, 256 MiB), so tests stay fast.
+    static let fast = Argon2id.Cost.minimumAccepted
+}
+
+/// Encrypts `plaintext` in password mode and returns the complete `.enc` bytes.
+func passwordSeal(
+    _ plaintext: [UInt8],
+    password: String = PasswordFixtures.password,
+    filename: String? = "file.bin",
+    cost: Argon2id.Cost = PasswordFixtures.fast
+) throws -> [UInt8] {
+    let sink = MemorySink()
+    try PasswordMode.encrypt(
+        password: password, filename: filename,
+        from: MemorySource(plaintext), to: sink, cost: cost)
+    return sink.bytes
+}
+
+/// Opens password-mode bytes, throwing the precise internal reason.
+func passwordOpen(
+    _ file: [UInt8],
+    password: String = PasswordFixtures.password,
+    onDeriveKey: (() -> Void)? = nil
+) throws -> (plaintext: [UInt8], filename: String?) {
+    let sink = MemorySink()
+    let filename = try PasswordMode.open(
+        password: password, from: MemorySource(file), to: sink, onDeriveKey: onDeriveKey)
+    return (sink.bytes, filename)
+}
+
+/// Reads a golden file from `Tests/EncryptionCoreTests/Vectors/` by path.
+func vector(_ name: String) throws -> [UInt8] {
+    let url = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .appendingPathComponent("Vectors")
+        .appendingPathComponent(name)
+    return [UInt8](try Data(contentsOf: url))
+}
+
+/// Streams `count` bytes of the pattern `i % 251` without holding them in memory.
+final class PatternSource: ByteSource {
+    /// One period-aligned block longer than any single request we make.
+    private static let block: [UInt8] = (0 ..< 251 * 300).map { UInt8($0 % 251) }
+    private let count: Int
+    private var offset = 0
+
+    init(count: Int) {
+        self.count = count
+    }
+
+    func read(maxCount: Int) throws -> [UInt8] {
+        let n = min(max(maxCount, 0), count - offset, Self.block.count - 251)
+        let start = offset % 251
+        defer { offset += n }
+        return Array(Self.block[start ..< start + n])
+    }
+
+    /// SHA-256 of the whole pattern, computed the same streaming way.
+    static func digest(count: Int) throws -> [UInt8] {
+        let source = PatternSource(count: count)
+        var hash = SHA256()
+        while true {
+            let piece = try source.read(maxCount: 1 << 16)
+            if piece.isEmpty { break }
+            hash.update(data: piece)
+        }
+        return Array(hash.finalize())
+    }
+}
+
+/// Hashes everything written to it, so large outputs never sit in memory.
+final class DigestSink: ByteSink {
+    private var hash = SHA256()
+    private(set) var count = 0
+
+    func write(_ data: Data) throws {
+        hash.update(data: data)
+        count += data.count
+    }
+
+    func finalize() -> [UInt8] {
+        Array(hash.finalize())
+    }
+}
