@@ -24,9 +24,7 @@ enum MetadataRecord {
             throw CoreFailure(.malformedMetadata)
         }
         let nameBytes = try r.readBytes(length)
-        // Strict UTF-8: decoding with replacement and re-encoding must round-trip.
-        let name = String(decoding: nameBytes, as: UTF8.self)
-        guard Array(name.utf8) == nameBytes, isAcceptable(name) else {
+        guard let name = TextRules.strictUTF8(nameBytes), isAcceptable(name) else {
             throw CoreFailure(.malformedMetadata)
         }
         return (name, r.offset)
@@ -37,20 +35,7 @@ enum MetadataRecord {
         let byteCount = name.utf8.count
         guard byteCount > 0, byteCount <= FormatV1.maxFilenameBytes else { return false }
         guard name != ".", name != ".." else { return false }
-        for scalar in name.unicodeScalars {
-            switch scalar.value {
-            case 0x2F:  // "/": would make a path, not a name
-                return false
-            case 0x00 ... 0x1F, 0x7F ... 0x9F:  // C0 / C1 controls, incl. NUL and newlines
-                return false
-            case 0x061C, 0x200E, 0x200F, 0x202A ... 0x202E, 0x2066 ... 0x2069:
-                // Bidirectional controls can make "invoice<RLO>fdp.exe" display as
-                // "invoiceexe.pdf".
-                return false
-            default:
-                continue
-            }
-        }
-        return true
+        // "/" would make a path, not a name. Controls and bidi controls: TextRules.
+        return !name.unicodeScalars.contains { $0 == "/" || TextRules.isForbiddenScalar($0) }
     }
 }

@@ -23,7 +23,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 | 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | done: 71 tests pass on macOS (Xcode) |
 | 2 | Password mode (Argon2id via libsodium), password rule, passphrase generator | done: 113 tests pass on macOS (Xcode) |
 | 3 | Atomic file processor: public `FileProcessor` API, safe writes, restored filenames | done: 138 tests pass on macOS (Xcode) |
-| 4 | Identities, Keychain / Secure Enclave, fingerprints | — |
+| 4 | Identities, Keychain / Secure Enclave, fingerprints, `.pqid`, contacts | code complete, 84 new tests (222 in all); awaiting a run on macOS |
 | 5 | Recipient mode: HPKE wrapping, ML-DSA signatures | — |
 | 6 | SwiftUI app | — |
 | 7 | Full test pass and security self-review | — |
@@ -41,9 +41,11 @@ chotam/
       Stream/                    chunked sealer/opener, byte sources/sinks, metadata record
       Password/                  Argon2id (libsodium), password mode, strength rule, passphrase generator
       Files/                     public file API: FileProcessor, safe temp-file writes, output naming, public errors
+      Identity/                  identities, key IDs, fingerprints, .pqid codec, contacts, recipient lists
+        Storage/                 Keychain and Secure Enclave backends behind small protocols (SECURITY.md D8)
       Resources/                 EFF large wordlist (CC-BY 3.0 US)
     Tests/EncryptionCoreTests/   XCTest
-      Vectors/                   golden .enc files from an independent implementation (FORMAT.md §8)
+      Vectors/                   golden .enc and .pqid files from independent implementations (FORMAT.md §8, §9.5)
 ```
 
 ## Using the core
@@ -77,6 +79,45 @@ result.storedFilename  // the original name, for display only
   `DecryptionError.failed`: "Decryption failed: file is damaged or not for you."
   See [SECURITY.md](SECURITY.md) D9, D12 and D13.
 
+## Identities and contacts
+
+Recipient mode (Phase 5) encrypts to contacts and signs with your identity. Phase 4 adds
+the identities themselves:
+
+```swift
+let store = IdentityStore.system   // the Keychain and Secure Enclave; needs the signed app
+
+// Once: create your identity (one Touch ID / password prompt, to sign your .pqid).
+let me = try store.myIdentity() ?? store.createIdentity(name: "Alice")
+me.fingerprint.description         // "P6BC HMEY 9SAS BEA0 DGKS 1Y3H FDP9 VXBM"
+me.publicIdentity.exportedData     // save as Alice.pqid
+me.publicIdentity.exportedString   // or copy this Base64 string
+me.signingKeyStorage               // .secureEnclave (or .keychain on a Mac whose SE can't)
+
+// Import a contact: always unverified.
+let bob = try store.importContact(PublicIdentity(importing: pqidData), name: "Bob")
+bob.fingerprint                    // read all 8 groups aloud with Bob, then:
+let verified = try store.markVerified(bob)
+
+// Choosing recipients: unverified contacts need an explicit confirmation.
+let recipients: RecipientList
+do {
+    recipients = try RecipientList(selectedContacts)
+} catch let error as RecipientSelectionError {
+    // Name request.unverifiedContacts in a dialog; continue only if the user confirms.
+    guard case .needsConfirmation(let request) = error, userConfirmed(request.unverifiedContacts) else { return }
+    recipients = request.confirm()
+}
+```
+
+- Private keys never leave the Mac and are never exported. ML-DSA-65 lives in the Secure
+  Enclave; X-Wing lives in the Keychain, because the Secure Enclave has no X-Wing. Both
+  need Touch ID or the password for every use. See SECURITY.md D7.
+- A `.pqid` holds both public keys, an optional suggested name and a self-signature
+  (FORMAT.md §9). Anyone can make one, so an identity means nothing until its
+  fingerprint has been compared.
+- Errors are `IdentityError` (and `RecipientSelectionError` for recipient lists).
+
 ## Building and testing
 
 **macOS 26 with Xcode 26** (authoritative):
@@ -91,6 +132,11 @@ This uses the system CryptoKit. The first run fetches one package,
 its `Clibsodium` product (libsodium itself) is linked, for Argon2id. `Package.resolved`
 should show revision `cfd195c76882aa9b997560ca7cb95d72fbf5db00`.
 
+Identity and contact tests run on an in-memory store and a fake Secure Enclave, because
+the real Keychain needs a signed app with the `keychain-access-groups` entitlement
+(SECURITY.md D8). On macOS, one test also tries an ML-DSA-65 key in the real Secure
+Enclave (without a prompt) and is skipped if this Mac can't do it.
+
 Password-mode tests run Argon2id for real. Most use the cheapest cost a file may declare
 (ops 3, 256 MiB). A few use the production preset (ops 4, 1 GiB) and take several
 seconds each.
@@ -98,7 +144,9 @@ seconds each.
 **Linux** (development convenience only). Needs a Swift 6.2 toolchain. The manifest then adds
 [apple/swift-crypto](https://github.com/apple/swift-crypto) 5.0.0 and swift-asn1 1.7.3,
 both pinned exactly. They provide the same `AES.GCM` / `HKDF` / `SHA256` / `SymmetricKey`
-API. They are declared inside `#if os(Linux)`, so a macOS build never resolves them.
+API, and also `MLDSA65`, `XWingMLKEM768X25519` and the X-Wing HPKE ciphersuite, so the
+identity code builds and tests on Linux as well (without the Keychain and Secure Enclave
+backends, which are Apple-only). They are declared inside `#if os(Linux)`, so a macOS build never resolves them.
 libsodium comes from the system: `apt install libsodium-dev`.
 
 ```sh

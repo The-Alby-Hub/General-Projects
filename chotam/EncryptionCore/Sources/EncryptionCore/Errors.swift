@@ -51,6 +51,20 @@ struct CoreFailure: Error, Equatable {
         case invalidFilename
         case invalidHeaderFields
         case weakPassword
+        // Public identities (.pqid, FORMAT.md §9). Mapped to `IdentityError`, never
+        // to the decryption error.
+        case identityTooLarge
+        case identityBadEncoding
+        case identityBadMagic
+        case identityUnsupportedVersion
+        case identityMalformed
+        case identityTrailingBytes
+        case identityInvalidName
+        case identityInvalidKey
+        case identityBadSignature
+        // Chotam's own Keychain records (FORMAT.md §10)
+        case storedRecordDamaged
+        case storedKeyMismatch
         // I/O and anything unexpected
         case readFailed
         case writeFailed
@@ -73,6 +87,13 @@ enum DebugLog {
     static func record(_ reason: CoreFailure.Reason) {
         #if canImport(os)
         logger.debug("operation failed: \(reason.rawValue, privacy: .public)")
+        #endif
+    }
+
+    /// Logs a Keychain status code (a public OSStatus number, never item contents).
+    static func record(keychainStatus: Int32) {
+        #if canImport(os)
+        logger.debug("keychain operation failed: status \(keychainStatus, privacy: .public)")
         #endif
     }
 }
