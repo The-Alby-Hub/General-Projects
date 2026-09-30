@@ -52,6 +52,6 @@ struct ByteWriter {
     }
 
     mutating func appendInteger<T: FixedWidthInteger & UnsignedInteger>(_ value: T) {
-        withUnsafeBytes(of: value.bigEndian) { bytes.append(contentsOf: $0) }
+        Swift.withUnsafeBytes(of: value.bigEndian) { bytes.append(contentsOf: $0) }
     }
 }

@@ -28,7 +28,7 @@ struct SeededGenerator: RandomNumberGenerator {
         var result: [UInt8] = []
         result.reserveCapacity(count + 8)
         while result.count < count {
-            withUnsafeBytes(of: next()) { result.append(contentsOf: $0) }
+            Swift.withUnsafeBytes(of: next()) { result.append(contentsOf: $0) }
         }
         return Array(result.prefix(count))
     }
@@ -173,7 +173,7 @@ enum HeaderOffsets {
 extension Array where Element == UInt8 {
     /// Overwrites `count` bytes at `offset` with a big-endian integer.
     mutating func put<T: FixedWidthInteger>(_ value: T, at offset: Int) {
-        withUnsafeBytes(of: value.bigEndian) { raw in
+        Swift.withUnsafeBytes(of: value.bigEndian) { raw in
             for (i, byte) in raw.enumerated() {
                 self[offset + i] = byte
             }
