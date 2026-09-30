@@ -23,7 +23,7 @@ They're listed first.
 | Phase | State |
 |---|---|
 | 1. FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | **Done.** 71 tests pass on macOS. |
-| 2. Password mode (Argon2id) | **Written, awaiting `swift test` on macOS.** Not compiled yet: the cloud container has no Swift toolchain. |
+| 2. Password mode (Argon2id) | **Done.** 113 tests pass on macOS (2026-09-30). `Package.resolved` pins swift-sodium at `cfd195c7…`; the bundled wordlist matches eff.org's SHA-256. |
 | 3. Atomic file processor | Next, after the go-ahead |
 | 4–7 | Not started |
 

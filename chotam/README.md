@@ -21,7 +21,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 | Phase | Scope | State |
 |---|---|---|
 | 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | done: 71 tests pass on macOS (Xcode) |
-| 2 | Password mode (Argon2id via libsodium), password rule, passphrase generator | written; awaiting `swift test` on macOS |
+| 2 | Password mode (Argon2id via libsodium), password rule, passphrase generator | done: 113 tests pass on macOS (Xcode) |
 | 3 | Atomic file processor | — |
 | 4 | Identities, Keychain / Secure Enclave, fingerprints | — |
 | 5 | Recipient mode: HPKE wrapping, ML-DSA signatures | — |
