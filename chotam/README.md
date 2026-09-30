@@ -14,6 +14,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 |---|---|
 | [FORMAT.md](FORMAT.md) | Byte-level file format v1 |
 | [SECURITY.md](SECURITY.md) | Threat model, non-goals, known limits, deviations from the spec |
+| [SPEC.md](SPEC.md) | The original brief, plus every decision made since |
 
 ## Status
 
