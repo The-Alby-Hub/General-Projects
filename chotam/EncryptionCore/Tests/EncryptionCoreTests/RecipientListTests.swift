@@ -5,18 +5,13 @@ import XCTest
 /// Choosing recipients: an unverified contact can only be included through an
 /// explicit confirmation of exactly those contacts.
 final class RecipientListTests: XCTestCase {
-    private func contacts(verified: Int, unverified: Int) throws -> (TestKeyring, [Contact]) {
-        let keyring = TestKeyring()
+    private func contacts(verified: Int, unverified: Int) throws -> ((), [Contact]) {
         var result: [Contact] = []
         for i in 0 ..< verified + unverified {
-            let contact = try keyring.store.importContact(try SomeoneElse().publicIdentity, name: "Contact \(i)")
-            if i < verified {
-                result.append(try keyring.store.markVerified(contact))
-            } else {
-                result.append(contact)
-            }
+            result.append(Contact(
+                name: "Contact \(i)", isVerified: i < verified, publicIdentity: try SomeoneElse().publicIdentity))
         }
-        return (keyring, result)
+        return ((), result)
     }
 
     func testVerifiedContactsNeedNoConfirmation() throws {
@@ -63,9 +58,10 @@ final class RecipientListTests: XCTestCase {
         }
     }
 
-    func testAtMost64Recipients() throws {
-        let (_, all) = try contacts(verified: 65, unverified: 0)
-        XCTAssertEqual(try RecipientList(Array(all.prefix(64))).contacts.count, 64)
+    /// 63 contacts: the 64th stanza is always the sender's own (encrypt to self).
+    func testAtMost63Recipients() throws {
+        let (_, all) = try contacts(verified: 64, unverified: 0)
+        XCTAssertEqual(try RecipientList(Array(all.prefix(63))).contacts.count, 63)
         XCTAssertThrowsError(try RecipientList(all)) {
             XCTAssertEqual($0 as? RecipientSelectionError, .tooManyRecipients)
         }

@@ -1,4 +1,4 @@
-/// The contacts a file will be encrypted to (Phase 5: `EncryptionMode.recipients`).
+/// The contacts a file will be encrypted to (Phase 5b: `EncryptionMode.recipients`).
 ///
 /// Encrypting to an **unverified** contact can't happen by accident. `init(_:)`
 /// refuses any list that contains one, and hands back an `UnverifiedRecipientsRequest`
@@ -12,7 +12,7 @@ public struct RecipientList: Sendable, Equatable {
     /// A list of verified contacts.
     ///
     /// - Throws: `.needsConfirmation` if any contact is unverified; `.noRecipients`,
-    ///   `.tooManyRecipients` (over 64) or `.duplicateRecipient` otherwise.
+    ///   `.tooManyRecipients` (over 63) or `.duplicateRecipient` otherwise.
     public init(_ contacts: [Contact]) throws(RecipientSelectionError) {
         try Self.validate(contacts)
         let unverified = contacts.filter { !$0.isVerified }
@@ -28,8 +28,9 @@ public struct RecipientList: Sendable, Equatable {
 
     private static func validate(_ contacts: [Contact]) throws(RecipientSelectionError) {
         guard !contacts.isEmpty else { throw .noRecipients }
-        // A v1 header holds at most 64 recipient stanzas (FORMAT.md §2.3).
-        guard contacts.count <= FormatV1.maxRecipients else { throw .tooManyRecipients }
+        // A v1 header holds at most 64 recipient stanzas (FORMAT.md §2.3), and your
+        // own identity always takes one, so you can open what you sent.
+        guard contacts.count <= FormatV1.maxContactRecipients else { throw .tooManyRecipients }
         var encryptionIDs = Set<KeyID>()
         var signingIDs = Set<KeyID>()
         for contact in contacts {
@@ -58,7 +59,7 @@ public enum RecipientSelectionError: Error, Equatable, Sendable {
     /// Some contacts are unverified: ask the user, then `request.confirm()`.
     case needsConfirmation(UnverifiedRecipientsRequest)
     case noRecipients
-    /// More than 64 recipients.
+    /// More than 63 contacts (the 64th stanza is always yours).
     case tooManyRecipients
     /// The same contact (or a key of theirs) appears twice.
     case duplicateRecipient

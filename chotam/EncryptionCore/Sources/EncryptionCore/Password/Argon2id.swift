@@ -56,58 +56,59 @@ enum Argon2id {
     ///     same key. Nothing is trimmed: spaces are part of the password.
     ///   - salt: The file's random 16-byte Argon2id salt.
     static func deriveIKM(password: String, salt: [UInt8], cost: Cost) throws -> SymmetricKey {
-        guard salt.count == FormatV1.argon2SaltSize else {
-            throw CoreFailure(.fieldSizeMismatch)
-        }
+        // Password mode only accepts the v1 file window (FORMAT.md §2.3).
         guard cost.isAccepted else {
             throw CoreFailure(.argon2ParametersOutOfRange)
+        }
+        // The password bytes go straight into a locked buffer we own and wipe, never
+        // into a Swift array. The normalised String itself can't be wiped (SECURITY.md §7.3).
+        let normalized = password.precomposedStringWithCanonicalMapping
+        let secret = SecretBuffer(count: normalized.utf8.count)
+        secret.withUnsafeMutableBytes { buffer in
+            for (offset, byte) in normalized.utf8.enumerated() {
+                buffer[offset] = byte
+            }
+        }
+        return try derive(secret: secret, salt: salt, cost: cost)
+    }
+
+    /// Argon2id over bytes the caller has already put in a `SecretBuffer`. The caller
+    /// checks `cost` against its own accepted range first: password files and
+    /// identities have different windows.
+    static func derive(secret: SecretBuffer, salt: [UInt8], cost: Cost) throws -> SymmetricKey {
+        // libsodium's crypto_pwhash takes exactly 16 bytes of salt.
+        guard salt.count == FormatV1.argon2SaltSize else {
+            throw CoreFailure(.fieldSizeMismatch)
         }
         // sodium_init is idempotent and thread-safe; 0 or 1 means ready.
         guard sodium_init() >= 0 else {
             throw CoreFailure(.keyDerivationFailed)
         }
 
-        // The password bytes go straight into a buffer we own and wipe, never into
-        // a Swift array. The normalised String itself can't be wiped (SECURITY.md §7.3).
-        let normalized = password.precomposedStringWithCanonicalMapping
-        let passwordLength = normalized.utf8.count
-        // At least 1 byte so the pointer is never nil; libsodium reads `passwordLength` bytes.
-        let secret = UnsafeMutableRawBufferPointer.allocate(byteCount: max(passwordLength, 1), alignment: 1)
-        defer {
-            Wipe.raw(secret)
-            secret.deallocate()
-        }
-        _ = secret.initializeMemory(as: UInt8.self, repeating: 0)
-        for (offset, byte) in normalized.utf8.enumerated() {
-            secret[offset] = byte
-        }
-
-        let output = UnsafeMutableRawBufferPointer.allocate(byteCount: FormatV1.ikmSize, alignment: 1)
-        defer {
-            Wipe.raw(output)
-            output.deallocate()
-        }
-        _ = output.initializeMemory(as: UInt8.self, repeating: 0)
-
-        let status = salt.withUnsafeBufferPointer { saltBuffer in
-            // Argon2id v1.3 (argon2id13), explicitly rather than libsodium's
-            // "default" alias. libsodium fixes parallelism at 1 lane.
-            crypto_pwhash(
-                output.baseAddress!.assumingMemoryBound(to: UInt8.self),
-                UInt64(FormatV1.ikmSize),
-                secret.baseAddress!.bindMemory(to: CChar.self, capacity: secret.count),
-                UInt64(passwordLength),
-                saltBuffer.baseAddress!,
-                cost.opsLimit,
-                Int(cost.memLimit),
-                crypto_pwhash_alg_argon2id13())
+        let output = SecretBuffer(count: FormatV1.ikmSize)
+        let status = secret.withUnsafeBytes { password in
+            output.withUnsafeMutableBytes { out in
+                salt.withUnsafeBufferPointer { saltBuffer in
+                    // Argon2id v1.3 (argon2id13), explicitly rather than libsodium's
+                    // "default" alias. libsodium fixes parallelism at 1 lane.
+                    crypto_pwhash(
+                        out.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                        UInt64(out.count),
+                        password.baseAddress!.assumingMemoryBound(to: CChar.self),
+                        UInt64(password.count),
+                        saltBuffer.baseAddress!,
+                        cost.opsLimit,
+                        Int(cost.memLimit),
+                        crypto_pwhash_alg_argon2id13())
+                }
+            }
         }
         // Non-zero means libsodium couldn't allocate the memory (or rejected a parameter).
         guard status == 0 else {
             throw CoreFailure(.keyDerivationFailed)
         }
         // SymmetricKey copies the bytes into its own storage, which CryptoKit zeroes
-        // on release. Our buffer is wiped by the defer above.
-        return SymmetricKey(data: UnsafeRawBufferPointer(output))
+        // on release. `output` is wiped and unlocked when it goes out of scope.
+        return output.symmetricKey
     }
 }

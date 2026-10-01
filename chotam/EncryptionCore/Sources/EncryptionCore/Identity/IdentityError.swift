@@ -2,8 +2,10 @@ import Foundation
 
 /// Everything that can go wrong with identities and contacts.
 ///
-/// Public identities are public data, so these can be precise without helping an
-/// attacker. Messages are fixed strings and never include keys, names or paths.
+/// These concern your own identity, your own files and public identities, so they can
+/// be precise without helping an attacker: an unlock attempt checks your passphrase
+/// against your own public `.pqid`, which anyone holding it can do offline anyway.
+/// Messages are fixed strings and never include keys, names, passphrases or paths.
 public enum IdentityError: Error, LocalizedError, Equatable, Sendable {
     /// Not a valid Chotam identity: malformed, damaged, or its self-signature doesn't verify.
     case invalidIdentity
@@ -17,14 +19,30 @@ public enum IdentityError: Error, LocalizedError, Equatable, Sendable {
     case alreadyAContact
     /// The contact no longer exists (it was removed).
     case contactNotFound
-    /// You already have an identity. Delete it first to make a new one.
+    /// Chotam keeps at most 500 contacts.
+    case tooManyContacts
+    /// This Mac already has an identity. Forget it first to create or restore another.
     case identityExists
-    /// You haven't created an identity yet.
+    /// This Mac has no identity yet: create one, or restore yours.
     case noIdentity
-    /// Touch ID or the password prompt was cancelled.
-    case cancelled
-    /// The Keychain or Secure Enclave couldn't be used.
-    case secureStorageUnavailable
+    /// Not 7 to 10 different words from Chotam's word list.
+    case invalidPassphrase
+    /// The passphrase (or the key file) doesn't produce this identity.
+    case wrongPassphrase
+    /// This identity was created with a key file; choose it to unlock.
+    case keyFileRequired
+    /// This identity doesn't use a key file; unlock with the passphrase alone.
+    case keyFileNotUsed
+    /// The key file couldn't be read, or is empty.
+    case keyFileUnusable
+    /// The identity was locked: its keys have been wiped from memory. Unlock it again.
+    case locked
+    /// Not enough free memory to derive the keys (about 1 GiB is needed).
+    case notEnoughMemory
+    /// The contacts file is damaged or belongs to another identity.
+    case contactsDamaged
+    /// Chotam couldn't read or write its files.
+    case storageFailed
     case unexpected
 
     public var errorDescription: String? {
@@ -35,10 +53,18 @@ public enum IdentityError: Error, LocalizedError, Equatable, Sendable {
         case .isYourOwnIdentity: "This is your own identity."
         case .alreadyAContact: "One of this identity's keys already belongs to a contact."
         case .contactNotFound: "This contact no longer exists."
-        case .identityExists: "You already have an identity."
-        case .noIdentity: "You don't have an identity yet."
-        case .cancelled: "Cancelled."
-        case .secureStorageUnavailable: "The Keychain couldn't be used."
+        case .tooManyContacts: "Chotam can keep at most 500 contacts."
+        case .identityExists: "This Mac already has an identity."
+        case .noIdentity: "There's no identity on this Mac yet."
+        case .invalidPassphrase: "A passphrase is 7 to 10 different words from Chotam's word list."
+        case .wrongPassphrase: "Wrong passphrase or key file."
+        case .keyFileRequired: "This identity needs its key file."
+        case .keyFileNotUsed: "This identity doesn't use a key file."
+        case .keyFileUnusable: "The key file can't be read, or is empty."
+        case .locked: "Your identity is locked. Unlock it with your passphrase."
+        case .notEnoughMemory: "There isn't enough free memory to unlock the identity."
+        case .contactsDamaged: "The contacts file is damaged."
+        case .storageFailed: "Chotam couldn't read or write its files."
         case .unexpected: "Something unexpected went wrong."
         }
     }
@@ -46,9 +72,9 @@ public enum IdentityError: Error, LocalizedError, Equatable, Sendable {
 
 /// Maps any internal error to `IdentityError`, logging only a fixed reason.
 ///
-/// - Parameter parsing: true when the bytes came from outside (an import), so a
-///   format failure means "invalid identity". False when they came from Chotam's
-///   own Keychain items, where a format failure is unexpected damage.
+/// - Parameter parsing: true when the bytes came from a `.pqid` (an import, or the
+///   identity file), so a format failure means "invalid identity". False otherwise,
+///   where a format failure is unexpected.
 func identityError(for error: any Error, parsing: Bool) -> IdentityError {
     switch error {
     case let error as IdentityError:
@@ -62,34 +88,23 @@ func identityError(for error: any Error, parsing: Bool) -> IdentityError {
              .identityMalformed, .identityTrailingBytes, .identityInvalidName, .identityInvalidKey,
              .identityBadSignature:
             return parsing ? .invalidIdentity : .unexpected
+        // Argon2id couldn't allocate the memory the identity's KDF asks for.
+        case .keyDerivationFailed:
+            return .notEnoughMemory
+        case .contactsDamaged:
+            return .contactsDamaged
+        case .wrongPassphrase:
+            return .wrongPassphrase
+        case .readFailed, .writeFailed:
+            return .storageFailed
         default:
             return .unexpected
         }
-    case let failure as SecureStoreError:
-        DebugLog.record(.unexpected)
-        switch failure {
-        case .cancelled: return .cancelled
-        case .duplicateItem: return .unexpected
-        case .unavailable: return .secureStorageUnavailable
-        }
+    case is FileProblem:
+        DebugLog.record(.writeFailed)
+        return .storageFailed
     default:
-        if isUserCancellation(error) { return .cancelled }
         DebugLog.record(.unexpected)
         return .unexpected
     }
-}
-
-/// Whether an error from LocalAuthentication, the Keychain or the Secure Enclave
-/// means the user dismissed the Touch ID / password prompt. Best-effort: the
-/// app-hosted tests (Phase 6) confirm which errors CryptoKit actually surfaces.
-func isUserCancellation(_ error: any Error, depth: Int = 0) -> Bool {
-    let ns = error as NSError
-    // LAError.userCancel (-2), .systemCancel (-4), .appCancel (-9)
-    if ns.domain == "com.apple.LocalAuthentication", [-2, -4, -9].contains(ns.code) { return true }
-    // errSecUserCanceled
-    if ns.domain == "NSOSStatusErrorDomain", ns.code == -128 { return true }
-    if depth < 4, let underlying = ns.userInfo[NSUnderlyingErrorKey] as? any Error {
-        return isUserCancellation(underlying, depth: depth + 1)
-    }
-    return false
 }

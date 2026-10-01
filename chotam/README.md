@@ -8,7 +8,9 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 
 - **Password mode:** Argon2id → HKDF → streaming AES-256-GCM.
 - **Recipient mode:** a per-file Data Key, wrapped with HPKE X-Wing (ML-KEM-768 + X25519)
-  and signed with ML-DSA-65.
+  and signed with a hybrid Ed25519 + ML-DSA-65 signature.
+- **Identities are derived from a generated passphrase.** No secret is ever stored, and
+  Chotam never uses the Keychain (SECURITY.md D17, D18).
 
 | Document | Contents |
 |---|---|
@@ -23,8 +25,9 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 | 1 | FORMAT.md, SECURITY.md, streaming AES-GCM core with key commitment | done: 71 tests pass on macOS (Xcode) |
 | 2 | Password mode (Argon2id via libsodium), password rule, passphrase generator | done: 113 tests pass on macOS (Xcode) |
 | 3 | Atomic file processor: public `FileProcessor` API, safe writes, restored filenames | done: 138 tests pass on macOS (Xcode) |
-| 4 | Identities, Keychain / Secure Enclave, fingerprints, `.pqid`, contacts | done: 222 tests pass on macOS (Xcode) |
-| 5 | Recipient mode: HPKE wrapping, ML-DSA signatures | — |
+| 4 | Identities, fingerprints, `.pqid`, contacts | done: 222 tests pass on macOS (Xcode); its Keychain parts removed in 5a |
+| 5a | Passphrase-derived identity, no Keychain, hybrid signatures, encrypted contacts | done: 238 tests pass on macOS (Xcode); unlock takes 3.5 s |
+| 5b | Recipient mode: HPKE wrapping, signed files, two-pass decryption | — |
 | 6 | SwiftUI app | — |
 | 7 | Full test pass and security self-review | — |
 
@@ -41,11 +44,11 @@ chotam/
       Stream/                    chunked sealer/opener, byte sources/sinks, metadata record
       Password/                  Argon2id (libsodium), password mode, strength rule, passphrase generator
       Files/                     public file API: FileProcessor, safe temp-file writes, output naming, public errors
-      Identity/                  identities, key IDs, fingerprints, .pqid codec, contacts, recipient lists
-        Storage/                 Keychain and Secure Enclave backends behind small protocols (SECURITY.md D8)
+      Identity/                  derived identities, key IDs, fingerprints, hybrid signatures, .pqid codec,
+                                 the encrypted contacts file, recipient lists
       Resources/                 EFF large wordlist (CC-BY 3.0 US)
     Tests/EncryptionCoreTests/   XCTest
-      Vectors/                   golden .enc and .pqid files from independent implementations (FORMAT.md §8, §9.5)
+      Vectors/                   golden .enc and .pqid files from independent implementations (FORMAT.md §8, §9.7)
 ```
 
 ## Using the core
@@ -81,25 +84,37 @@ result.storedFilename  // the original name, for display only
 
 ## Identities and contacts
 
-Recipient mode (Phase 5) encrypts to contacts and signs with your identity. Phase 4 adds
-the identities themselves:
+Recipient mode (Phase 5b) encrypts to contacts and signs with your identity. Your identity
+is **derived from a passphrase Chotam generates**. Nothing secret is stored anywhere: not
+in the Keychain (Chotam never touches it), not on disk. The keys exist in memory only
+while the identity is unlocked.
 
 ```swift
-let store = IdentityStore.system   // the Keychain and Secure Enclave; needs the signed app
+// The folder holding identity.pqid (public) and contacts.chotam (encrypted).
+let vault = IdentityVault(folder: appSupportFolder)
 
-// Once: create your identity (one Touch ID / password prompt, to sign your .pqid).
-let me = try store.myIdentity() ?? store.createIdentity(name: "Alice")
-me.fingerprint.description         // "P6BC HMEY 9SAS BEA0 DGKS 1Y3H FDP9 VXBM"
+// Once: create your identity. Show the passphrase once, have it written down, drop it.
+let created = try vault.createIdentity(name: "Alice")      // optionally keyFile: url
+created.passphrase                  // 7 EFF words, about 90 bits. No recovery if lost.
+let me = created.identity
+
+// Later (each launch): unlock. Case and spacing don't matter. A few seconds, ~1 GiB.
+let me = try vault.unlock(passphrase: typed)                 // keyFile: if it has one
+me.fingerprint.description         // "80XX XYHV TNDW KMXW QJ1J KY3M 0SVB QTVM"
 me.publicIdentity.exportedData     // save as Alice.pqid
 me.publicIdentity.exportedString   // or copy this Base64 string
-me.signingKeyStorage               // .secureEnclave (or .keychain on a Mac whose SE can't)
+me.lock()                           // on quit, screen lock, sleep, idle: wipes the keys
 
-// Import a contact: always unverified.
-let bob = try store.importContact(PublicIdentity(importing: pqidData), name: "Bob")
+// On a new Mac: your .pqid (e.g. from a contact) plus the passphrase.
+let me = try vault.restore(PublicIdentity(importing: myPQID), passphrase: typed)
+
+// Contacts belong to the unlocked identity. Imports are always unverified.
+let bob = try me.importContact(PublicIdentity(importing: pqidData), name: "Bob")
 bob.fingerprint                    // read all 8 groups aloud with Bob, then:
-let verified = try store.markVerified(bob)
+let verified = try me.markVerified(bob)
 
-// Choosing recipients: unverified contacts need an explicit confirmation.
+// Choosing recipients (at most 63: you are always the 64th). Unverified contacts
+// need an explicit confirmation.
 let recipients: RecipientList
 do {
     recipients = try RecipientList(selectedContacts)
@@ -110,12 +125,14 @@ do {
 }
 ```
 
-- Private keys never leave the Mac and are never exported. ML-DSA-65 lives in the Secure
-  Enclave; X-Wing lives in the Keychain, because the Secure Enclave has no X-Wing. Both
-  need Touch ID or the password for every use. See SECURITY.md D7.
-- A `.pqid` holds both public keys, an optional suggested name and a self-signature
-  (FORMAT.md §9). Anyone can make one, so an identity means nothing until its
-  fingerprint has been compared.
+- **The passphrase is the identity.** Anyone holding your `.pqid` can guess passphrases
+  offline, which is why Chotam generates them and refuses chosen ones. A forgotten
+  passphrase (or lost key file) can't be recovered, and a new passphrase means a new
+  identity. See SECURITY.md D17 and §5.17–§5.25.
+- A `.pqid` holds three public keys, the public parameters for re-deriving the identity,
+  an optional suggested name and a hybrid self-signature (FORMAT.md §9). Anyone can make
+  one, so an identity means nothing until its fingerprint has been compared.
+- `forgetThisMac()` removes the two files; it can't delete the identity itself.
 - Errors are `IdentityError` (and `RecipientSelectionError` for recipient lists).
 
 ## Building and testing
@@ -132,10 +149,11 @@ This uses the system CryptoKit. The first run fetches one package,
 its `Clibsodium` product (libsodium itself) is linked, for Argon2id. `Package.resolved`
 should show revision `cfd195c76882aa9b997560ca7cb95d72fbf5db00`.
 
-Identity and contact tests run on an in-memory store and a fake Secure Enclave, because
-the real Keychain needs a signed app with the `keychain-access-groups` entitlement
-(SECURITY.md D8). On macOS, one test also tries an ML-DSA-65 key in the real Secure
-Enclave (without a prompt) and is skipped if this Mac can't do it.
+Identity and contact tests run for real, in temp folders: there is no Keychain to fake.
+Most derive identities at the cheapest accepted cost (ops 3, 256 MiB). One test runs the
+production cost once (1 GiB, ops 8) and prints how long it took, for calibration:
+look for `Chotam calibration:` in the output. `NoKeychainTests` fails if any source
+file ever uses a Keychain, Secure Enclave or Touch ID API.
 
 Password-mode tests run Argon2id for real. Most use the cheapest cost a file may declare
 (ops 3, 256 MiB). A few use the production preset (ops 4, 1 GiB) and take several
@@ -144,9 +162,8 @@ seconds each.
 **Linux** (development convenience only). Needs a Swift 6.2 toolchain. The manifest then adds
 [apple/swift-crypto](https://github.com/apple/swift-crypto) 5.0.0 and swift-asn1 1.7.3,
 both pinned exactly. They provide the same `AES.GCM` / `HKDF` / `SHA256` / `SymmetricKey`
-API, and also `MLDSA65`, `XWingMLKEM768X25519` and the X-Wing HPKE ciphersuite, so the
-identity code builds and tests on Linux as well (without the Keychain and Secure Enclave
-backends, which are Apple-only). They are declared inside `#if os(Linux)`, so a macOS build never resolves them.
+API, and also `MLDSA65`, `XWingMLKEM768X25519`, Ed25519 and the X-Wing HPKE ciphersuite,
+so everything builds and tests on Linux as well. They are declared inside `#if os(Linux)`, so a macOS build never resolves them.
 libsodium comes from the system: `apt install libsodium-dev`.
 
 ```sh
