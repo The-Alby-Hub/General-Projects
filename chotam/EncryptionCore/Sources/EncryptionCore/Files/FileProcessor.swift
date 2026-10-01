@@ -34,7 +34,7 @@ public struct Destination: Sendable {
     }
 }
 
-/// How to encrypt. Recipient mode (Phase 5) adds another factory here, e.g.
+/// How to encrypt. Recipient mode (Phase 5b) adds another factory here, e.g.
 /// `.recipients(_:signedBy:)`; existing callers don't change.
 public struct EncryptionMode: Sendable, CustomStringConvertible, CustomDebugStringConvertible,
     CustomReflectable
@@ -69,8 +69,8 @@ public struct EncryptionMode: Sendable, CustomStringConvertible, CustomDebugStri
     public var customMirror: Mirror { Mirror(self, children: [:]) }
 }
 
-/// How to decrypt. Recipient mode (Phase 5) adds another factory here, e.g.
-/// `.identity(_:trusting:)`; existing callers don't change.
+/// How to decrypt. Recipient mode (Phase 5b) adds another factory here, e.g.
+/// `.identity(_:contacts:)`; existing callers don't change.
 public struct DecryptionMode: Sendable, CustomStringConvertible, CustomDebugStringConvertible,
     CustomReflectable
 {
@@ -97,7 +97,7 @@ public struct DecryptionMode: Sendable, CustomStringConvertible, CustomDebugStri
     public var customMirror: Mirror { Mirror(self, children: [:]) }
 }
 
-/// The result of a successful decryption. Phase 5 adds who signed it.
+/// The result of a successful decryption. Phase 5b adds who signed it.
 public struct DecryptedFile: Equatable, Sendable {
     /// Where the plaintext was saved.
     public let url: URL

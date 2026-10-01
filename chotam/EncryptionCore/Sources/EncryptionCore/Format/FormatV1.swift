@@ -35,6 +35,9 @@ enum FormatV1 {
 
     // Recipient mode.
     static let maxRecipients = 64
+    /// Contacts per file: your own identity always takes one of the 64 stanzas
+    /// (encrypt to self, SECURITY.md D21).
+    static let maxContactRecipients = maxRecipients - 1
     /// X-Wing ciphertext: ML-KEM-768 ciphertext (1088) + X25519 share (32).
     /// Asserted against the SDK by `IdentityKeyTests` (Phase 4).
     static let xwingEncapsulatedKeySize = 1120

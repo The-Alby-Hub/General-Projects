@@ -5,7 +5,7 @@ import CryptoKit
 import Crypto
 #endif
 
-/// What the opener verified. Recipient mode (Phase 5) checks the signature in
+/// What the opener verified. Recipient mode (Phase 5b) checks the signature in
 /// `trailer` against `headerHash`, `ciphertextDigest` and `chunkCount`.
 struct OpenSummary {
     let filename: String?

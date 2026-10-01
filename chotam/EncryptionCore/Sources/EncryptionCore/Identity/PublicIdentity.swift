@@ -5,10 +5,12 @@ import CryptoKit
 import Crypto
 #endif
 
-/// Someone's public identity: an X-Wing encryption key and an ML-DSA-65 signing key,
-/// as exchanged in a `.pqid` file or its Base64 string (FORMAT.md §9).
+/// Someone's public identity: an X-Wing encryption key and a hybrid signing key
+/// (ML-DSA-65 + Ed25519), as exchanged in a `.pqid` file or its Base64 string
+/// (FORMAT.md §9).
 ///
-/// It holds public keys only. A value always comes from a strictly parsed, correctly
+/// It holds public data only: the keys, the public parameters for re-deriving the
+/// identity from its owner's passphrase, a name and a self-signature. A value always comes from a strictly parsed, correctly
 /// self-signed `.pqid`, so every `PublicIdentity` is well-formed. That says nothing
 /// about *whose* it is: only comparing fingerprints does (SECURITY.md D5, D14).
 public struct PublicIdentity: Hashable, Sendable {
@@ -19,27 +21,37 @@ public struct PublicIdentity: Hashable, Sendable {
     public let suggestedName: String?
 
     let encryptionKey: XWingMLKEM768X25519.PublicKey
-    let signingKey: MLDSA65.PublicKey
+    let mldsaKey: MLDSA65.PublicKey
+    let ed25519Key: Curve25519.Signing.PublicKey
     let encryptionKeyID: KeyID
+    /// Covers both signing keys (FORMAT.md §6.1).
     let signingKeyID: KeyID
     let encryptionKeyBytes: [UInt8]
-    let signingKeyBytes: [UInt8]
+    let mldsaKeyBytes: [UInt8]
+    let ed25519KeyBytes: [UInt8]
+    /// How the owner's passphrase becomes these keys (FORMAT.md §9.6). Public.
+    let kdf: IdentityKDF
     /// The exact, signed `.pqid` bytes it was parsed from.
     let encoded: [UInt8]
 
     /// Only `PQIDCodec.decode` calls this, after every check has passed.
     init(
-        encryptionKey: XWingMLKEM768X25519.PublicKey, signingKey: MLDSA65.PublicKey,
-        encryptionKeyBytes: [UInt8], signingKeyBytes: [UInt8],
-        suggestedName: String?, encoded: [UInt8]
+        encryptionKey: XWingMLKEM768X25519.PublicKey, mldsaKey: MLDSA65.PublicKey,
+        ed25519Key: Curve25519.Signing.PublicKey,
+        encryptionKeyBytes: [UInt8], mldsaKeyBytes: [UInt8], ed25519KeyBytes: [UInt8],
+        kdf: IdentityKDF, suggestedName: String?, encoded: [UInt8]
     ) {
         self.encryptionKey = encryptionKey
-        self.signingKey = signingKey
+        self.mldsaKey = mldsaKey
+        self.ed25519Key = ed25519Key
         self.encryptionKeyBytes = encryptionKeyBytes
-        self.signingKeyBytes = signingKeyBytes
+        self.mldsaKeyBytes = mldsaKeyBytes
+        self.ed25519KeyBytes = ed25519KeyBytes
         self.encryptionKeyID = KeyID.encryption(rawPublicKey: encryptionKeyBytes)
-        self.signingKeyID = KeyID.signing(rawPublicKey: signingKeyBytes)
-        self.fingerprint = Fingerprint(encryptionKey: encryptionKeyBytes, signingKey: signingKeyBytes)
+        self.signingKeyID = KeyID.signing(mldsaKey: mldsaKeyBytes, ed25519Key: ed25519KeyBytes)
+        self.fingerprint = Fingerprint(
+            encryptionKey: encryptionKeyBytes, mldsaKey: mldsaKeyBytes, ed25519Key: ed25519KeyBytes)
+        self.kdf = kdf
         self.suggestedName = suggestedName
         self.encoded = encoded
     }
@@ -66,7 +78,7 @@ public struct PublicIdentity: Hashable, Sendable {
 
     // MARK: Export
 
-    /// The `.pqid` file contents. Public keys, name and self-signature only.
+    /// The `.pqid` file contents: public keys, KDF parameters, name and self-signature only.
     public var exportedData: Data {
         Data(encoded)
     }
@@ -81,8 +93,8 @@ public struct PublicIdentity: Hashable, Sendable {
 
     // MARK: Identity
 
-    /// Two values are the same identity when both keys match. The name and the
-    /// signature bytes don't matter (ML-DSA signatures are randomised).
+    /// Two values are the same identity when all keys match. The name and the
+    /// signature bytes don't matter (signatures may be randomised).
     public static func == (lhs: PublicIdentity, rhs: PublicIdentity) -> Bool {
         lhs.encryptionKeyID == rhs.encryptionKeyID && lhs.signingKeyID == rhs.signingKeyID
     }
@@ -92,9 +104,12 @@ public struct PublicIdentity: Hashable, Sendable {
         hasher.combine(signingKeyID)
     }
 
-    /// Whether the two share either key. Two different contacts must never do this:
-    /// it would let one key stand in for the other's (SECURITY.md D14).
+    /// Whether the two share any key, including either half of the signing key. Two
+    /// different contacts must never do this: it would let one key stand in for the
+    /// other's (SECURITY.md D14).
     func sharesKey(with other: PublicIdentity) -> Bool {
-        encryptionKeyID == other.encryptionKeyID || signingKeyID == other.signingKeyID
+        encryptionKeyBytes == other.encryptionKeyBytes
+            || mldsaKeyBytes == other.mldsaKeyBytes
+            || ed25519KeyBytes == other.ed25519KeyBytes
     }
 }

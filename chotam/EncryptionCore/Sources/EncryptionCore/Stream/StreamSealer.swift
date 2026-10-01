@@ -5,7 +5,7 @@ import CryptoKit
 import Crypto
 #endif
 
-/// What the sealer produced. Recipient mode (Phase 5) signs these values.
+/// What the sealer produced. Recipient mode (Phase 5b) signs these values.
 struct SealSummary {
     let headerHash: [UInt8]
     let chunkCount: UInt64

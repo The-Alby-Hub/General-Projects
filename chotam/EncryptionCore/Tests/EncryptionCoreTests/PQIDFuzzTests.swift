@@ -1,5 +1,10 @@
 import Foundation
 import XCTest
+#if canImport(CryptoKit)
+import CryptoKit
+#else
+import Crypto
+#endif
 @testable import EncryptionCore
 
 /// The `.pqid` parser must reject hostile input by throwing, never by trapping. As
@@ -50,7 +55,14 @@ final class PQIDFuzzTests: XCTestCase {
             var bytes = prelude + rng.bytes(max(0, target - prelude.count + jitter))
             if bytes.count >= 12, rng.next() % 2 == 0 { bytes.put(UInt16(1216), at: 10) }
             if bytes.count >= 1230, rng.next() % 2 == 0 { bytes.put(UInt16(1952), at: 1228) }
-            if bytes.count > 3182, rng.next() % 2 == 0 { bytes[3182] = UInt8(rng.next() % 70) }
+            if bytes.count >= 3184, rng.next() % 2 == 0 { bytes.put(UInt16(32), at: 3182) }
+            if bytes.count >= 3218, rng.next() % 2 == 0 { bytes[3216] = 1; bytes[3217] = UInt8(rng.next() % 2) }
+            if bytes.count >= 3235, rng.next() % 2 == 0 {
+                bytes.put(UInt64(3 + rng.next() % 14), at: 3218)
+                bytes.put(UInt64(256 << 20), at: 3226)
+                bytes[3234] = 1
+            }
+            if bytes.count > 3251, rng.next() % 2 == 0 { bytes[3251] = UInt8(rng.next() % 70) }
             exercise(bytes)
         }
     }
@@ -100,29 +112,44 @@ final class PQIDFuzzTests: XCTestCase {
         }
     }
 
-    /// The Keychain records wrap a .pqid; their parsers get the same treatment.
-    func testStoredRecordParsersNeverTrap() throws {
+    /// The contacts file wraps .pqid files inside AES-GCM. Its parser gets the same
+    /// treatment: hostile bytes, truncations and flips, with the right key and the
+    /// wrong one.
+    func testContactsFileParserNeverTraps() throws {
         var rng = SeededGenerator(seed: 0x2EC)
-        let golden = try IdentityVectors.pqid()
-        let contact = try ContactRecord(
-            name: "Alice", isVerified: true, publicIdentity: PQIDCodec.decode(golden)).encode()
-        let own = OwnIdentityRecord(signingKeyStorage: .secureEnclave, publicIdentity: try PQIDCodec.decode(golden)).encode()
-        for record in [contact, own] {
-            for length in stride(from: 0, to: record.count, by: 7) {
-                XCTAssertThrowsError(try ContactRecord.decode(Array(record.prefix(length))))
-                XCTAssertThrowsError(try OwnIdentityRecord.decode(Array(record.prefix(length))))
-            }
-            for _ in 0 ..< 300 {
-                var bytes = record
-                bytes[Int(rng.next() % 40)] ^= UInt8(1 + rng.next() % 255)  // header area
-                _ = try? ContactRecord.decode(bytes)
-                _ = try? OwnIdentityRecord.decode(bytes)
-            }
+        let key = SymmetricKey(size: .bits256)
+        let owner = KeyID(bytes: Array(repeating: 7, count: 32))
+        let contacts = try (0 ..< 3).map { i in
+            Contact(name: "Contact \(i)", isVerified: i == 0, publicIdentity: try SomeoneElse().publicIdentity)
+        }
+        let file = try ContactsFile.encode(contacts, owner: owner, key: key)
+        XCTAssertEqual(try ContactsFile.decode(file, owner: owner, key: key), contacts)
+
+        for length in stride(from: 0, to: file.count, by: 11) {
+            XCTAssertThrowsError(try ContactsFile.decode(Array(file.prefix(length)), owner: owner, key: key))
+        }
+        for _ in 0 ..< 500 {
+            var bytes = file
+            bytes[Int(rng.next() % UInt64(bytes.count))] ^= UInt8(1 + rng.next() % 255)
+            XCTAssertThrowsError(try ContactsFile.decode(bytes, owner: owner, key: key))
         }
         for _ in 0 ..< 20_000 {
-            let bytes = rng.bytes(Int(rng.next() % 64))
-            XCTAssertThrowsError(try ContactRecord.decode(bytes))
-            XCTAssertThrowsError(try OwnIdentityRecord.decode(bytes))
+            let bytes = rng.bytes(Int(rng.next() % 200))
+            XCTAssertThrowsError(try ContactsFile.decode(bytes, owner: owner, key: key))
+        }
+        // Authenticated plaintexts of any shape, so the inner parser sees them too.
+        for _ in 0 ..< 2_000 {
+            let plaintext = rng.bytes(Int(rng.next() % 300))
+            let nonce = rng.bytes(12)
+            let header = Array("CHOTAMCF".utf8) + [0, 1] + owner.bytes + nonce
+            let box = try AES.GCM.seal(plaintext, using: key, nonce: try AES.GCM.Nonce(data: nonce), authenticating: header)
+            let bytes = header + [UInt8](box.ciphertext) + [UInt8](box.tag)
+            do {
+                _ = try ContactsFile.decode(bytes, owner: owner, key: key)
+            } catch is CoreFailure {
+            } catch {
+                XCTFail("non-CoreFailure error \(type(of: error))")
+            }
         }
     }
 }
