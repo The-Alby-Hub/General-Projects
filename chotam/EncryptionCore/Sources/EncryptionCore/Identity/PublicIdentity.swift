@@ -34,6 +34,11 @@ public struct PublicIdentity: Hashable, Sendable {
     /// The exact, signed `.pqid` bytes it was parsed from.
     let encoded: [UInt8]
 
+    /// Whether unlocking this identity needs a key file as well as the passphrase
+    /// (FORMAT.md §9.6). Public data from the `.pqid`, so the unlock screen can ask for
+    /// the file before the identity is unlocked.
+    public var requiresKeyFile: Bool { kdf.requiresKeyFile }
+
     /// Only `PQIDCodec.decode` calls this, after every check has passed.
     init(
         encryptionKey: XWingMLKEM768X25519.PublicKey, mldsaKey: MLDSA65.PublicKey,

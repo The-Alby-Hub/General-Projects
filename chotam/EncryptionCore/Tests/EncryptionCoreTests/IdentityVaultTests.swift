@@ -161,6 +161,9 @@ final class IdentityVaultTests: XCTestCase {
         let keyFile = try vault.scratch.write(IdentityVectors.keyFile, to: "key.bin")
         let golden = try PQIDCodec.decode(try vector(IdentityVectors.keyFilePQIDFile))
         XCTAssertTrue(golden.kdf.requiresKeyFile)
+        // Public, so the app can ask for the key file before unlocking (Phase 6).
+        XCTAssertTrue(golden.requiresKeyFile)
+        XCTAssertFalse(try PQIDCodec.decode(try vector(IdentityVectors.pqidFile)).requiresKeyFile)
 
         assertIdentityError(.keyFileRequired) { _ = try vault.vault.restore(golden, passphrase: IdentityVectors.typedPassphrase) }
         let wrongFile = try vault.scratch.write(IdentityVectors.keyFile.dropLast() + [0], to: "wrong.bin")
