@@ -63,8 +63,8 @@ enum Fixtures {
     static let passwordParameters = FileHeader.ModeParameters.password(
         .init(argon2Salt: [UInt8](repeating: 0x44, count: 16), opsLimit: 4, memLimit: 1 << 30))
 
-    /// Structurally valid recipient parameters. The stanza contents are filler:
-    /// HPKE wrapping arrives in Phase 5, so here they're just header bytes.
+    /// Structurally valid recipient parameters, with filler stanza contents.
+    /// They only exercise the header codec; real stanzas are in `RecipientModeTests`.
     static func recipientParameters(count: Int) -> FileHeader.ModeParameters {
         .recipients(.init(
             senderKeyID: [UInt8](repeating: 0x55, count: 32),

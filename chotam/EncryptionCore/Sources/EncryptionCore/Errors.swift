@@ -47,6 +47,15 @@ struct CoreFailure: Error, Equatable {
         case tooManyChunks
         case nonCanonicalFinalChunk
         case malformedMetadata
+        // Recipient mode (FORMAT.md §6, §7)
+        case notARecipient
+        case unknownSender
+        case badSignature
+        case unwrapFailed
+        case changedBetweenPasses
+        case recipientsChanged
+        // The caller cancelled (ProgressHook)
+        case cancelled
         // Encrypt-side input validation
         case invalidFilename
         case invalidHeaderFields

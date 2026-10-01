@@ -27,7 +27,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 | 3 | Atomic file processor: public `FileProcessor` API, safe writes, restored filenames | done: 138 tests pass on macOS (Xcode) |
 | 4 | Identities, fingerprints, `.pqid`, contacts | done: 222 tests pass on macOS (Xcode); its Keychain parts removed in 5a |
 | 5a | Passphrase-derived identity, no Keychain, hybrid signatures, encrypted contacts | done: 238 tests pass on macOS (Xcode); unlock takes 3.5 s |
-| 5b | Recipient mode: HPKE wrapping, signed files, two-pass decryption | — |
+| 5b | Recipient mode: HPKE wrapping, signed files, two-pass decryption, cancellation with cleanup | implemented; awaiting the first Mac test run (273 tests expected) |
 | 6 | SwiftUI app | — |
 | 7 | Full test pass and security self-review | — |
 
@@ -46,9 +46,11 @@ chotam/
       Files/                     public file API: FileProcessor, safe temp-file writes, output naming, public errors
       Identity/                  derived identities, key IDs, fingerprints, hybrid signatures, .pqid codec,
                                  the encrypted contacts file, recipient lists
+      Recipient/                 recipient mode: HPKE X-Wing wrapping, file signatures, two-pass decryption
       Resources/                 EFF large wordlist (CC-BY 3.0 US)
     Tests/EncryptionCoreTests/   XCTest
-      Vectors/                   golden .enc and .pqid files from independent implementations (FORMAT.md §8, §9.7)
+      Vectors/                   golden .enc and .pqid files from independent implementations (FORMAT.md §8, §9.7),
+                                 and the Python scripts that make them
 ```
 
 ## Using the core
@@ -135,6 +137,36 @@ do {
 - `forgetThisMac()` removes the two files; it can't delete the identity itself.
 - Errors are `IdentityError` (and `RecipientSelectionError` for recipient lists).
 
+## Recipient mode
+
+```swift
+// Encrypt to the chosen contacts. You are always added as a recipient, so you can
+// open what you sent. The file is signed with your hybrid Ed25519 + ML-DSA-65 key.
+let encrypted = try FileProcessor.encrypt(
+    documentURL, to: .folder(folderURL), using: .recipients(recipients, signedBy: me))
+
+// Decrypt with your unlocked identity. The file is read twice: the signature is
+// checked first, and nothing is written unless it verifies.
+let result = try FileProcessor.decrypt(encrypted, to: .folder(folderURL), using: .identity(me))
+switch result.signer {
+case .you?:                         // "Signed by: you"
+case .verifiedContact(let c)?:      // "Signed by: \(c.name) ✓ verified"
+case .unverifiedContact(let c)?:    // "Signed by: \(c.name) (not verified)": offer to compare fingerprints
+case nil:                           // password mode: no signer
+}
+```
+
+- Each file gets a fresh random 256-bit Data Key, wrapped to every recipient with HPKE
+  (X-Wing: ML-KEM-768 + X25519). At most 63 contacts per file; the 64th stanza is yours.
+- A file signed by someone who is neither you nor a contact is refused with
+  `DecryptionError.unknownSender`. Every other problem (not for you, a bad signature,
+  tampering) is the generic `.failed`.
+- `recipients` must come from the signing identity's current contacts, or encryption
+  fails with `.recipientsChanged`. A locked identity gives `.identity(.locked)`.
+- Cancelling or failing at any point, in either pass, leaves nothing behind: the temp
+  file is deleted and keys and buffers are wiped (SECURITY.md D24). Progress and
+  cancellation become public in Phase 6.
+
 ## Building and testing
 
 **macOS 26 with Xcode 26** (authoritative):
@@ -154,6 +186,11 @@ Most derive identities at the cheapest accepted cost (ops 3, 256 MiB). One test 
 production cost once (1 GiB, ops 8) and prints how long it took, for calibration:
 look for `Chotam calibration:` in the output. `NoKeychainTests` fails if any source
 file ever uses a Keychain, Secure Enclave or Touch ID API.
+
+Recipient-mode tests use real identities in temp folders, plus golden files made by an
+independent Python implementation of HPKE and X-Wing (FORMAT.md §8). One test streams a
+file over 100 MB through both passes. Cancellation tests stop operations part-way
+through each pass and check that nothing is left on disk.
 
 Password-mode tests run Argon2id for real. Most use the cheapest cost a file may declare
 (ops 3, 256 MiB). A few use the production preset (ops 4, 1 GiB) and take several
