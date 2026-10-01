@@ -36,8 +36,8 @@ enum IdentityFormat {
     static let kdfParallelism: UInt8 = 1
     static let kdfFlagKeyFile: UInt8 = 0x01
     static let kdfSaltSize = FormatV1.argon2SaltSize  // 16: libsodium's fixed salt size
-    /// What a new identity uses: 1 GiB, 8 passes (estimated 2–3 s on Apple Silicon;
-    /// `DerivationTests.testDefaultCostTiming` prints the real figure).
+    /// What a new identity uses: 1 GiB, 8 passes. 3.53 s on the user's iMac (2026-10-01);
+    /// `DerivationTests.testDefaultCostTiming` prints the figure on every run.
     static let defaultKDFCost = Argon2id.Cost(opsLimit: 8, memLimit: 1 << 30)
     /// What a `.pqid` may declare. Bounds the work a substituted `.pqid` can cause
     /// at unlock, and refuses a trivially cheap derivation.

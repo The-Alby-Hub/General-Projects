@@ -26,7 +26,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 | 2 | Password mode (Argon2id via libsodium), password rule, passphrase generator | done: 113 tests pass on macOS (Xcode) |
 | 3 | Atomic file processor: public `FileProcessor` API, safe writes, restored filenames | done: 138 tests pass on macOS (Xcode) |
 | 4 | Identities, fingerprints, `.pqid`, contacts | done: 222 tests pass on macOS (Xcode); its Keychain parts removed in 5a |
-| 5a | Passphrase-derived identity, no Keychain, hybrid signatures, encrypted contacts | built: 238 tests pass on Linux; awaiting the macOS run |
+| 5a | Passphrase-derived identity, no Keychain, hybrid signatures, encrypted contacts | done: 238 tests pass on macOS (Xcode); unlock takes 3.5 s |
 | 5b | Recipient mode: HPKE wrapping, signed files, two-pass decryption | — |
 | 6 | SwiftUI app | — |
 | 7 | Full test pass and security self-review | — |
