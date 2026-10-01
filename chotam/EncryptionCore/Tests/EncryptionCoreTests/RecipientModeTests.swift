@@ -697,11 +697,14 @@ final class RecipientModeTests: XCTestCase {
         XCTAssertEqual(FileProcessor.encryptionError(for: CoreFailure(.cancelled)), .cancelled)
 
         let decryption: [DecryptionError] = [.failed, .notEnoughMemory, .unknownSender, .identity(.locked), .cancelled]
-        let encryption: [EncryptionError] = [.weakPassword, .invalidFilename, .notEnoughMemory, .identity(.locked), .recipientsChanged, .cancelled, .unexpected]
+        // `.identity(_)` is left out here: it shows the IdentityError's own message, the
+        // same whether encrypting or decrypting, by design (checked below).
+        let encryption: [EncryptionError] = [.weakPassword, .invalidFilename, .notEnoughMemory, .recipientsChanged, .cancelled, .unexpected]
         let messages = decryption.map(\.errorDescription) + encryption.map(\.errorDescription)
         XCTAssertFalse(messages.contains(nil))
         XCTAssertEqual(Set(messages).count, messages.count)
         XCTAssertEqual(DecryptionError.identity(.locked).errorDescription, IdentityError.locked.errorDescription)
+        XCTAssertEqual(EncryptionError.identity(.locked).errorDescription, IdentityError.locked.errorDescription)
     }
 
     func testModesDontDescribeKeysOrNames() throws {
