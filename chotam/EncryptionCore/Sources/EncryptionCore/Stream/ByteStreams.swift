@@ -133,9 +133,10 @@ final class PrefixedSource: ByteSource {
 
 /// Progress reports and cancellation for one file operation.
 ///
-/// Internal for now: Phase 6 exposes it (e.g. through Foundation's `Progress`) without
-/// changing today's public API. Progress counts bytes read from the input file, so a
-/// recipient-mode decryption, which reads the file twice, has a total of twice its size.
+/// Internal: the public async API (`FileProcessor+Async.swift`, SECURITY.md D28) wires it
+/// to a progress closure and to Swift task cancellation. Progress counts bytes read from
+/// the input file, so a recipient-mode decryption, which reads the file twice, has a
+/// total of twice its size.
 struct ProgressHook {
     /// Called after each read with the bytes read so far and the expected total.
     var report: ((_ completed: Int64, _ total: Int64) -> Void)? = nil

@@ -1,0 +1,5 @@
+# Per-user Xcode state and local builds. The project and its shared scheme are tracked.
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+build/
+DerivedData/

@@ -28,14 +28,20 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 | 4 | Identities, fingerprints, `.pqid`, contacts | done: 222 tests pass on macOS (Xcode); its Keychain parts removed in 5a |
 | 5a | Passphrase-derived identity, no Keychain, hybrid signatures, encrypted contacts | done: 238 tests pass on macOS (Xcode); unlock takes 3.5 s |
 | 5b | Recipient mode: HPKE wrapping, signed files, two-pass decryption, cancellation with cleanup | done: 273 tests pass on macOS (Xcode); CryptoKit opens the independent golden files |
-| 6 | SwiftUI app | — |
+| 6a | App: project, identity, contacts, automatic locking, public progress/cancel API | written; awaiting the first build and run on macOS |
+| 6b | App: encrypt/decrypt, recipients, progress bar, quarantine, temp sweep | — |
 | 7 | Full test pass and security self-review | — |
 
 ## Layout
 
 ```
 chotam/
-  FORMAT.md, SECURITY.md
+  FORMAT.md, SECURITY.md, SPEC.md
+  App/                           the macOS app (SwiftUI + AppKit glue only)
+    Chotam.xcodeproj             hand-written, file-system-synchronized folders (SECURITY.md D27)
+    Chotam/                      views, the secure passphrase field, panels, lock events, launch hardening
+    Config/                      Info.plist and Chotam.entitlements (sandbox + user-selected files only)
+  AppModel/                      Swift package ChotamAppModel: view models and app logic, `swift test`-able
   EncryptionCore/                Swift package: all crypto, format and file logic
     Sources/EncryptionCore/
       Errors.swift               single public error; internal reasons → debug log
@@ -73,7 +79,7 @@ result.storedFilename  // the original name, for display only
 ```
 
 - Both calls are slow on purpose (Argon2id: about a second and 1 GiB), so run them off
-  the main thread.
+  the main thread, or use the async versions below.
 - The result is written to a temp file and moved into place atomically, only once it
   is complete (for decryption, only once every chunk has authenticated). On any failure
   nothing is left behind, and an existing file is never overwritten unless you pass
@@ -83,6 +89,21 @@ result.storedFilename  // the original name, for display only
   file's contents, or a wrong password, is the single
   `DecryptionError.failed`: "Decryption failed: file is damaged or not for you."
   See [SECURITY.md](SECURITY.md) D9, D12 and D13.
+
+### Progress and cancellation
+
+```swift
+// Async versions: progress from 0 to 1, and cancelling the Task cancels the operation.
+let task = Task {
+    try await FileProcessor.encrypt(documentURL, to: .file(saveURL), using: mode,
+                                    progress: { fraction in /* update a progress bar */ })
+}
+task.cancel()   // → EncryptionError.cancelled; nothing is left behind (SECURITY.md D24, D28)
+```
+
+The work runs on its own queue. Cancellation is checked before every read, between the
+two passes of a recipient-mode decryption and before the result is moved into place;
+Argon2id itself always finishes first. The synchronous API is unchanged.
 
 ## Identities and contacts
 
@@ -164,8 +185,8 @@ case nil:                           // password mode: no signer
 - `recipients` must come from the signing identity's current contacts, or encryption
   fails with `.recipientsChanged`. A locked identity gives `.identity(.locked)`.
 - Cancelling or failing at any point, in either pass, leaves nothing behind: the temp
-  file is deleted and keys and buffers are wiped (SECURITY.md D24). Progress and
-  cancellation become public in Phase 6.
+  file is deleted and keys and buffers are wiped (SECURITY.md D24). Use the async
+  versions above for progress and cancellation.
 
 ## Building and testing
 
@@ -207,6 +228,85 @@ libsodium comes from the system: `apt install libsodium-dev`.
 cd chotam/EncryptionCore
 swift build && swift test
 ```
+
+## The app (Phase 6a)
+
+What this build does: create your identity (the passphrase is shown once, as numbered
+words, with no copy button and hidden from screen capture), unlock it (optionally with a
+key file), restore it on another Mac, lock it, forget it on this Mac; export your public
+identity as a `.pqid` file or copyable text; import contacts from a file or pasted text,
+see their fingerprints as 8 numbered groups, compare them, mark them verified, rename,
+remove. Encrypting and decrypting arrive in Phase 6b.
+
+It locks on quit, closing the window, screen lock, screen saver, sleep, fast user
+switching, and after 1, 5, 10 (default) or 30 minutes without input in Chotam (Settings,
+⌘,). All of that logic lives in `AppModel` and is unit-tested; the views only call it.
+See SECURITY.md D27–D35 for every Phase 6 decision.
+
+### Testing the app
+
+Switch to the branch first:
+
+```sh
+cd ~/Developer/General-Projects
+git fetch origin
+git switch claude/charming-carson-au9fqy     # first time: git switch -c claude/charming-carson-au9fqy --track origin/claude/charming-carson-au9fqy
+git pull
+```
+
+Unit tests (no Xcode window needed):
+
+```sh
+cd ~/Developer/General-Projects/chotam/EncryptionCore && swift test   # the core, plus the app's Keychain scan
+cd ../AppModel && swift test                                          # view models and app rules
+```
+
+Run it from Xcode (Debug build): `open ~/Developer/General-Projects/chotam/App/Chotam.xcodeproj`,
+then Product ▸ Run (⌘R). The project signs to run locally ("-"); if macOS asks whether
+Chotam may access its own data after a rebuild, that's because each ad-hoc build has a
+new signature (setting your own Team in Signing & Capabilities avoids it).
+
+A Release build for the checks in SECURITY.md §8.1 (Debug builds carry `get-task-allow`
+for Xcode's debugger; Release builds don't, D35):
+
+```sh
+cd ~/Developer/General-Projects/chotam/App
+xcodebuild -project Chotam.xcodeproj -scheme Chotam -configuration Release \
+  -derivedDataPath /tmp/chotam-build build
+APP=/tmp/chotam-build/Build/Products/Release/Chotam.app
+codesign -d --entitlements - "$APP"        # exactly app-sandbox + files.user-selected.read-write
+codesign -dv "$APP" 2>&1 | grep flags      # flags=0x10000(runtime)
+open "$APP"
+```
+
+Manual checklist (Release build unless noted):
+
+1. **Sandbox:** create an identity; `ls ~/Library/Containers/io.github.the-alby-hub.Chotam/Data/Library/Application\ Support/Chotam/`
+   shows `identity.pqid` (and `contacts.chotam` after adding a contact); nothing appears in
+   `~/Library/Application Support/Chotam`.
+2. **Passphrase sheet:** 7 numbered words; they can't be selected or copied (⌘C does
+   nothing); a screenshot (⌘⇧5 or ⌘⇧3) shows the sheet blank; Continue is disabled until
+   the box is ticked.
+3. **Passphrase field:** unlock with the words typed in any case and spacing; macOS never
+   offers to save a password, and the Passwords AutoFill key never appears; the field is
+   empty after Unlock; a wrong word gives "Wrong passphrase or key file."
+4. **Key file:** create a second identity with a key file (Forget This Mac first); unlock
+   fails without the file and works with it; the file must be chosen again after a lock.
+5. **Locking:** each of these locks it and the unlock screen says why: lock the screen
+   (⌃⌘Q), start the screen saver, sleep (Apple menu ▸ Sleep), switch user (fast user
+   switching), set Settings ▸ 1 minute and wait, close the window (Chotam quits). Also
+   check that a lock during the few seconds of unlocking leaves it locked.
+6. **Save panels:** Export .pqid File… saves where you chose, and asks before replacing;
+   Import File… reads it back as a contact (from another identity) or refuses your own.
+7. **No window restoration:** quit, relaunch: the window comes back empty, and
+   `ls ~/Library/Containers/io.github.the-alby-hub.Chotam/Data/Library/Saved\ Application\ State`
+   shows nothing for Chotam.
+8. **No debugger on Release:** `lldb -n Chotam` while it runs fails to attach.
+9. **One copy only:** `open -n "$APP"` doesn't start a second Chotam.
+10. **Errors:** no message ever shows a path.
+
+Quarantine and the save panels for encrypting and decrypting are Phase 6b's checklist
+(SECURITY.md §8.1, checks 9 and 10).
 
 ## Credits
 

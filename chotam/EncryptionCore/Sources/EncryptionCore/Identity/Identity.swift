@@ -12,7 +12,7 @@ import Crypto
 ///   secret is ever stored: not in the Keychain, not on disk (SECURITY.md D18).
 /// - `lock()` drops them. CryptoKit zeroes key storage when it's released. Call it on
 ///   quit, when the screen locks, on sleep and after an idle timeout (the app does,
-///   Phase 6). It is also called when this object is released.
+///   SECURITY.md D29). It is also called when this object is released.
 /// - After `lock()`, everything that needs a key throws `IdentityError.locked`. Unlock
 ///   again with `IdentityVault.unlock(passphrase:keyFile:)`.
 /// - Contacts belong to the identity: their file is encrypted with a key derived from

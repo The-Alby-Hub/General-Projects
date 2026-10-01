@@ -151,9 +151,11 @@ public struct DecryptedFile: Equatable, Sendable {
 /// - Both calls are synchronous and slow on purpose (Argon2id takes about a second
 ///   and 1 GiB; recipient mode reads the input twice to decrypt it), so call them off
 ///   the main thread.
-/// - Cancelling (internal for now, Phase 6 makes it public) or failing at any point,
-///   in either pass, unwinds the same way: the temp file is deleted, keys and buffers
-///   are released and wiped, and nothing is left at the destination.
+/// - The async overloads (`encrypt(_:to:using:progress:)`, `decrypt(_:to:using:progress:)`)
+///   report progress and stop when their task is cancelled (SECURITY.md D28).
+///   Cancelling or failing at any point, in either pass, unwinds the same way: the temp
+///   file is deleted, keys and buffers are released and wiped, and nothing is left at
+///   the destination.
 public enum FileProcessor {
     /// Encrypts `input` and returns the URL of the new `.enc` file.
     ///

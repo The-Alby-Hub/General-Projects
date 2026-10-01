@@ -108,11 +108,12 @@ file-system extensions.
     mid-operation, the temp file stays in the system's `TemporaryItems` folder (or, as a
     fallback, as a hidden `.chotam-<UUID>.tmp` beside the output). After a decryption,
     that file holds plaintext, some of it possibly not yet authenticated. Only FileVault
-    protects it. The app may sweep leftovers at the next launch (Phase 6).
+    protects it. The app sweeps leftovers it can reach at the next launch, and says so
+    (D30); it can't reach those on other volumes or beside outputs.
 15. **The restored filename is chosen by whoever made the file.** Even when it passes
     D12's rules, it can carry any extension, e.g. `.command` or `.app`. (So can the
-    `.enc` file's own name.) The app should mark decrypted outputs as quarantined
-    (Phase 6).
+    `.enc` file's own name.) Decrypted outputs are marked as quarantined, so Gatekeeper
+    checks them before they can run (D31).
 16. **Fingerprints resist collisions only to about 2^80, classically.** A second preimage
     (matching someone else's fingerprint) costs about 2^160, or 2^80 with Grover. But a
     person could make **two identities of their own** with the same fingerprint for about
@@ -123,8 +124,9 @@ file-system extensions.
     Keychain or the Secure Enclave (D18), so all three private keys and the contacts key
     live in Chotam's memory from unlock until lock. Malware or anyone who can read the
     app's memory in that window gets **copies** of them, valid forever (there is no
-    revocation, §5.23). The app locks on quit, screen lock, sleep and after an idle
-    timeout (Phase 6) to keep the window short. Anyone at the unlocked Mac can decrypt
+    revocation, §5.23). The app locks on quit, closing the window, screen lock, the
+    screen saver, sleep, fast user switching and after 1–30 minutes without input in
+    Chotam (D29) to keep the window short. Anyone at the unlocked Mac can decrypt
     and sign without a further prompt.
 18. **No recovery.** A forgotten passphrase or a lost key file means the identity is
     gone, with every file ever sent to it. There is no reset and no backup key. (In
@@ -164,6 +166,16 @@ file-system extensions.
     the temp file before failing** (D19). It is deleted at once; only a crash at that
     moment could leave it (§5.14). Only someone who holds the Data Key (a recipient) can
     make chunks that authenticate.
+28. **Screen-lock detection relies on undocumented notifications.** macOS has no public
+    API for "the screen locked" or "the screen saver started"; Chotam listens for the
+    distributed notifications `com.apple.screenIsLocked` and
+    `com.apple.screensaver.didstart`, as many apps do. If a macOS release drops them,
+    Chotam stops locking at those moments without any error, and only sleep, fast user
+    switching, quit and the idle timeout remain. Check by hand on every new macOS (D29).
+29. **What's on screen can be seen.** The generated passphrase is shown once, and the
+    sheet is excluded from screen capture (D34), but a camera, a person behind you or
+    a capture path that ignores the exclusion still sees it. Chotam can't detect any
+    of these.
 
 ## 6. Design notes and deviations from the original spec
 
@@ -179,8 +191,8 @@ superseded in Phase 5 and are kept for the record.
 | D5 | **Fingerprint length and contents** | 8 groups of 4 **hex** characters is only 128 bits: a quantum second-preimage search (Grover) costs about 2^64. **Approved by the user (2026-09-30):** 8 groups of 4 **Crockford base32** characters = 160 bits (5 bits per character; about 2^80 under Grover), at the same visible length. **Defined in Phase 4, extended in Phase 5a (FORMAT §9.3):** the first 20 bytes of `SHA-256("Chotam v1 identity fingerprint" ‖ X-Wing public key ‖ ML-DSA-65 public key ‖ Ed25519 public key)`, in Crockford base32 (`0-9 A-Z` without I, L, O, U). It covers **all three** keys, because the user trusts all of them: one to encrypt to the contact, two to check their signatures; leaving one out would let it be swapped unnoticed. It covers **nothing else**, so a rename or a new self-signature never changes it. The label keeps fingerprints apart from key IDs and from any future version. Users compare all 8 groups aloud (numbered in the UI); a typed fingerprint is compared the Crockford way (case, spaces, hyphens, O/0 and I/L/1 don't matter), always all 32 symbols. Its collision limit is in §5.16. |
 | D6 | **"≥ 14 characters" accepts `aaaaaaaaaaaaaa`** | Decided in Phase 2 (`PasswordPolicy`). A password is accepted if it is **6 or more distinct EFF words**, or it has **14 or more characters and an effective length of 14 or more**. In the effective length, each of these counts as one character: a run of 3+ identical characters, an ascending/descending or keyboard-row run of 3+, an immediate repeat of the preceding 2+ characters, a year 1900–2099, and a common word from a hand-written list of about 120 entries (also matched after undoing `p@ssw0rd`-style substitutions). This is a floor against obvious mistakes, not an entropy estimate. It is enforced inside the encrypt function, not only in the UI, and never on decryption. The generator uses the approved EFF large wordlist: 6 distinct words by default, drawn from the CSPRNG with rejection sampling (no modulo bias). |
 | D7 | **Secure Enclave coverage** | *Superseded in Phase 5a by D17 and D18.* Phase 4 put ML-DSA-65 in the Secure Enclave and X-Wing in the Keychain, behind user presence. The user then chose a passphrase-derived identity and banned the Keychain outright. The Secure Enclave generates its own keys and can't import a seed, so a derived key can never live there, and its handles were Keychain items anyway. For the record, CryptoKit on macOS 26 offers `SecureEnclave.P256`, `MLKEM768`, `MLKEM1024`, `MLDSA65` and `MLDSA87`, and no X-Wing (checked 2026-09-30). The Phase 4 Keychain and Secure Enclave code, its records (old FORMAT §10) and its tests were deleted. |
-| D8 | **Testing without the Keychain** | *Rewritten in Phase 5a.* With no Keychain and no Secure Enclave, everything is testable under `swift test` on macOS and Linux: deriving identities (against independent golden vectors), unlocking, restoring, locking, forgetting, the contacts file, and the exact files on disk. `NoKeychainTests` scans every source file for Keychain, Secure Enclave and LocalAuthentication APIs and fails if one appears (D18). Phase 6 still has to check, on a signed build, the sandboxed app container and the app-level rules in §8. |
-| D9 | **Sandbox and sibling files** | `user-selected read-write` grants access to the chosen file, not its folder, so `Document.pdf.enc` can't be created beside it without more. **Decided in Phase 3.** The core never assumes it may write beside the input. Callers pass a `Destination`: an exact file (from an NSSavePanel prefilled with `FileProcessor.encryptedName(for:)`) or a folder the user granted. Security-scoped access stays in the app. **Temp file:** in a private folder from `FileManager.url(for: .itemReplacementDirectory, appropriateFor: destination folder)`, on the destination's volume. If the system can't provide one, it falls back to a hidden `.chotam-<UUID>.tmp` in the destination folder; if neither works, the operation fails with an I/O error. It is created only on the first write, with `O_EXCL` and mode 0600 (the output keeps 0600). It is flushed with `F_FULLFSYNC` (else `fsync`) before it is moved. **New output:** an exclusive rename (`renamex_np(RENAME_EXCL)`, or `link` + `unlink` where that's unsupported). It fails atomically if anything appeared at the name, with no check-then-rename race. There is no cross-volume copy fallback, because a copy isn't atomic. **Existing output:** refused with `outputExists` before any work, unless the caller passes `replacingExisting: true` (the user confirmed in the save panel). It is then replaced with `replaceItemAt(…, options: .usingNewMetadataOnly)`, so the old file's tags, quarantine flag or download origin don't carry over. The destination can't be the input itself (same device and inode), a folder or a symbolic link. **Failure:** the temp file and its private folder are deleted, and the destination is exactly as before. Whether `.itemReplacementDirectory` works for a sandboxed app on external volumes is confirmed in Phase 6 on a signed build; `swift test` can't check it. |
+| D8 | **Testing without the Keychain** | *Rewritten in Phase 5a.* With no Keychain and no Secure Enclave, everything is testable under `swift test` on macOS and Linux: deriving identities (against independent golden vectors), unlocking, restoring, locking, forgetting, the contacts file, and the exact files on disk. `NoKeychainTests` scans every source file for Keychain, Secure Enclave and LocalAuthentication APIs and fails if one appears (D18). Phase 6 still has to check, on a signed build, the sandboxed app container and the app-level rules in §8: the exact list is §8.1. |
+| D9 | **Sandbox and sibling files** | `user-selected read-write` grants access to the chosen file, not its folder, so `Document.pdf.enc` can't be created beside it without more. **Decided in Phase 3.** The core never assumes it may write beside the input. Callers pass a `Destination`: an exact file (from an NSSavePanel prefilled with `FileProcessor.encryptedName(for:)`) or a folder the user granted. Security-scoped access stays in the app. **Temp file:** in a private folder from `FileManager.url(for: .itemReplacementDirectory, appropriateFor: destination folder)`, on the destination's volume. If the system can't provide one, it falls back to a hidden `.chotam-<UUID>.tmp` in the destination folder; if neither works, the operation fails with an I/O error. It is created only on the first write, with `O_EXCL` and mode 0600 (the output keeps 0600). It is flushed with `F_FULLFSYNC` (else `fsync`) before it is moved. **New output:** an exclusive rename (`renamex_np(RENAME_EXCL)`, or `link` + `unlink` where that's unsupported). It fails atomically if anything appeared at the name, with no check-then-rename race. There is no cross-volume copy fallback, because a copy isn't atomic. **Existing output:** refused with `outputExists` before any work, unless the caller passes `replacingExisting: true` (the user confirmed in the save panel). It is then replaced with `replaceItemAt(…, options: .usingNewMetadataOnly)`, so the old file's tags, quarantine flag or download origin don't carry over. The destination can't be the input itself (same device and inode), a folder or a symbolic link. **Failure:** the temp file and its private folder are deleted, and the destination is exactly as before. Whether `.itemReplacementDirectory` works for a sandboxed app on external volumes is confirmed in Phase 6b on a signed build (§8.1, check 9); `swift test` can't check it. |
 | D10 | **Unverified plaintext on disk** | *Decided in Phase 5: see D19.* |
 | D11 | **swift-sodium's Swift wrapper is not used** | In swift-sodium 0.11.0, `PWHash.hash` converts every password byte with `Int8.init`, which traps on any byte ≥ 0x80: every non-ASCII password (Hebrew, accented letters, emoji) would crash the app. It also copies the password into an array that can't be wiped. Chotam depends only on the package's `Clibsodium` product and calls `crypto_pwhash` directly, with the password in a buffer it allocates and wipes. A regression test derives keys from Hebrew and emoji passwords. |
 | D12 | **The restored filename is attacker-chosen** | The name stored inside a file (FORMAT §3) comes from its author. Decided in Phase 3. It is used **only** to name a new file inside a `Destination.folder`, and only if it passes the decoder's rules (no `/`, control or bidirectional characters, not `.`/`..`) **and** doesn't start with `.` (no planting `.zshrc` or `.lldbinit`), doesn't contain `:` (Finder shows it as `/`), and is at most 255 bytes. Otherwise the `.enc` file's own name without `.enc` is used, and failing that, `Decrypted file`. The final URL is checked to be exactly one component inside the chosen folder. On a name clash it tries `Report 2.pdf`, `Report 3.pdf`, … (up to 100) with an exclusive rename, so it never replaces anything, and case-insensitive or normalising file systems are handled by the file system itself. With `Destination.file` the name is ignored and only returned in `DecryptedFile.storedFilename`, for display as text. |
@@ -194,11 +206,19 @@ superseded in Phase 5 and are kept for the record.
 | D20 | **Unknown sender** | Decided by the user in Phase 5 (2026-10-01). A recipient-mode file names its sender only by `senderKeyID`, so a sender who isn't you or a contact can't be verified at all. Such a file is **refused** with a distinct public error, `DecryptionError.unknownSender`: "This file is signed by someone who isn't in your contacts, so Chotam won't open it." (The first wording, "import their identity to open it", was dropped in Phase 5b: it nudged users to import a stranger.) It is decided from public header data and the user's contact list, before any secret is used, and reveals nothing about the contents or keys. **What it does reveal (§5.26):** to anyone who learns which error you got, whether a given signing key is in your contacts. **Order (decided 2026-10-01):** "not for you" is checked first, so a file that is both not for you and from an unknown sender gives the generic error; telling the user to deal with the sender of a file they can't open anyway would mislead them. Contacts are read from the unlocked identity when the file is opened, so a removed contact's files are refused again. Files from **unverified** contacts open and are reported as unverified; your own files as "you". |
 | D21 | **Encrypt to self** | Decided by the user in Phase 5 (2026-10-01). The sender is always added as a recipient, so they can open what they sent. This reveals nothing new: the sender's key ID is already in the header. It costs one 1,204-byte stanza and lowers the contact limit to 63. Anyone who later unlocks the sender's identity can also read files they sent. |
 | D22 | **Hybrid signatures** | Decided by the user in Phase 5 (2026-10-01): **Ed25519 + ML-DSA-65**. Every signature (the `.pqid` self-signature, the file trailer) is `Ed25519 (64) ‖ ML-DSA-65 (3309)` over the same labelled message, and both must verify. P-256 was first chosen to keep both keys in the Secure Enclave; with derived keys (D17) that reason disappeared, and Ed25519 derives directly from a 32-byte seed. It matches the IETF composite ML-DSA-65 + Ed25519 pairing. Cost: 64 bytes per signature, a 32-byte key in the `.pqid`, a fingerprint over three keys, and a signing key ID over both signing keys. |
-
 | D23 | **What decryption reports, and identity errors** | Decided by the user in Phase 5b (2026-10-01). `DecryptedFile.signer` is `Signer?`: `.you`, `.verifiedContact(Contact)` or `.unverifiedContact(Contact)`, and nil in password mode. Three cases, so the app's `switch` can't forget to show "unverified"; the `Contact` (a snapshot taken when the file was opened) can go straight to `markVerified`. Encryption still returns only the `URL`: the recipients are exactly the list plus you. `DecryptionMode.identity(_:)` takes the unlocked identity and reads contacts from it, rather than a list from the caller that could be stale (replacing the planned `identity(_:contacts:)`). A locked identity, or an unreadable contacts file, surfaces as `DecryptionError.identity(IdentityError)` / `EncryptionError.identity(IdentityError)` (`.locked`, `.contactsDamaged`, `.storageFailed`): about your own identity, never the file, so not an oracle. Keys are taken when used (the Data Key is unwrapped after pass 1, the signature is made last), so a lock part-way through fails cleanly too. |
 | D24 | **Progress, cancellation and cleanup** | Decided by the user in Phase 5b (2026-10-01). An internal per-read hook reports bytes read of the expected total (twice the file size for recipient-mode decryption) and is polled for cancellation before every read, between the passes and before the output is committed. Phase 6 makes it public without changing today's API. **Cancellation must always clean up (the user's requirement):** a cancellation is thrown as an internal failure and unwinds through the same `defer`s as an error or abort, so in either pass the temp file and its private folder are deleted, nothing is created or replaced at the destination (an existing file is left as it was), the original is untouched, and the Data Key, file key and identity keys are released (CryptoKit zeroes them) while Chotam's own plaintext buffers are wiped on every exit path (§7.3). It is reported as `.cancelled`. Tested by cancelling at many points of both passes, in both modes. A crash or power cut is not a cancellation: see §5.14. |
 | D25 | **Recipients must still be contacts** | Decided by the user in Phase 5b (2026-10-01). A `RecipientList` isn't tied to an identity, so it could hold a contact removed since it was made, or contacts from another identity's list (even the signer's own key). Before any work, every recipient must match a current contact of the signing identity by both key IDs; otherwise `EncryptionError.recipientsChanged`, and nothing is created. |
 | D26 | **X-Wing version and interoperability** | Checked in Phase 5b (2026-10-01). swift-crypto 5.0.0 implements X-Wing as **draft-connolly-cfrg-xwing-kem-06** (KEM ID 0x647A, combiner `SHA3-256(ss_M ‖ ss_X ‖ ct_X ‖ pk_X ‖ "\.//^\")`, SHAKE256 key expansion); the draft's current text agrees. Apple's CryptoKit key generation matched the draft in Phase 5a (the golden identities). Its encapsulation and HPKE are proven against the same draft by the recipient-mode golden files (FORMAT §8), made by an independent implementation checked against the draft's and RFC 9180's published vectors. **If they ever fail on macOS, that's a real incompatibility: stop and report it, never adjust the format to match.** |
+| D27 | **The app project and where its logic lives** | Chosen by the user in Phase 6 (2026-10-01). `App/Chotam.xcodeproj` is written by hand in Xcode 16+'s format with **file-system-synchronized folders**: no per-file entries, so adding a source file never touches it. It depends on two local packages: `EncryptionCore`, and `AppModel` (module `ChotamAppModel`), which holds the view models and all testable app logic, uses only Foundation and Observation (no SwiftUI, AppKit or CryptoKit), and is tested with `swift test`. The SwiftUI views and the AppKit glue (panels, system notifications, the secure field, window flags) live in `App/Chotam/`. They call only the view models and EncryptionCore's public API, never CryptoKit or libsodium. The entitlements and `Info.plist` are plain files in git. `NoKeychainTests` also scans the app's sources, the AppModel sources, the project file and the entitlements, and checks that the entitlements are exactly the two allowed keys. No Swift compiler was available when Phase 6 was written, so the first build happens on the user's Mac. |
+| D28 | **Public progress and cancellation** | Chosen by the user in Phase 6 (2026-10-01). There are new async overloads, `FileProcessor.encrypt(_:to:using:progress:)` and `decrypt(_:to:using:progress:)`. `progress` is a `@Sendable (Double) -> Void` that receives the fraction done, from 0 to 1: bytes read of the expected total (twice the size for a recipient-mode decryption), reported at most once per 0.1 %. **Cancelling the calling Swift `Task` cancels the operation**, which unwinds exactly as D24 says and throws `.cancelled`. A task that is already cancelled when it calls them throws `.cancelled` before opening anything. The work runs on a dedicated dispatch queue, not on Swift's cooperative thread pool, which shouldn't be blocked for minutes. The `progress:` label is required, so existing synchronous callers can't silently switch to the async version, and the synchronous API is unchanged. **Limit:** cancellation is checked before every read, between the passes and before the commit, but not inside Argon2id, which always runs to the end (a few seconds) first. |
+| D29 | **When the identity locks** | Chosen by the user in Phase 6 (2026-10-01). The identity locks on **quit**, on **closing the window** (Chotam has one window, and closing it quits), on **screen lock** (`com.apple.screenIsLocked`), when the **screen saver starts** (`com.apple.screensaver.didstart`), on **sleep** (`NSWorkspace.willSleepNotification`), on **fast user switching** (`NSWorkspace.sessionDidResignActiveNotification`), and after an **idle timeout**. **Idle** means no key press, click or scroll in Chotam's own windows, seen through a local event monitor that needs no permission and never sees other apps' input. The default is 10 minutes; Settings offers 1, 5, 10 or 30, and has no "never". A running operation counts as activity, so the idle timeout never cuts one off. **A lock cancels a running recipient-mode operation**, which unwinds as in D24; a password-mode operation doesn't use the identity and keeps running. The timeout is stored in `UserDefaults` under `idleLockMinutes`: Chotam's only preference, and not secret. Locking drops the keys (§7.3) and every copy of the contact list the view models hold. **Caveat:** the screen-lock and screen-saver notifications are undocumented distributed notifications. They have worked for many macOS releases, but must be checked by hand on each new one (§5.28). |
+| D30 | **Leftover temp files after a crash** | Chosen by the user in Phase 6 (2026-10-01); built in Phase 6b. At launch, before any operation can start, Chotam deletes leftover `chotam-*.tmp` files, and the private folders they were in, from the temp area the sandbox gives it (its container's temporary folder, including `TemporaryItems`). Files changed in the last 10 minutes are skipped, and `LSMultipleInstancesProhibited` stops a second copy of Chotam from running, so a live operation's temp file is never touched. If anything was removed, the app says once: "A previous operation was interrupted; its temporary file was removed. Deleting doesn't erase it from an SSD; FileVault protects it." **Limits:** temp files on other volumes, and the hidden fallback files beside outputs, are outside what the sandbox lets Chotam reach, so they stay; deleting doesn't wipe anything (§5.4). Where macOS actually puts a sandboxed app's `.itemReplacementDirectory` is confirmed on the Mac in Phase 6b. |
+| D31 | **Quarantining decrypted files** | Chosen by the user in Phase 6 (2026-10-01); built in Phase 6b. On macOS the core sets `com.apple.quarantine` (agent name "Chotam") on a decryption's temp file **before** it is moved into place, so a decrypted file is never visible without it, and Gatekeeper checks it before it can run (§5.15). It applies to every decryption, and there is no flag to skip it. `.enc` outputs aren't quarantined: they can't run. What happens on a volume that can't store the attribute will be flagged before Phase 6b's code is written. |
+| D32 | **No "delete the original"** | Chosen by the user in Phase 6 (2026-10-01). The app doesn't offer to delete or trash the original. On APFS and SSDs no deletion erases the data (§5.4), and a button in an encryption app would suggest a safety it can't give; Finder's Trash does the same thing. After an encryption the app says: "The original is unchanged. Deleting it doesn't erase it from an SSD; FileVault protects it." |
+| D33 | **One file at a time** | Chosen by the user in Phase 6 (2026-10-01). Each operation can need 1 GiB for Argon2id and its own save panel, so the app processes one file at a time, with one progress bar, one Cancel and one cleanup path. Dropping several files says "Chotam works on one file at a time." A queue may come later. |
+| D34 | **Secrets on screen** | Chosen by the user in Phase 6 (2026-10-01). **Typing the passphrase:** an AppKit `NSSecureTextField` wrapped for SwiftUI, with no content type and no username field beside it, so macOS has no reason to offer "Save password" (confirmed by hand on a signed build, §8). It has no "show" toggle, because a plain text field would expose the passphrase to spelling, autocorrection and Writing Tools; case and spacing don't matter anyway (D17). The view model clears its copy of the text as soon as the unlock starts. **The generated identity passphrase:** shown once, in a sheet, as numbered words in non-selectable text, with **no copy button**. The sheet's window is excluded from screenshots, screen recording and screen sharing while it's open (`NSWindow.sharingType = .none`); this is best effort, since it can't stop a camera, and macOS doesn't promise that every capture path honours it. To continue you must tick "I've written down all N words"; the view model then drops the passphrase. If Chotam quits before that, the identity already exists (its `.pqid` was stored at creation) and its passphrase is lost: "Forget this Mac" and create a new one. **The generated password-mode password** (Phase 6b) follows the same rule: shown once, no copy button, so nothing ever reaches the clipboard, Universal Clipboard or clipboard managers. **Key file:** chosen in an open panel each time it's needed, and never remembered. |
+| D35 | **What macOS records anyway, and debug builds** | Found in Phase 6 (2026-10-01). Even though Chotam's own code writes only `idleLockMinutes`, **AppKit and SwiftUI write their own keys** to the preferences file in Chotam's container: for example the window's frame and the open and save panels' last folder. None of it is secret, but folder names can be revealing. Chotam turns off what it can (window state restoration, the window's frame autosave), but can't stop the panels. **Folder grants last for one session:** remembering a granted folder across launches would need security-scoped bookmarks and the `files.bookmarks.app-scope` entitlement, which the entitlement rule excludes. **Debug builds:** Xcode adds `get-task-allow` to Debug builds so its debugger can attach, so the Debug configuration keeps it. The Release configuration sets `CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO`, so a Release (or archived) build has only the two entitlements and no `get-task-allow`. The checks in §8 apply to a Release build. `RLIMIT_CORE = 0` applies to both. |
 
 ## 7. Implementation hygiene
 
@@ -225,8 +245,8 @@ superseded in Phase 5 and are kept for the record.
   with no copy in between.
 - An unlocked `Identity` holds the private keys and the contacts key. `lock()` drops
   them; it's also called when the object is released. After that every operation that
-  needs a key throws `locked`. The app must lock on quit, screen lock, sleep and idle
-  timeout (Phase 6).
+  needs a key throws `locked`. The app locks on quit, closing the window, screen lock,
+  the screen saver, sleep, fast user switching and an idle timeout (D29).
 - Our own plaintext buffers are wiped after use: with `memset_s` on Apple platforms,
   which the compiler may not remove, and a plain fill on the Linux test build. Since
   Phase 5b the chunk buffers are wiped in `defer`s, so an error or a cancellation in the
@@ -281,28 +301,68 @@ superseded in Phase 5 and are kept for the record.
 
 | What | Where | Secret? |
 |---|---|---|
-| `identity.pqid` | the app's folder (container) | no: public keys, KDF salt and cost, name, signature |
+| `identity.pqid` | the app's folder: `~/Library/Containers/<bundle id>/Data/Library/Application Support/Chotam/` | no: public keys, KDF salt and cost, name, signature |
 | `contacts.chotam` | the app's folder | encrypted and authenticated (FORMAT §10) |
 | An encrypted `.enc` file | where the user chose | encrypted |
-| A decrypted file | where the user chose | the user's plaintext, by request |
-| A temp file during each operation | a private `.itemReplacementDirectory` folder, or a hidden `.chotam-<UUID>.tmp` beside the output | ciphertext, or plaintext while decrypting. Deleted on failure; may survive a crash (§5.14) |
+| A decrypted file | where the user chose; quarantined (D31) | the user's plaintext, by request |
+| A temp file during each operation | a private `.itemReplacementDirectory` folder, or a hidden `.chotam-<UUID>.tmp` beside the output | ciphertext, or plaintext while decrypting. Deleted on failure; may survive a crash (§5.14), then swept at launch where reachable (D30) |
+| An exported `.pqid` | where the user chose | no: public |
+| `idleLockMinutes` | the container's preferences file (`UserDefaults`) | no: 1, 5, 10 or 30 (D29) |
 | Debug log lines | the unified log, debug level (not persisted by default) | no: fixed reason strings only |
 
-Nothing else: no Keychain items, no key files, no caches, no `UserDefaults`, no Core
-Data, no saved application state.
+Nothing else of Chotam's own: no Keychain items, no key files, no caches, no Core Data,
+no saved application state, no security-scoped bookmarks. **AppKit and SwiftUI add
+their own keys** to the same preferences file (for example the open and save panels'
+last folder); not secret, but folder names can be revealing (D35).
 
-**Rules for the app, from the 2026-10-01 audit:**
-- The passphrase is entered in a secure text field (`NSSecureTextField` / `SecureField`)
-  with no username field next to it and a content type that isn't a password type, so
-  macOS and iCloud Keychain never offer "Save password". Confirm on a signed build.
-- The generated passphrase is shown once, to be written down. There is **no copy
-  button**. If one is ever added, it must use the concealed pasteboard type and clear
-  the clipboard after 60 seconds, and Universal Clipboard would still carry it to
-  other devices.
-- Lock the identity on quit, screen lock, sleep and after an idle timeout.
+**Rules for the app, from the 2026-10-01 audit and Phase 6's decisions:**
+- The passphrase is entered in an `NSSecureTextField` with no content type, no
+  username field next to it and no "show" toggle, so macOS and iCloud Keychain never
+  offer "Save password" (D34). Confirm on a signed build.
+- The generated passphrase is shown once, as numbered, non-selectable words, to be
+  written down. There is **no copy button**, and the sheet is excluded from screen
+  capture while it's open (D34). If a copy button is ever added, it must use the
+  concealed pasteboard type and clear the clipboard after 60 seconds, and Universal
+  Clipboard would still carry it to other devices. Password mode's generated password
+  follows the same rule.
+- Lock the identity on quit, closing the window, screen lock, the screen saver, sleep,
+  fast user switching and after the idle timeout; a lock cancels a running
+  recipient-mode operation (D29).
 - Disable window state restoration, so no text field content is archived.
 - Set `RLIMIT_CORE` to 0 at launch, ship with the Hardened Runtime and without
   `get-task-allow`, so a crash can't produce a core dump of the keys and debuggers
   can't attach. macOS crash reports (`.ips`) hold stack traces and registers, not heap
-  memory; a register could briefly hold key bytes, which is a residual risk.
-- No `keychain-access-groups` entitlement; only `user-selected read-write` (D18).
+  memory; a register could briefly hold key bytes, which is a residual risk. Debug
+  builds keep `get-task-allow` for Xcode's debugger; Release builds don't (D35).
+- No `keychain-access-groups` entitlement; only `app-sandbox` and
+  `files.user-selected.read-write` (D18). No network entitlement: Chotam is offline.
+- Show public error messages exactly as the core gives them. Never show a path, a
+  system error's own text or an internal reason: anything else becomes a fixed
+  message.
+
+### 8.1 Checks only a signed build on a Mac can confirm
+
+`swift test` can't run the sandbox, the Hardened Runtime or AppKit. These checks are
+done by hand on a **Release** build (README "Testing the app" has the exact commands),
+and their results are recorded in SPEC.md:
+
+1. **Entitlements:** `codesign -d --entitlements - Chotam.app` lists exactly
+   `com.apple.security.app-sandbox` and `com.apple.security.files.user-selected.read-write`:
+   no `get-task-allow`, no `keychain-access-groups`, no network.
+2. **Hardened Runtime:** `codesign -dv Chotam.app` shows `flags=0x10000(runtime)`.
+3. **Sandbox container:** `identity.pqid` and `contacts.chotam` appear under
+   `~/Library/Containers/<bundle id>/Data/Library/Application Support/Chotam/`, and
+   nowhere else.
+4. **No "Save password":** typing a passphrase and unlocking never offers to save it.
+5. **No core dumps, no debugger:** `lldb -p <pid>` refuses to attach to the Release
+   build.
+6. **No window restoration:** after quitting, the container has no
+   `Saved Application State` folder for Chotam.
+7. **Locking:** each trigger in D29 locks the identity.
+8. **Screen capture:** the passphrase sheet is blank in a screenshot (⌘⇧5).
+9. **Save panels and folder grants (Phase 6b, D9):** encrypting and decrypting into a
+   file chosen in a save panel and into a granted folder works; the temp file goes in
+   `.itemReplacementDirectory` on the destination's volume, including an external
+   one, or the hidden fallback beside the output.
+10. **Quarantine (Phase 6b, D31):** `xattr -p com.apple.quarantine` on a decrypted file
+    shows Chotam as the agent.
