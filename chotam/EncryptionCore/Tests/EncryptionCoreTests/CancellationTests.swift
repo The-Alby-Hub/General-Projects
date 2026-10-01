@@ -45,21 +45,34 @@ final class CancellationTests: XCTestCase {
         }
     }
 
-    private func decryptError(_ body: () throws(DecryptionError) -> DecryptedFile) -> DecryptionError? {
+    /// The error `body` threw, or nil if it succeeded. `body` takes a plain throwing
+    /// closure: not every compiler infers a typed-throws closure from context.
+    private func decryptError(
+        _ body: () throws -> DecryptedFile, file: StaticString = #filePath, line: UInt = #line
+    ) -> DecryptionError? {
         do {
             _ = try body()
             return nil
-        } catch {
+        } catch let error as DecryptionError {
             return error
+        } catch {
+            XCTFail("not a DecryptionError: \(error)", file: file, line: line)
+            return nil
         }
     }
 
-    private func encryptError(_ body: () throws(EncryptionError) -> URL) -> EncryptionError? {
+    /// The error `body` threw, or nil if it succeeded.
+    private func encryptError(
+        _ body: () throws -> URL, file: StaticString = #filePath, line: UInt = #line
+    ) -> EncryptionError? {
         do {
             _ = try body()
             return nil
-        } catch {
+        } catch let error as EncryptionError {
             return error
+        } catch {
+            XCTFail("not an EncryptionError: \(error)", file: file, line: line)
+            return nil
         }
     }
 
