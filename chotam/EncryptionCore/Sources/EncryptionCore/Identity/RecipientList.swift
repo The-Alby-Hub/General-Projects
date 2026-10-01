@@ -1,4 +1,4 @@
-/// The contacts a file will be encrypted to (Phase 5b: `EncryptionMode.recipients`).
+/// The contacts a file will be encrypted to (`EncryptionMode.recipients`), besides you.
 ///
 /// Encrypting to an **unverified** contact can't happen by accident. `init(_:)`
 /// refuses any list that contains one, and hands back an `UnverifiedRecipientsRequest`

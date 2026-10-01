@@ -131,7 +131,7 @@ public final class Identity: @unchecked Sendable {
         }
     }
 
-    /// The contact whose signing key has this ID, to name the sender of a file (Phase 5b).
+    /// The contact whose signing key has this ID: who signed a recipient-mode file.
     func contact(signingKeyID: KeyID) throws(IdentityError) -> Contact? {
         try contacts().first { $0.publicIdentity.signingKeyID == signingKeyID }
     }

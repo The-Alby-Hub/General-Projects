@@ -15,6 +15,8 @@ Status of each part in the implementation:
 | Golden test files (password mode) | §8 | Phase 2 |
 | Recipient-mode stanzas (HPKE X-Wing) | yes | fields parsed in Phase 1, HPKE in Phase 5b |
 | Trailer (hybrid Ed25519 + ML-DSA-65 signature) | yes | framing in Phase 1, signing in Phase 5b |
+| Two-pass decryption, signer lookup (§6.3, §7) | yes | Phase 5b |
+| Golden test files (recipient mode) | §8 | Phase 5b |
 | Key IDs (§6.1) | yes | Phase 4; signing key ID over both signing keys in Phase 5a |
 | Public identity file `.pqid` and fingerprints (§9) | yes | Phase 4, reworked in Phase 5a (three keys, KDF block, extensions, hybrid self-signature) |
 | Passphrase-derived identity (§9.6) | yes | Phase 5a |
@@ -234,7 +236,7 @@ mode, `3373` for recipient mode, §6.3), the reader keeps a read-ahead buffer:
 
 The reader never reads more than `S + T + 1` bytes at a time.
 
-## 6. Recipient mode (implemented in Phase 5b)
+## 6. Recipient mode (Phase 5b)
 
 ### 6.1 Key IDs (implemented in Phase 4, signing key ID updated in Phase 5a)
 
@@ -256,6 +258,18 @@ Golden values are in §9.7.
 
 - Ciphersuite: `HPKE.Ciphersuite.XWingMLKEM768X25519_SHA256_AES_GCM_256`, base mode.
   X-Wing has no authenticated mode; sender authentication comes from §6.3.
+- Exactly, for an independent implementation (RFC 9180 §5.1, §5.2):
+  - `mode = mode_base (0x00)`, no PSK (`psk = ""`, `psk_id = ""`);
+  - `suite_id = "HPKE" ‖ I2OSP(0x647A, 2) ‖ I2OSP(0x0001, 2) ‖ I2OSP(0x0002, 2)`: KEM X-Wing,
+    KDF HKDF-SHA256, AEAD AES-256-GCM (`Nk = 32`, `Nn = 12`);
+  - the KEM is **X-Wing as in draft-connolly-cfrg-xwing-kem-06**: `Encap` is its
+    `Encapsulate` (1120-byte `enc` = ML-KEM-768 ciphertext ‖ X25519 ephemeral share),
+    `Decap` its `Decapsulate`, and the 32-byte shared secret is
+    `SHA3-256(ss_M ‖ ss_X ‖ ct_X ‖ pk_X ‖ "\.//^\")` (label hex `5c2e2f2f5e5c`, last). That
+    shared secret goes straight into the HPKE key schedule;
+  - `info` is the 32-byte wrap-context **digest** below, not its preimage;
+  - `aad` is the raw 32-byte `keyID_i`;
+  - the Data Key is sealed once, with sequence number 0 (`nonce = base_nonce`).
 - The HPKE `info` can't include the stanzas it helps produce. It is set to the
   **wrap context**, which covers every header field except each stanza's
   `encapsulatedKey` and `wrappedDataKey`:
@@ -273,8 +287,11 @@ wrapContext = SHA-256( "Chotam v1 wrap context"
   is not used.
 - The stanza stores `keyID_i ‖ enc ‖ ct`.
 - **The sender is always a recipient** (encrypt to self, SECURITY.md D21), so a file
-  has at most 63 contacts plus the sender. The writer puts the sender's stanza last.
-  **Readers never rely on stanza order**: they find their own stanza by key ID.
+  has at most 63 contacts plus the sender.
+- **Order:** the writer sorts the contacts' stanzas by key ID (bytewise, ascending), so
+  the header reveals nothing about how they were chosen, and puts the sender's stanza
+  last. **Readers never rely on stanza order**: they find their own stanza by key ID.
+- The Data Key is 32 bytes from the CSPRNG, fresh for every file, and is the IKM of §4.
 
 Binding `wrapContext` means a stanza can't be moved into another file, or into a header
 with a different recipient list or commitment.
@@ -298,16 +315,18 @@ trailer = Ed25519.sign(signedMessage) (64) ‖ ML-DSA-65.sign(signedMessage) (33
 - The header hash covers every stanza, so re-targeting a file to new recipients
   invalidates the signature.
 - **Who signed:** the reader looks up `senderKeyID` among (a) its own identity and
-  (b) its contacts, verified or not. If it's neither, decryption stops with the
-  distinct error "unknown sender" (SECURITY.md D20) before any secret is used: the file
-  holds only the sender's key ID, so there is nothing to check the signature against.
-  An unverified contact's file opens and is reported as unverified.
+  (b) its contacts, verified or not, as stored when the file is opened. If it's
+  neither, decryption stops with the distinct error "unknown sender" (SECURITY.md D20)
+  before any secret is used: the file holds only the sender's key ID, so there is
+  nothing to check the signature against. An unverified contact's file opens and is
+  reported as unverified.
 - **Two passes** (SECURITY.md D19): pass 1 reads the header and the whole body,
   computes `headerHash`, the ciphertext hash and `n`, and verifies the trailer, using
   no secret. Only then is the Data Key unwrapped, the commitment checked, and pass 2
-  decrypts. Pass 2 recomputes the header hash, the ciphertext hash and `n` from the
-  bytes it actually decrypts and requires them to equal pass 1's, so a file changed
-  between the passes fails.
+  decrypts. Pass 2 reads the header again and requires the exact same bytes, then
+  recomputes the ciphertext hash and `n` from the bytes it actually decrypts and
+  requires them, and the trailer, to equal pass 1's, so a file changed between the
+  passes fails.
 - Password-mode files have no trailer.
 
 ## 7. Parser limits, checked before any expensive work
@@ -326,15 +345,25 @@ In order:
 Only after all of that does any expensive or secret work happen:
 
 - **Password mode:** Argon2id, HKDF, the commitment check, then chunk decryption.
-- **Recipient mode** (§6.3): find your stanza by key ID (none: not for you); find the
-  sender by `senderKeyID` (unknown: "unknown sender"); pass 1 verifies the signature
-  over the ciphertext; then HPKE unwraps the Data Key, HKDF and the commitment check
-  run, and pass 2 decrypts. The commitment is still checked before any chunk is opened.
+- **Recipient mode** (§6.3), in exactly this order:
+  1. the reader's identity is unlocked (checked before the file is read; failing it
+     says nothing about the file);
+  2. the header parses (steps 1–7 above);
+  3. find your stanza by key ID. None: **not for you** (the generic failure). This comes
+     **before** the sender check, so a file that is both not for you and from an
+     unknown sender is reported as not for you;
+  4. find the sender by `senderKeyID` among you and your contacts. Neither: **"unknown
+     sender"**;
+  5. pass 1 reads the whole body and verifies both halves of the signature;
+  6. HPKE unwraps the Data Key;
+  7. pass 2 re-reads the header (it must be identical), HKDF and the commitment check
+     run before any chunk is opened, every chunk is decrypted, and the ciphertext hash,
+     chunk count and trailer must equal pass 1's.
 
 Every failure that depends on the file's contents or the key becomes the single public
 error **"Decryption failed: file is damaged or not for you."** The one recipient-mode
 exception is "unknown sender" (SECURITY.md D20), which reveals only the public
-`senderKeyID` and the reader's own contact list. The detailed reason goes only
+`senderKeyID` and whether it is in the reader's contacts. The detailed reason goes only
 to the debug log, as a fixed string that never contains secret material.
 
 ## 8. Test vectors
@@ -353,6 +382,28 @@ HKDF-SHA256 and AES-256-GCM. All inputs are fixed, so the output is reproducible
 
 Both use the password `correct horse battery staple`, `argon2Salt = 00 01 … 0f`,
 `opsLimit = 3`, `memLimit = 256 MiB`, `hkdfSalt = 20 21 … 3f`, `baseNonce = 40 41 … 4b`.
+
+**Recipient mode** (Phase 5b): `make_recipient_vectors.py` builds two files between the
+golden identity Alice (§9.7) and a second golden identity, Bob, independently of the
+Swift code. X-Wing encapsulation and decapsulation are written from
+draft-connolly-cfrg-xwing-kem-06 (ML-KEM-768 from kyber-py) and checked against the
+draft's three published test vectors. OpenSSL's ML-KEM-768 must decapsulate every
+ML-KEM ciphertext to the same secret. The HPKE key schedule and seal are written from
+RFC 9180 and checked against its official vector for base mode, HKDF-SHA256 and
+AES-256-GCM (there are no published HPKE vectors with X-Wing, so only the KEM differs
+from that vector). Both signature halves are checked with OpenSSL too, and the script
+opens every file again, through §7's steps, as each recipient, before writing it. The
+X-Wing encapsulation seeds are fixed (`SHA-512("Chotam golden eseed " ‖ tag ‖ index)`),
+so the files are reproducible.
+
+| File | Size | Contents |
+|---|---:|---|
+| `identity-bob-v1.pqid` | 6,632 | Bob: passphrase `angrily copy excretion joyride perish scouting tipped`, `kdfSalt = b0 b1 … bf`, ops 3, 256 MiB, name `Bob`; fingerprint `KYVS TWF6 1AFH B7H7 2J9D MM1B VYCG MJ1A`; SHA-256 `8cac900b…040788f0f` |
+| `recipients-from-alice.enc` | 5,973 | Alice → Bob (and Alice), signed by Alice: `"Chotam golden vector: recipient mode.\n"`, filename `vector.txt`, one chunk. Data Key `c0 c1 … df`, `hkdfSalt = 60 61 … 7f`, `baseNonce = 80 81 … 8b`. SHA-256 `1a803e8e…2d8746bcb3` |
+| `recipients-from-bob.enc` | 71,575 | Bob → Alice (and Bob), signed by Bob: bytes `i mod 251` for `i` in `0 ..< 65634`, no filename, a full chunk then a 100-byte final chunk. Data Key `e0 e1 … ff`, `hkdfSalt = 30 31 … 4f`, `baseNonce = 50 51 … 5b`. SHA-256 `d8e9b355…b02a1ba21` |
+
+Bob's encryption key ID is `4c2072ed26b99aff222a574009b173407c0e89e5849f142d3b0903c8cda69c1a`,
+his signing key ID `7294d21b83a43861a72c13e5d14007c629879124c86f57a9b4c596148968a44e`.
 
 ## 9. Public identity file (`.pqid`), version 1
 

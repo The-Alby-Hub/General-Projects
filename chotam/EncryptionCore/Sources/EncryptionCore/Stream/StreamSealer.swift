@@ -5,7 +5,7 @@ import CryptoKit
 import Crypto
 #endif
 
-/// What the sealer produced. Recipient mode (Phase 5b) signs these values.
+/// What the sealer produced. Recipient mode signs these values (FORMAT.md §6.3).
 struct SealSummary {
     let headerHash: [UInt8]
     let chunkCount: UInt64
@@ -19,25 +19,31 @@ struct SealSummary {
 /// The salt, base nonce and file key are generated inside, so callers never
 /// handle nonces, salts or derived keys.
 enum StreamSealer {
+    /// - Parameter prepareHeader: Recipient mode only. Called with the complete header
+    ///   (salt, nonce and commitment filled in) before it is encoded, to replace the
+    ///   placeholder stanzas with the wrapped Data Key: the wrap context covers the
+    ///   commitment, so the stanzas can only be made once it exists (FORMAT.md §6.2).
     static func seal(
         ikm: SymmetricKey,
         parameters: FileHeader.ModeParameters,
         filename: String?,
         from source: any ByteSource,
-        to sink: any ByteSink
+        to sink: any ByteSink,
+        prepareHeader: ((inout FileHeader) throws -> Void)? = nil
     ) throws -> SealSummary {
         // Fresh random salt per file → a unique file key per file (no key reuse).
         let hkdfSalt = SecureRandom.bytes(FormatV1.hkdfSaltSize)
         let baseNonce = SecureRandom.bytes(FormatV1.baseNonceSize)
         let keys = try KeySchedule.derive(ikm: ikm, hkdfSalt: hkdfSalt)
 
-        let header = FileHeader(
+        var header = FileHeader(
             chunkSize: UInt32(FormatV1.chunkSize),
             hkdfSalt: hkdfSalt,
             baseNonce: baseNonce,
             commitment: keys.commitment,
             parameters: parameters
         )
+        try prepareHeader?(&header)
         let rawHeader = try HeaderCodec.encode(header)
         let headerHash = Array(SHA256.hash(data: rawHeader))
         let plaintext = PrefixedSource(
@@ -51,6 +57,11 @@ enum StreamSealer {
         var index: UInt64 = 0
         var current = try plaintext.readFully(FormatV1.chunkSize)
         var next: [UInt8] = []
+        // Wiped on every way out, including a failed write or a cancellation.
+        defer {
+            Wipe.bytes(&current)
+            Wipe.bytes(&next)
+        }
 
         while true {
             // One-chunk lookahead: a chunk is final exactly when nothing follows it.

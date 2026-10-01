@@ -5,8 +5,8 @@ import CryptoKit
 import Crypto
 #endif
 
-/// What the opener verified. Recipient mode (Phase 5b) checks the signature in
-/// `trailer` against `headerHash`, `ciphertextDigest` and `chunkCount`.
+/// What the opener verified. Recipient mode requires `ciphertextDigest`, `chunkCount`
+/// and `trailer` to equal what pass 1 verified the signature over (FORMAT.md §6.3).
 struct OpenSummary {
     let filename: String?
     let headerHash: [UInt8]
@@ -60,7 +60,10 @@ enum StreamOpener {
             digest.update(data: sealedChunk)
 
             onChunkOpen?()
-            var plaintext: Data
+            var plaintext = Data()
+            // Wiped on every way out of this iteration, including a failed write or a
+            // cancellation, not only after a successful write.
+            defer { Wipe.data(&plaintext) }
             do {
                 let box = try AES.GCM.SealedBox(
                     nonce: ChunkCrypto.nonce(base: header.baseNonce, index: index),

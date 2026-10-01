@@ -19,6 +19,9 @@ struct FileStatus {
 
     let kind: Kind
     let identity: Identity
+    /// Size in bytes. Recipient-mode decryption checks it hasn't changed between the
+    /// two passes (SECURITY.md D19); the hashes are what actually guarantee it.
+    let size: Int64
 
     private init(_ s: stat) {
         // File-type bits (S_IFMT) spelled out, because `mode_t` and the S_IF*
@@ -32,6 +35,7 @@ struct FileStatus {
         identity = Identity(
             device: UInt64(truncatingIfNeeded: s.st_dev),
             inode: UInt64(truncatingIfNeeded: s.st_ino))
+        size = Int64(truncatingIfNeeded: s.st_size)
     }
 
     /// The file behind an open descriptor, so what we check is what we read.
