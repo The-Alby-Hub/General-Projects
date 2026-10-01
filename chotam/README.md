@@ -27,7 +27,7 @@ A native macOS 26 (Swift 6 / SwiftUI) app that encrypts individual files:
 | 3 | Atomic file processor: public `FileProcessor` API, safe writes, restored filenames | done: 138 tests pass on macOS (Xcode) |
 | 4 | Identities, fingerprints, `.pqid`, contacts | done: 222 tests pass on macOS (Xcode); its Keychain parts removed in 5a |
 | 5a | Passphrase-derived identity, no Keychain, hybrid signatures, encrypted contacts | done: 238 tests pass on macOS (Xcode); unlock takes 3.5 s |
-| 5b | Recipient mode: HPKE wrapping, signed files, two-pass decryption, cancellation with cleanup | implemented; awaiting the first Mac test run (273 tests expected) |
+| 5b | Recipient mode: HPKE wrapping, signed files, two-pass decryption, cancellation with cleanup | done: 273 tests pass on macOS (Xcode); CryptoKit opens the independent golden files |
 | 6 | SwiftUI app | — |
 | 7 | Full test pass and security self-review | — |
 
