@@ -245,21 +245,31 @@ See SECURITY.md D27–D35 for every Phase 6 decision.
 
 ### Testing the app
 
-Switch to the branch first:
+Switch to the branch first. Paste the commands one block at a time: zsh doesn't treat
+`#` as a comment when typed, so the blocks below have none.
 
 ```sh
 cd ~/Developer/General-Projects
 git fetch origin
-git switch claude/charming-carson-au9fqy     # first time: git switch -c claude/charming-carson-au9fqy --track origin/claude/charming-carson-au9fqy
+git switch claude/charming-carson-au9fqy
 git pull
+```
+
+The first time, use `git switch -c claude/charming-carson-au9fqy --track origin/claude/charming-carson-au9fqy`
+instead of the plain `git switch`.
 ```
 
 Unit tests (no Xcode window needed):
 
 ```sh
-cd ~/Developer/General-Projects/chotam/EncryptionCore && swift test   # the core, plus the app's Keychain scan
-cd ../AppModel && swift test                                          # view models and app rules
+cd ~/Developer/General-Projects/chotam/EncryptionCore
+swift test
+cd ~/Developer/General-Projects/chotam/AppModel
+swift test
 ```
+
+The first runs the core and the Keychain scan of the app; the second the view models
+and the app's rules.
 
 Run it from Xcode (Debug build): `open ~/Developer/General-Projects/chotam/App/Chotam.xcodeproj`,
 then Product ▸ Run (⌘R). The project signs to run locally ("-"); if macOS asks whether
@@ -274,10 +284,13 @@ cd ~/Developer/General-Projects/chotam/App
 xcodebuild -project Chotam.xcodeproj -scheme Chotam -configuration Release \
   -derivedDataPath /tmp/chotam-build build
 APP=/tmp/chotam-build/Build/Products/Release/Chotam.app
-codesign -d --entitlements - "$APP"        # exactly app-sandbox + files.user-selected.read-write
-codesign -dv "$APP" 2>&1 | grep flags      # flags=0x10000(runtime)
+codesign -d --entitlements - "$APP"
+codesign -dv "$APP" 2>&1 | grep flags
 open "$APP"
 ```
+
+The entitlements must be exactly `app-sandbox` and `files.user-selected.read-write`, and
+the flags must include `0x10000(runtime)`.
 
 Manual checklist (Release build unless noted):
 
